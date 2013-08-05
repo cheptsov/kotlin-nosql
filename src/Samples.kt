@@ -12,7 +12,7 @@ object Users : Table() {
 }
 
 object Cities : Table() {
-    val id = integer("id", autoIncrement = true).primaryKey // PKColumn<Int>
+    val id = integer("id").primaryKey.auto // GeneratedPKColumn<Int>
     val name = varchar("name", 50) // Column<String>
 
     val all = template(id, name) // Column2<Int, String> Select template

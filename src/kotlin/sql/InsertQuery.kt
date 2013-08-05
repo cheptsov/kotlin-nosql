@@ -6,7 +6,7 @@ import java.sql.Statement
 class InsertQuery<T: Table>(val table: T, val statement: Statement) {
 }
 
-fun <T: Table> InsertQuery<T>.get(column: T.() -> Column<Int>): Int {
+fun <T: Table> InsertQuery<T>.get(column: T.() -> GeneratedValue<Int>): Int {
     val rs = statement.getGeneratedKeys()!!;
     if (rs.next()) {
         return rs.getInt(1)

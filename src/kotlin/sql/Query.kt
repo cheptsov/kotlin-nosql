@@ -69,6 +69,14 @@ open class Query<T>(val session: Session, val fields: Array<Field<*>>) {
         return this
     }
 
+    fun <B> map(statement: (row: T) -> B): List<B> {
+        val results = ArrayList<B>()
+        forEach {
+            results.add(statement(it))
+        }
+        return results
+    }
+
     fun forEach(statement: (row: T) -> Unit) {
         val tables: MutableSet<Table> = HashSet<Table>()
         val sql = StringBuilder("SELECT ")

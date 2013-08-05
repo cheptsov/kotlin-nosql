@@ -9,8 +9,8 @@ open class Table(name: String = "") {
     val primaryKeys: List<PKColumn<*>> = ArrayList<PKColumn<*>>()
     val foreignKeys: List<ForeignKey> = ArrayList<ForeignKey>()
 
-    fun integer(name: String, autoIncrement: Boolean = false, references: PKColumn<Int>? = null): Column<Int> {
-        return column<Int>(name, ColumnType.INTEGER, autoIncrement = autoIncrement, references = references)
+    fun integer(name: String, references: PKColumn<Int>? = null): Column<Int> {
+        return column<Int>(name, ColumnType.INTEGER, references = references)
     }
 
     fun varchar(name: String, length: Int, references: PKColumn<String>? = null): Column<String> {

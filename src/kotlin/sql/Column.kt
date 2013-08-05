@@ -52,9 +52,25 @@ fun <T:Any?> Column<T>.isNull(): Op {
 fun <T:Any?> Column<T>.equals(other: Expression): Op {
     return EqualsOp(this, other)
 }
-class PKColumn<T>(table: Table, name: String, columnType: ColumnType, length: Int, autoIncrement: Boolean, references: Column<*>?) : Column<T>(table, name, columnType, false, length, autoIncrement, references) {
-
+open class PKColumn<T>(table: Table, name: String, columnType: ColumnType, length: Int, autoIncrement: Boolean, references: Column<*>?) : Column<T>(table, name, columnType, false, length, autoIncrement, references) {
+    val auto: GeneratedPKColumn<T>
+        get() {
+            (table.tableColumns as ArrayList<Column<*>>).remove(this)
+            val column = GeneratedPKColumn<T>(table, name, columnType, length, autoIncrement = true, references = references)
+            (table.tableColumns as ArrayList<Column<*>>).add(column)
+            return column
+        }
 }
+
+
+
+class GeneratedPKColumn<T>(table: Table, name: String, columnType: ColumnType, length: Int, autoIncrement: Boolean, references: Column<*>?) : PKColumn<T>(table, name, columnType, length, autoIncrement, references), GeneratedValue<T> {
+}
+
+/*
+class GeneratedColumn<T>(table: Table, name: String, columnType: ColumnType, length: Int, autoIncrement: Boolean, references: Column<*>?) : Column<T>(table, name, columnType, false, length, autoIncrement, references), GeneratedValue {
+}
+*/
 
 class Column2<A, B>(val a: Column<A>, val b: Column<B>) {
     fun <C> plus(c: Column<C>): Column3<A, B, C> {
