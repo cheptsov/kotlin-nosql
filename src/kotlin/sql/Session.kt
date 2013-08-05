@@ -40,10 +40,6 @@ open class Session (val connection: Connection, val driver: Driver) {
         return DeleteQuery(this, table)
     }
 
-    fun <T> insert(column: Pair<Column<T>, T>): InsertQuery {
-        return insert(array(column) as Array<Pair<Column<*>, *>>)
-    }
-
     fun create(vararg tables: Table) {
         if (tables.size > 0) {
             for (table in tables) {
@@ -101,6 +97,14 @@ open class Session (val connection: Connection, val driver: Driver) {
             }
             else -> throw UnsupportedOperationException("Unsupported driver: " + driver.getClass().getName())
         }
+    }
+
+    fun <T: Table> T.insert(columns: T.() -> Array<Pair<Column<*>, *>>): InsertQuery<T> {
+        return insert(columns() as Array<Pair<Column<*>, *>>)
+    }
+
+    fun <T: Table> T.insert(column: Pair<Column<T>, T>): InsertQuery<T> {
+        return insert(array(column) as Array<Pair<Column<*>, *>>)
     }
 
     fun <T: Table> T.insert(columns: Array<Pair<Column<*>, *>>): InsertQuery<T> {
