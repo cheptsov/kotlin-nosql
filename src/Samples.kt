@@ -1,22 +1,22 @@
 package demo
 
 import kotlin.sql.*
+import java.util.ArrayList
 
 object Users : Table() {
-    val id = varchar("id", ColumnType.PRIMARY_KEY, length = 10) // PKColumn<String>
+    val id = varchar("id", length = 10).primaryKey // PKColumn<String>
     val name = varchar("name", length = 50) // Column<String>
-    val cityId = integer("city_id", ColumnType.NULLABLE, references = Cities.id) // Column<Int?>
+    val cityId = integer("city_id", references = Cities.id).nullable // Column<Int?>
 
-    val all = id + name + cityId // Column3<String, String, Int?>
-    val values = id + name + cityId // The columns required for insert statement
+    val values = template(id, name, cityId) // Column3<String, String, Int?> Insert template
 }
 
 object Cities : Table() {
-    val id = integer("id", ColumnType.PRIMARY_KEY, autoIncrement = true) // PKColumn<Int>
+    val id = integer("id", autoIncrement = true).primaryKey // PKColumn<Int>
     val name = varchar("name", 50) // Column<String>
 
-    val all = id + name // Column2<Int, String>
-    val values = name // The columns required for insert statement
+    val all = template(id, name) // Column2<Int, String> Select template
+    val values = template(name) // Column<String> Insert template
 }
 
 fun main(args: Array<String>) {
@@ -26,30 +26,37 @@ fun main(args: Array<String>) {
     db.withSession {
         create (Cities, Users)
 
-        val saintPetersburgId = insert (Cities.values("St. Petersburg")) get Cities.id
-        val munichId = insert (Cities.values("Munich")) get Cities.id
-        insert (Cities.values("Prague"))
+        val saintPetersburgId = Cities.insert { values("St. Petersburg")} get Cities.id
+        val munichId = Cities.insert {values("Munich")} get Cities.id
+        Cities.insert { values("Prague") }
 
-        insert (Users.values("andrey", "Andrey", saintPetersburgId))
+        Users.insert { values("andrey", "Andrey", saintPetersburgId) }
+        Users.insert { values("sergey", "Sergey", munichId) }
+        Users.insert { values("eugene", "Eugene", munichId) }
+        Users.insert { values("alex", "Alex", null) }
+        Users.insert { values("smth", "Something", null) }
 
-        insert (Users.values("sergey", "Sergey", munichId))
-        insert (Users.values("eugene", "Eugene", munichId))
-        insert (Users.values("alex", "Alex", null))
-        insert (Users.values("smth", "Something", null))
+        Users.filter { id.equals("alex") } update {
+            it[name] = "Alexey"
+        }
 
-        update (Users) {
-            set(name("Alexey"))
-        } where Users.id.equals("alex")
-
-        delete (Users) where Users.name.like("%thing")
+        Users.delete { name.like("%thing") }
 
         println("All cities:")
 
-        select (Cities.all) forEach {
+        Cities.all().forEach {
             val (id, name) = it
             println("$id: $name")
         }
 
+        println("Select city by name: ")
+
+        Cities.all.filter { name.equals("St. Petersburg") } forEach {
+            val (id, name) = it
+            println("$id: $name")
+        }
+
+        /*
         println("Manual join:")
 
         select (Users.name, Cities.name) where (Users.id.equals("andrey") or Users.name.equals("Sergey")) and
@@ -80,6 +87,7 @@ fun main(args: Array<String>) {
                 println("Nobody lives in $cityName")
             }
         }
+        */
 
         drop (Users, Cities)
     }

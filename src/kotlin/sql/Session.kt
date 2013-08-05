@@ -36,16 +36,6 @@ open class Session (val connection: Connection, val driver: Driver) {
         return Query(this, array(a.a, a.b, a. c))
     }
 
-    fun <T : Table> update(table: T, statement: T.() -> Unit): UpdateQuery {
-        Table.setPairs.set(null)
-        table.statement()
-        return UpdateQuery(this, Table.setPairs.get()!!)
-    }
-
-    fun update(vararg pairs: Pair<Column<*>, *>): UpdateQuery {
-        return UpdateQuery(this, pairs)
-    }
-
     fun delete(table: Table): DeleteQuery {
         return DeleteQuery(this, table)
     }
@@ -71,7 +61,7 @@ open class Session (val connection: Connection, val driver: Driver) {
         sql.append("VALUES (")
         for (column in columns) {
             when (column.component1().columnType) {
-                InternalColumnType.STRING -> sql.append("'" + column.component2() + "'")
+                ColumnType.STRING -> sql.append("'" + column.component2() + "'")
                 else -> sql.append(column.component2())
             }
             c++

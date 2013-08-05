@@ -1,6 +1,8 @@
 package kotlin.sql
 
-open class Column<T>(val table: Table, val name: String, val columnType: InternalColumnType, val primaryKey: Boolean, val nullable: Boolean, val length: Int, val autoIncrement: Boolean, val references: Column<*>?) : Field<T>() {
+import java.util.ArrayList
+
+open class Column<T>(val table: Table, val name: String, val columnType: ColumnType, val _nullable: Boolean, val length: Int, val autoIncrement: Boolean, val references: Column<*>?) : Field<T>() {
     fun equals(other: Expression): Op {
         return EqualsOp(this, other)
     }
@@ -13,24 +15,44 @@ open class Column<T>(val table: Table, val name: String, val columnType: Interna
         return LikeOp(this, LiteralOp(other))
     }
 
-    fun isNull(): Op {
-        return IsNullOp(this)
-    }
-
     override fun toSQL(): String {
         return Session.get().fullIdentity(this);
     }
 
-    fun invoke(value: T): Pair<Column<T>, T> {
-        return Pair<Column<T>, T>(this, value)
+    fun invoke(value: T): Array<Pair<Column<T>, T>> {
+        return array(Pair<Column<T>, T>(this, value))
     }
 
     fun <B> plus(b: Column<B>): Column2<T, B> {
         return Column2<T, B>(this, b)
     }
+
+    val primaryKey: PKColumn<T>
+        get() {
+            (table.tableColumns as ArrayList<Column<*>>).remove(this)
+            val column = PKColumn<T>(table, name, columnType, length, autoIncrement, references)
+            (table.tableColumns as ArrayList<Column<*>>).add(column)
+            (table.primaryKeys as ArrayList<PKColumn<*>>).add(column)
+            return column
+        }
+
+    val nullable: Column<T?>
+        get() {
+            (table.tableColumns as ArrayList<Column<*>>).remove(this)
+            val column = (Column<T?>(table, name, columnType, true, length, autoIncrement, references)) as Column<T?>
+            (table.tableColumns as ArrayList<Column<*>>).add(column)
+            return column
+        }
 }
 
-class PKColumn<T>(table: Table, name: String, columnType: InternalColumnType, primaryKey: Boolean, nullable: Boolean, length: Int, autoIncrement: Boolean, references: Column<*>?) : Column<T>(table, name, columnType, primaryKey, nullable, length, autoIncrement, references) {
+fun <T:Any?> Column<T>.isNull(): Op {
+    return IsNullOp(this)
+}
+
+fun <T:Any?> Column<T>.equals(other: Expression): Op {
+    return EqualsOp(this, other)
+}
+class PKColumn<T>(table: Table, name: String, columnType: ColumnType, length: Int, autoIncrement: Boolean, references: Column<*>?) : Column<T>(table, name, columnType, false, length, autoIncrement, references) {
 
 }
 

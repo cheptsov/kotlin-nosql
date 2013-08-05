@@ -6,55 +6,21 @@ open class Table(name: String = "") {
     val tableName = if (name.length() > 0) name else this.javaClass.getSimpleName()
 
     val tableColumns: List<Column<*>> = ArrayList<Column<*>>()
-    val primaryKeys: List<Column<*>> = ArrayList<Column<*>>()
+    val primaryKeys: List<PKColumn<*>> = ArrayList<PKColumn<*>>()
     val foreignKeys: List<ForeignKey> = ArrayList<ForeignKey>()
 
     fun integer(name: String, autoIncrement: Boolean = false, references: PKColumn<Int>? = null): Column<Int> {
-        return column<Int>(name, InternalColumnType.INTEGER, false, autoIncrement = autoIncrement, references = references)
-    }
-
-    fun integer(name: String, primaryKeyColumnType: PrimaryKeyColumnType, autoIncrement: Boolean = false): PKColumn<Int> {
-        return pkColumn<Int>(name, InternalColumnType.INTEGER, false, autoIncrement = autoIncrement)
-    }
-
-    fun integer(name: String, nullableColumnType: NullableColumnType, references: PKColumn<Int>? = null): Column<Int?> {
-        return column<Int?>(name, InternalColumnType.INTEGER, true, references = references)
+        return column<Int>(name, ColumnType.INTEGER, autoIncrement = autoIncrement, references = references)
     }
 
     fun varchar(name: String, length: Int, references: PKColumn<String>? = null): Column<String> {
-        return column<String>(name, InternalColumnType.STRING, false, length = length, references = references)
+        return column<String>(name, ColumnType.STRING, length = length, references = references)
     }
 
-    fun varchar(name: String, primaryKeyColumnType: PrimaryKeyColumnType, length: Int): PKColumn<String> {
-        return pkColumn<String>(name, InternalColumnType.STRING, false, length = length)
-    }
-
-    fun varchar(name: String, nullableColumnType: NullableColumnType, references: PKColumn<String>? = null): Column<String?> {
-        return column<String?>(name, InternalColumnType.STRING, true, references = references)
-    }
-
-    private fun <T> column(name: String, columnType: InternalColumnType, nullable: Boolean, length: Int = 0, autoIncrement: Boolean = false, references: Column<*>? = null): Column<T> {
-        val column = Column<T>(this, name, columnType, false, nullable, length, autoIncrement, references)
-        if (column.primaryKey) {
-            (primaryKeys as ArrayList<Column<*>>).add(column)
-        }
+    private fun <T> column(name: String, columnType: ColumnType, length: Int = 0, autoIncrement: Boolean = false, references: Column<*>? = null): Column<T> {
+        val column = Column<T>(this, name, columnType, false, length, autoIncrement, references)
         (tableColumns as ArrayList<Column<*>>).add(column)
         return column
-    }
-
-    private fun <T> pkColumn(name: String, columnType: InternalColumnType, nullable: Boolean, length: Int = 0, autoIncrement: Boolean = false, references: Column<*>? = null): PKColumn<T> {
-        val column = PKColumn<T>(this, name, columnType, true, nullable, length, autoIncrement, references)
-        if (column.primaryKey) {
-            (primaryKeys as ArrayList<Column<*>>).add(column)
-        }
-        (tableColumns as ArrayList<Column<*>>).add(column)
-        return column
-    }
-
-    internal fun foreignKey(column: Column<*>, table: Table): ForeignKey {
-        val foreignKey = ForeignKey(this, column, table)
-        (foreignKeys as ArrayList<ForeignKey>).add(foreignKey)
-        return foreignKey
     }
 
     class object {
@@ -76,18 +42,18 @@ open class Table(name: String = "") {
             for (column in tableColumns) {
                 ddl.append(Session.get().identity(column)).append(" ")
                 when (column.columnType) {
-                    InternalColumnType.INTEGER -> ddl.append("INT")
-                    InternalColumnType.STRING -> ddl.append("VARCHAR(${column.length})")
+                    ColumnType.INTEGER -> ddl.append("INT")
+                    ColumnType.STRING -> ddl.append("VARCHAR(${column.length})")
                     else -> throw IllegalStateException()
                 }
                 ddl.append(" ")
-                if (column.primaryKey) {
+                if (column is PKColumn<*>) {
                     ddl.append("PRIMARY KEY ")
                 }
                 if (column.autoIncrement) {
                     ddl.append(Session.get().autoIncrement(column)).append(" ")
                 }
-                if (column.nullable) {
+                if (column._nullable) {
                     ddl.append("NULL")
                 } else {
                     ddl.append("NOT NULL")
@@ -102,3 +68,103 @@ open class Table(name: String = "") {
         return ddl.toString()
     }
 }
+
+/*
+fun <T: Table, C> T.insert(column: T.() -> Pair<Column<C>, C>): InsertQuery {
+    return Session.get().insert(array(column) as Array<Pair<Column<*>, *>>)
+}
+*/
+
+fun <T: Table> T.insert(columns: T.() -> Array<Pair<Column<*>, *>>): InsertQuery {
+    return Session.get().insert(columns())
+}
+
+fun <T:Table> T.filter(body: T.() -> Op): FilterQuery<T> {
+    return FilterQuery(this, body())
+}
+
+fun <T: Table, A, B> Template2<T, A, B>.filter(op: T.() -> Op): Query<Pair<A, B>> {
+    return Query<Pair<A, B>>(Session.get(), array(a, b)).where(table.op())
+}
+
+fun <T: Table> FilterQuery<T>.update(body: T.(UpdateQuery) -> Unit): UpdateQuery {
+    val answer = UpdateQuery(table, op)
+    table.body(answer)
+    answer.execute(Session.get())
+    return answer
+}
+
+fun <T:Table> T.delete(op: T.() -> Op) {
+    DeleteQuery(Session.get(), this).where(op())
+}
+
+fun <T:Table> T.deleteAll() {
+    DeleteQuery(Session.get(), this).where(null)
+}
+
+fun <T: Table, B> FilterQuery<T>.map(statement: T.(Map<Any, Any>) -> B): List<B> {
+    val results = ArrayList<B>()
+    //Query
+    return results
+}
+
+fun <T: Table, A> T.template(a: Column<A>): Template1<T, A> {
+    return Template1(this, a)
+}
+
+class Template1<T: Table, A>(val table: T, val a: Column<A>) {
+    fun invoke(av: A): Array<Pair<Column<*>, *>> {
+        return array(Pair(a, av))
+    }
+}
+
+fun <T: Table, A, B> T.template(a: Column<A>, b: Column<B>): Template2<T, A, B> {
+    return Template2(this, a, b)
+}
+
+class Template2<T: Table, A, B>(val table: T, val a: Column<A>, val b: Column<B>) {
+    fun invoke(av: A, bv: B): Array<Pair<Column<*>, *>> {
+        return array(Pair(a, av), Pair(b, bv))
+    }
+
+    fun invoke(): List<Pair<A, B>> {
+        val results = ArrayList<Pair<A, B>>()
+        Query<Pair<A, B>>(Session.get(), array(a, b)).forEach{ results.add(it) }
+        return results
+    }
+}
+
+fun <T: Table, A, B, C> T.template(a: Column<A>, b: Column<B>, c: Column<C>): Template3<T, A, B, C> {
+    return Template3(this, a, b, c)
+}
+
+class Template3<T: Table, A, B, C>(val table: T, val a: Column<A>, val b: Column<B>, val c: Column<C>) {
+    fun invoke(av: A, bv: B, cv: C): Array<Pair<Column<*>, *>> {
+        return array(Pair(a, av), Pair(b, bv), Pair(c, cv))
+    }
+
+    fun invoke(): List<Triple<A, B, C>> {
+        val results = ArrayList<Triple<A, B, C>>()
+        Query<Triple<A, B, C>>(Session.get(), array(a, b, c)).forEach{ results.add(it) }
+        return results
+    }
+
+}
+
+/*
+class A<T> {
+}
+
+fun <T: Table> A<T>.forEach(statement: T.(Map<Any, Any>) -> Unit) {
+}
+
+fun <T: Table, B> A<T>.orderBy(statement: T.(Map<Any, Any>) -> B): A<T> {
+    return this
+}
+
+fun <T: Table> T.filter(predicate: T.() -> Op) : A<T> {
+    this.predicate();
+    return A<T>();
+}
+*/
+

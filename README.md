@@ -5,20 +5,19 @@ _Exposed_ is a prototype for a lightweight SQL library written over JDBC driver 
 
 ```java
 object Users : Table() {
-    val id = varchar("id", ColumnType.PRIMARY_KEY, length = 10) // PKColumn<String>
+    val id = varchar("id", length = 10).primaryKey // PKColumn<String>
     val name = varchar("name", length = 50) // Column<String>
-    val cityId = integer("city_id", ColumnType.NULLABLE, references = Cities.id) // Column<Int?>
+    val cityId = integer("city_id", references = Cities.id).nullable // Column<Int?>
 
-    val all = id + name + cityId // Column3<String, String, Int?>
-    val values = id + name + cityId // The columns required for insert statement
+    val values = template(id, name, cityId) // Column3<String, String, Int?> Insert template
 }
 
 object Cities : Table() {
-    val id = integer("id", ColumnType.PRIMARY_KEY, autoIncrement = true) // PKColumn<Int>
+    val id = integer("id", autoIncrement = true).primaryKey // PKColumn<Int>
     val name = varchar("name", 50) // Column<String>
 
-    val all = id + name // Column2<Int, String>
-    val values = name // The columns required for insert statement
+    val all = template(id, name) // Column2<Int, String> Select template
+    val values = template(name) // Column<String> Insert template
 }
 
 fun main(args: Array<String>) {
@@ -28,59 +27,34 @@ fun main(args: Array<String>) {
     db.withSession {
         create (Cities, Users)
 
-        val saintPetersburgId = insert (Cities.values("St. Petersburg")) get Cities.id
-        val munichId = insert (Cities.values("Munich")) get Cities.id
-        insert (Cities.values("Prague"))
+        val saintPetersburgId = Cities.insert { values("St. Petersburg")} get Cities.id
+        val munichId = Cities.insert {values("Munich")} get Cities.id
+        Cities.insert { values("Prague") }
 
-        insert (Users.values("andrey", "Andrey", saintPetersburgId))
+        Users.insert { values("andrey", "Andrey", saintPetersburgId) }
+        Users.insert { values("sergey", "Sergey", munichId) }
+        Users.insert { values("eugene", "Eugene", munichId) }
+        Users.insert { values("alex", "Alex", null) }
+        Users.insert { values("smth", "Something", null) }
 
-        insert (Users.values("sergey", "Sergey", munichId))
-        insert (Users.values("eugene", "Eugene", munichId))
-        insert (Users.values("alex", "Alex", null))
-        insert (Users.values("smth", "Something", null))
+        Users.filter { id.equals("alex") } update {
+            it[name] = "Alexey"
+        }
 
-        update (Users) {
-            set(name("Alexey"))
-        } where Users.id.equals("alex")
-
-        delete (Users) where Users.name.like("%thing")
+        Users.delete { name.like("%thing") }
 
         println("All cities:")
 
-        select (Cities.all) forEach {
+        Cities.all().forEach {
             val (id, name) = it
             println("$id: $name")
         }
 
-        println("Manual join:")
+        println("Select city by name: ")
 
-        select (Users.name, Cities.name) where (Users.id.equals("andrey") or Users.name.equals("Sergey")) and
-                Users.id.equals("sergey") and Users.cityId.equals(Cities.id) forEach {
-            val (userName, cityName) = it
-            println("$userName lives in $cityName")
-        }
-
-        println("Join with foreign key:")
-
-        select (Users.name, Users.cityId, Cities.name) from Users join Cities where
-                Cities.name.equals("St. Petersburg") or Users.cityId.isNull() forEach {
-            val (userName, cityId, cityName) = it
-            if (cityId != null) {
-                println("$userName lives in $cityName")
-            } else {
-                println("$userName lives nowhere")
-            }
-        }
-
-        println("Functions and group by:")
-
-        select (Cities.name, count(Users.id)) from Cities join Users groupBy Cities.name forEach {
-            val (cityName, userCount) = it
-            if (userCount > 0) {
-                println("$userCount user(s) live(s) in $cityName")
-            } else {
-                println("Nobody lives in $cityName")
-            }
+        Cities.all.filter { name.equals("St. Petersburg") } forEach {
+            val (id, name) = it
+            println("$id: $name")
         }
 
         drop (Users, Cities)
@@ -107,17 +81,8 @@ Outputs:
     1: St. Petersburg
     2: Munich
     3: Prague
-    Manual join:
-    SQL: SELECT Users.name, Cities.name FROM Cities, Users WHERE (Users.id = 'andrey' or Users.name = 'Sergey') and Users.id = 'sergey' and Users.city_id = Cities.id
-    Sergey lives in Munich
-    Join with foreign key:
-    SQL: SELECT Users.name, Users.city_id, Cities.name FROM Users LEFT JOIN Cities ON Users.city_id = Cities.id WHERE Cities.name = 'St. Petersburg' or Users.city_id IS NULL
-    Andrey lives in St. Petersburg
-    Alexey lives nowhere
-    Functions and group by:
-    SQL: SELECT Cities.name, COUNT(Users.id) FROM Cities LEFT JOIN Users ON Users.city_id = Cities.id GROUP BY Cities.name
-    Nobody lives in Prague
-    1 user(s) live(s) in St. Petersburg
-    2 user(s) live(s) in Munich
+    Select city by name:
+    SQL: SELECT Cities.id, Cities.name FROM Cities WHERE Cities.name = 'St. Petersburg'
+    1: St. Petersburg
     SQL: DROP TABLE Users
     SQL: DROP TABLE Cities
