@@ -44,38 +44,6 @@ open class Session (val connection: Connection, val driver: Driver) {
         return insert(array(column) as Array<Pair<Column<*>, *>>)
     }
 
-    fun insert(columns: Array<Pair<Column<*>, *>>): InsertQuery {
-        val table = columns[0].component1().table
-        var sql = StringBuilder("INSERT INTO ${identity(table)}")
-        var c = 0
-        sql.append(" (")
-        for (column in columns) {
-            sql.append(identity(column.component1()))
-            c++
-            if (c < columns.size) {
-                sql.append(", ")
-            }
-        }
-        sql.append(") ")
-        c = 0
-        sql.append("VALUES (")
-        for (column in columns) {
-            when (column.component1().columnType) {
-                ColumnType.STRING -> sql.append("'" + column.component2() + "'")
-                else -> sql.append(column.component2())
-            }
-            c++
-            if (c < columns.size) {
-                sql.append(", ")
-            }
-        }
-        sql.append(") ")
-        println("SQL: " + sql.toString())
-        val statement = connection.createStatement()!!
-        statement.executeUpdate(sql.toString(), Statement.RETURN_GENERATED_KEYS)
-        return InsertQuery(statement)
-    }
-
     fun create(vararg tables: Table) {
         if (tables.size > 0) {
             for (table in tables) {
@@ -134,6 +102,39 @@ open class Session (val connection: Connection, val driver: Driver) {
             else -> throw UnsupportedOperationException("Unsupported driver: " + driver.getClass().getName())
         }
     }
+
+    fun <T: Table> T.insert(columns: Array<Pair<Column<*>, *>>): InsertQuery<T> {
+        val table = columns[0].component1().table
+        var sql = StringBuilder("INSERT INTO ${identity(table)}")
+        var c = 0
+        sql.append(" (")
+        for (column in columns) {
+            sql.append(identity(column.component1()))
+            c++
+            if (c < columns.size) {
+                sql.append(", ")
+            }
+        }
+        sql.append(") ")
+        c = 0
+        sql.append("VALUES (")
+        for (column in columns) {
+            when (column.component1().columnType) {
+                ColumnType.STRING -> sql.append("'" + column.component2() + "'")
+                else -> sql.append(column.component2())
+            }
+            c++
+            if (c < columns.size) {
+                sql.append(", ")
+            }
+        }
+        sql.append(") ")
+        println("SQL: " + sql.toString())
+        val statement = connection.createStatement()!!
+        statement.executeUpdate(sql.toString(), Statement.RETURN_GENERATED_KEYS)
+        return InsertQuery(this, statement)
+    }
+
 
     fun autoIncrement(column: Column<*>): String {
         return when (driver.getClass().getName()) {

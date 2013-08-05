@@ -27,8 +27,8 @@ fun main(args: Array<String>) {
     db.withSession {
         create (Cities, Users)
 
-        val saintPetersburgId = Cities.insert { values("St. Petersburg")} get Cities.id
-        val munichId = Cities.insert {values("Munich")} get Cities.id
+        val saintPetersburgId = Cities.insert { values("St. Petersburg")} get { id }
+        val munichId = Cities.insert {values("Munich")} get { id }
         Cities.insert { values("Prague") }
 
         Users.insert { values("andrey", "Andrey", saintPetersburgId) }

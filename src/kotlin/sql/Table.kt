@@ -75,7 +75,7 @@ fun <T: Table, C> T.insert(column: T.() -> Pair<Column<C>, C>): InsertQuery {
 }
 */
 
-fun <T: Table> T.insert(columns: T.() -> Array<Pair<Column<*>, *>>): InsertQuery {
+fun <T: Table> T.insert(columns: T.() -> Array<Pair<Column<*>, *>>): InsertQuery<T> {
     return Session.get().insert(columns())
 }
 
