@@ -183,8 +183,8 @@ class Template2<T: Table, A, B>(val table: T, val a: Column<A, T>, val b: Column
 }
 
 class Template2FKTemplate2<T1: Table, A1, B1, C1, T2: Table, A2, B2>(val t1: T1, val a1: Column<A1, T1>, val b1: Column<B1, T1>, val c1: Column<C1, T1>, val t2: T2, val a2: Column<A2, T2>, val b2: Column<B2, T2>) {
-    fun forEach(statement: (row: Quintuple<A1, B1, C1, A2, B2>) -> Unit) {
-        Query<Quintuple<A1, B1, C1, A2, B2>>(Session.get(), array(a1, b1, c1, a2, b2)).from(t1).join(t2).forEach(statement)
+    fun forEach(statement: (row: Quadruple<A1, B1, A2, B2>) -> Unit) {
+        Query<Quadruple<A1, B1, A2, B2>>(Session.get(), array(a1, b1, a2, b2)).from(t1).join(t2).forEach(statement)
     }
 }
 

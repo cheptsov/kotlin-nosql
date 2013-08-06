@@ -126,10 +126,18 @@ open class Query<T>(val session: Session, val fields: Array<Field<*>>) {
             for (table in joinedTables) {
                 if (table.primaryKeys.size == 1) {
                     val primaryKey = table.primaryKeys.get(0)
-                    for (column in selectedColumns) {
+                    /*for (column in selectedColumns) {
                         if (column is FKColumn<*, *> && column.reference == primaryKey) {
                             sql.append(" INNER JOIN ").append(session.identity(column.reference.table)).append(" ON ").
                             append(session.fullIdentity(column)).append(" = ").append(session.fullIdentity(primaryKey));
+                        }
+                    }*/
+                    for (selectedTable in selectedTables) {
+                        for (column in selectedTable.tableColumns) {
+                            if (column is FKColumn<*, *> && column.reference == primaryKey) {
+                                sql.append(" INNER JOIN ").append(session.identity(column.reference.table)).append(" ON ").
+                                append(session.fullIdentity(column)).append(" = ").append(session.fullIdentity(primaryKey));
+                            }
                         }
                     }
                 }
