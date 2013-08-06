@@ -12,6 +12,10 @@ open class Session (val connection: Connection, val driver: Driver) {
     val extraNameCharacters = connection.getMetaData()!!.getExtraNameCharacters()!!
     val identifierPattern = Pattern.compile("^[a-zA-Z_][a-zA-Z0-9_]*$")
 
+    fun query(sql: String): PlainQuery {
+        return PlainQuery(Session.get(), sql)
+    }
+
     fun <A> select(a: Field<A>): Query<A> {
         return Query(this, array(a))
     }
