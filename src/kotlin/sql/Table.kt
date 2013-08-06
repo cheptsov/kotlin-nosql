@@ -33,7 +33,7 @@ open class Table(name: String = "") {
                 if (column is PKColumn<*, *>) {
                     ddl.append("PRIMARY KEY ")
                 }
-                if (column.autoIncrement) {
+                if (column is GeneratedValue<*>) {
                     ddl.append(Session.get().autoIncrement(column)).append(" ")
                 }
                 if (column._nullable) {
@@ -52,16 +52,16 @@ open class Table(name: String = "") {
     }
 }
 
-fun <T: Table> T.integer(name: String, references: PKColumn<Int, *>? = null): Column<Int, T> {
-    return column(name, ColumnType.INTEGER, references = references)
+fun <T: Table> T.integer(name: String): Column<Int, T> {
+    return column(name, ColumnType.INTEGER)
 }
 
-fun <T: Table> T.varchar(name: String, length: Int, references: PKColumn<String, *>? = null): Column<String, T> {
-    return column(name, ColumnType.STRING, length = length, references = references)
+fun <T: Table> T.varchar(name: String, length: Int): Column<String, T> {
+    return column(name, ColumnType.STRING, length = length)
 }
 
-private fun <C, T: Table> T.column(name: String, columnType: ColumnType, length: Int = 0, autoIncrement: Boolean = false, references: Column<C, *>? = null): Column<C, T> {
-    val column = Column<C, T>(this, name, columnType, false, length, autoIncrement, references)
+private fun <C, T: Table> T.column(name: String, columnType: ColumnType, length: Int = 0, autoIncrement: Boolean = false): Column<C, T> {
+    val column = Column<C, T>(this, name, columnType, false, length)
     (tableColumns as ArrayList<Column<*, T>>).add(column)
     return column
 }
@@ -110,16 +110,30 @@ class Template1<T: Table, A>(val table: T, val a: Column<A, T>) {
         return array(Pair(a, av))
     }
 
-    fun <T2: Table, A2> multiply(t2: Template1<T2, A2>): Template11<T, A, T2, A2> {
-        return Template11<T, A, T2, A2>(table, a, t2.table, t2.a)
-    }
+    /*fun <T2: Table, A2> multiply(t2: Template1<T2, A2>): Template1t1<T, A, T2, A2> {
+        return Template1t1<T, A, T2, A2>(table, a, t2.table, t2.a)
+    }*/
 }
 
-class Template11<T1: Table, A1, T2: Table, A2>(val table1: T1, val a1: Column<A1, T1>, val table2: T2, val a2: Column<A2, T2>) {
+class Template1t1<T1: Table, A1, T2: Table, A2>(val table1: T1, val a1: Column<A1, T1>, val table2: T2, val a2: Column<A2, T2>) {
 }
 
-fun <T1: Table, A1, T2: Table, A2> Template11<T1, A1, T2, A2>.filter(op: () -> Op): Query<Pair<A1, A2>> {
+class Template3t1<T1: Table, A1, A2, A3, T2: Table, A4>(val table1: T1, val a1: Column<A1, T1>, val a2: Column<A2, T1>, val a3: Column<A3, T1>, val table2: T2, val a4: Column<A4, T2>) {
+}
+
+fun <T1: Table, A1, T2: Table, A2> Template1t1<T1, A1, T2, A2>.filter(op: () -> Op): Query<Pair<A1, A2>> {
     return Query<Pair<A1, A2>>(Session.get(), array(a1, a2)).where(op())
+}
+
+fun <T1: Table, A1, A2, A3, T2: Table, A4> Template3t1<T1, A1, A2, A3, T2, A4>.filter(op: () -> Op): Query<Quadruple<A1, A2, A3, A4>> {
+    return Query<Quadruple<A1, A2, A3, A4>>(Session.get(), array(a1, a2, a3, a4)).where(op())
+}
+
+class Quadruple<A1, A2, A3, A4>(val a1: A1, val a2: A2, val a3: A3, val a4: A4) {
+    public fun component1(): A1 = a1
+    public fun component2(): A2 = a2
+    public fun component3(): A3 = a3
+    public fun component4(): A4 = a4
 }
 
 fun <T: Table, A, B> T.template(a: Column<A, T>, b: Column<B, T>): Template2<T, A, B> {
@@ -153,6 +167,9 @@ class Template3<T: Table, A, B, C>(val table: T, val a: Column<A, T>, val b: Col
         return results
     }
 
+    fun <T2: Table, D> times(t2: Column<D, T2>): Template3t1<T, A, B, C, T2, D> {
+        return Template3t1(table, a, b, c, t2.table, t2)
+    }
 }
 
 /*

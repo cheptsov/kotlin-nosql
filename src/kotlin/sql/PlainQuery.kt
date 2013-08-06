@@ -28,7 +28,8 @@ open class PlainQuery(val session: Session, val sql: String) {
     }
 
     fun forEach(statement: (row: Row) -> Unit) {
-        rs = session.connection.createStatement()?.executeQuery(sql.toString())!!
+        println("SQL: $sql")
+        rs = session.connection.createStatement()?.executeQuery(sql)!!
         while (rs!!.next()) {
             statement(row)
         }

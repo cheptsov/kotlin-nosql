@@ -127,8 +127,8 @@ open class Query<T>(val session: Session, val fields: Array<Field<*>>) {
                 if (table.primaryKeys.size == 1) {
                     val primaryKey = table.primaryKeys.get(0)
                     for (column in selectedColumns) {
-                        if (column.references == primaryKey) {
-                            sql.append(" LEFT JOIN ").append(session.identity(column.references.table)).append(" ON ").
+                        if (column is FKColumn<*, *> && column.reference == primaryKey) {
+                            sql.append(" LEFT JOIN ").append(session.identity(column.reference.table)).append(" ON ").
                             append(session.fullIdentity(column)).append(" = ").append(session.fullIdentity(primaryKey));
                         }
                     }
@@ -137,7 +137,7 @@ open class Query<T>(val session: Session, val fields: Array<Field<*>>) {
                     if (selectedTable.primaryKeys.size == 1) {
                         val primaryKey = selectedTable.primaryKeys.get(0)
                         for (column in table.tableColumns) {
-                            if (column.references == primaryKey) {
+                            if (column is FKColumn<*, *> && column.reference == primaryKey) {
                                 sql.append(" LEFT JOIN ").append(session.identity(table)).append(" ON ").
                                 append(session.fullIdentity(column)).append(" = ").append(session.fullIdentity(primaryKey));
                             }
@@ -181,6 +181,8 @@ open class Query<T>(val session: Session, val fields: Array<Field<*>>) {
                 statement(Pair(rs.getObject(1), rs.getObject(2)) as T)
             } else if (fields.size == 3) {
                 statement(Triple(rs.getObject(1), rs.getObject(2), rs.getObject(3)) as T)
+            } else if (fields.size == 4) {
+                statement(Quadruple(rs.getObject(1), rs.getObject(2), rs.getObject(3), rs.getObject(4)) as T)
             }
         }
     }

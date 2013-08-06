@@ -5,16 +5,16 @@ _Exposed_ is a prototype for a lightweight SQL library written over JDBC driver 
 
 ```java
 object Users : Table() {
-    val id = varchar("id", length = 10).primaryKey // PKColumn<String, Users>
+    val id = varchar("id", length = 10).primaryKey() // PKColumn<String, Users>
     val name = varchar("name", length = 50) // Column<String, Users>
-    val cityId = integer("city_id", references = Cities.id).nullable // Column<Int?, Users>
+    val cityId = integer("city_id").foreignKey(Cities.id).nullable() // FKColumn<Int?, Users>
 
     val all = template(id, name, cityId) // Template3<Users, String, String, Int?> Select template
     val values = template(id, name, cityId) // Template3<Users, String, String, Int?> Insert template
 }
 
 object Cities : Table() {
-    val id = integer("id").primaryKey.auto // GeneratedPKColumn<Int, Cities>
+    val id = integer("id").primaryKey().auto() // GeneratedPKColumn<Int, Cities>
     val name = varchar("name", 50) // Column<String, Cities>
 
     val all = template(id, name) // Template2<Cities, Int, String> Select template

@@ -4,16 +4,16 @@ import kotlin.sql.*
 import java.util.ArrayList
 
 object Users : Table() {
-    val id = varchar("id", length = 10).primaryKey // PKColumn<String, Users>
+    val id = varchar("id", length = 10).primaryKey() // PKColumn<String, Users>
     val name = varchar("name", length = 50) // Column<String, Users>
-    val cityId = integer("city_id", references = Cities.id).nullable // Column<Int?, Users>
+    val cityId = integer("city_id").foreignKey(Cities.id).nullable() // FKColumn<Int?, Users>
 
     val all = template(id, name, cityId) // Template3<Users, String, String, Int?> Select template
     val values = template(id, name, cityId) // Template3<Users, String, String, Int?> Insert template
 }
 
 object Cities : Table() {
-    val id = integer("id").primaryKey.auto // GeneratedPKColumn<Int, Cities>
+    val id = integer("id").primaryKey().auto() // GeneratedPKColumn<Int, Cities>
     val name = varchar("name", 50) // Column<String, Cities>
 
     val all = template(id, name) // Template2<Cities, Int, String> Select template
@@ -50,19 +50,32 @@ fun main(args: Array<String>) {
             println("$id: $name")
         }
 
-        println("Select city by name: ")
+        println("Select city by name:")
 
         Cities.all.filter { name.equals("St. Petersburg") } forEach {
             val (id, name) = it
             println("$id: $name")
         }
 
-        println("Select from two tables: ")
+        println("Select from two tables:")
 
         (Cities.name * Users.name).filter { Users.cityId.equals(Cities.id) } forEach {
             val (cityName, userName) = it
             println("$userName lives in $cityName")
         }
+
+        // FKColumn * Template3 -> FKTemplate3
+        // Column + Column -> Template2
+        // Template2 + Column -> Template3
+
+        /*(Users.id + Users.name + Users.cityId * Cities.all) forEach {
+            val (userId, userName, userCityId, cityId, cityName) = it
+            if (userCityId != null) {
+                println("$userName lives in $cityName")
+            } else {
+                println("$userName lives nowhere")
+            }
+        }*/
 
         drop (Users, Cities)
     }
