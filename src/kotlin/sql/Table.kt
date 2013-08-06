@@ -50,6 +50,24 @@ open class Table(name: String = "") {
         }
         return ddl.toString()
     }
+
+    fun create() {
+        println("SQL: " + ddl.toString())
+        Session.get().connection.createStatement()?.executeUpdate(ddl.toString())
+        if (foreignKeys.size > 0) {
+            for (foreignKey in foreignKeys) {
+                val fKDdl = Session.get().foreignKey(foreignKey);
+                println("SQL: " + fKDdl)
+                Session.get().connection.createStatement()?.executeUpdate(fKDdl)
+            }
+        }
+    }
+
+    fun drop() {
+        val ddl = StringBuilder("DROP TABLE ${Session.get().identity(this)}")
+        println("SQL: " + ddl.toString())
+        Session.get().connection.createStatement()?.executeUpdate(ddl.toString())
+    }
 }
 
 fun <T: Table> T.integer(name: String): Column<Int, T> {

@@ -44,33 +44,6 @@ open class Session (val connection: Connection, val driver: Driver) {
         return DeleteQuery(this, table)
     }
 
-    fun create(vararg tables: Table) {
-        if (tables.size > 0) {
-            for (table in tables) {
-                val ddl = table.ddl
-                println("SQL: " + ddl.toString())
-                connection.createStatement()?.executeUpdate(ddl.toString())
-                if (table.foreignKeys.size > 0) {
-                    for (foreignKey in table.foreignKeys) {
-                        val fKDdl = foreignKey(foreignKey);
-                        println("SQL: " + fKDdl)
-                        connection.createStatement()?.executeUpdate(fKDdl)
-                    }
-                }
-            }
-        }
-    }
-
-    fun drop(vararg tables: Table) {
-        if (tables.size > 0) {
-            for (table in tables) {
-                val ddl = StringBuilder("DROP TABLE ${identity(table)}")
-                println("SQL: " + ddl.toString())
-                connection.createStatement()?.executeUpdate(ddl.toString())
-            }
-        }
-    }
-
     fun identity(table: Table): String {
         return if (identifierPattern.matcher(table.tableName).matches())
             table.tableName else "$identityQuoteString${table.tableName}$identityQuoteString"

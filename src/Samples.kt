@@ -25,7 +25,7 @@ fun main(args: Array<String>) {
     // var db = Database("jdbc:mysql://localhost/test", driver = "com.mysql.jdbc.Driver", user = "root")
 
     db.withSession {
-        create (Cities, Users)
+        array(Cities, Users).forEach { it.create() }
 
         val saintPetersburgId = Cities.insert { values("St. Petersburg") } get { id }
         val munichId = Cities.insert { values("Munich") } get { id }
@@ -77,6 +77,6 @@ fun main(args: Array<String>) {
             }
         }*/
 
-        drop (Users, Cities)
+        array(Users, Cities).forEach { it.drop() }
     }
 }
