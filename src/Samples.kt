@@ -71,6 +71,13 @@ fun main(args: Array<String>) {
             println("$userName lives in $cityName")
         }
 
+        println("Inner join 2: ")
+
+        (Users.name + Users.cityId * Cities.name) forEach {
+            val (userName, cityName) = it
+            println("$userName lives in $cityName")
+        }
+
         array(Users, Cities).forEach { it.drop() }
     }
 }

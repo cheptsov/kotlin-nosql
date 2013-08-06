@@ -65,10 +65,17 @@ fun main(args: Array<String>) {
             println("$userName lives in $cityName")
         }
 
-        println("Inner join: ")
+         println("Inner join: ")
 
         (Users.id + Users.name + Users.cityId * Cities.all).forEach {
             val (userId, userName, cityId, cityName) = it
+            println("$userName lives in $cityName")
+        }
+
+        println("Inner join 2: ")
+
+        (Users.name + Users.cityId * Cities.name) forEach {
+            val (userName, cityName) = it
             println("$userName lives in $cityName")
         }
 
@@ -100,11 +107,17 @@ Outputs:
     SQL: SELECT Cities.id, Cities.name FROM Cities WHERE Cities.name = 'St. Petersburg'
     1: St. Petersburg
     Select from two tables:
-    SQL: SELECT Cities.name, Users.name FROM Users, Cities WHERE Users.city_id = Cities.id
+    SQL: SELECT Cities.name, Users.name FROM Cities, Users WHERE Users.city_id = Cities.id
     Andrey lives in St. Petersburg
     Sergey lives in Munich
     Eugene lives in Munich
-    SQL: SELECT Users.id, Users.name, Users.city_id, Cities.id, Cities.name FROM Users INNER JOIN Cities ON Users.city_id = Cities.id
+    Inner join:
+    SQL: SELECT Users.id, Users.name, Cities.id, Cities.name FROM Users INNER JOIN Cities ON Users.city_id = Cities.id
+    Andrey lives in St. Petersburg
+    Sergey lives in Munich
+    Eugene lives in Munich
+    Inner join 2:
+    SQL: SELECT Users.name, Cities.name FROM Users INNER JOIN Cities ON Users.city_id = Cities.id
     Andrey lives in St. Petersburg
     Sergey lives in Munich
     Eugene lives in Munich

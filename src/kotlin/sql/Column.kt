@@ -23,10 +23,6 @@ open class Column<C, T: Table>(val table: T, val name: String, val columnType: C
         return "${table.tableName}.$name"
     }
 
-    fun <T2: Table, C2> times(c2: Column<C2, T2>): Template1t1<T, C, T2, C2> {
-        return Template1t1<T, C, T2, C2>(table, this, c2.table, c2)
-    }
-
     fun foreignKey(reference: Column<C, *>) : FKColumn<C, T> {
         (table.tableColumns as ArrayList<Column<*, T>>).remove(this)
         val column = FKColumn<C, T>(table, name, columnType, length, reference)
@@ -45,7 +41,22 @@ open class Column<C, T: Table>(val table: T, val name: String, val columnType: C
     fun <C2> plus(c: Column<C2, T>): Template2<T, C, C2> {
         return Template2(table, this, c) as Template2<T, C, C2>
     }
+
+    fun <A1, A2, T2: Table> plus(template: FKTemplate<T, A1, T2, A2>): TemplateFKTemplate<T, C, A1, T2, A2> {
+        return TemplateFKTemplate<T, C, A1, T2, A2>(table, this, template.c1, template.t2, template.c2) as TemplateFKTemplate<T, C, A1, T2, A2>
+    }
 }
+
+class TemplateFKTemplate<T1: Table, A1, B1, T2: Table, A2>(val t1: T1, val a1: Column<A1, T1>, val b1: Column<B1, T1>, val t2: T2, val a2: Column<A2, T2>) {
+    fun forEach(statement: (row: Pair<A1, A2>) -> Unit) {
+        Query<Pair<A1, A2>>(Session.get(), array(a1, a2)).from(t1).join(t2).forEach(statement)
+    }
+}
+
+fun <T: Table, C, T2: Table, C2> Column<C, T>.times(c2: Column<C2, T2>): Template1t1<T, C, T2, C2> {
+    return Template1t1<T, C, T2, C2>(table, this, c2.table, c2)
+}
+
 
 fun <C, T : Table> Column<C, T>.nullable(): Column<C?, T> {
     (table.tableColumns as ArrayList<Column<*, T>>).remove(this)
@@ -90,6 +101,14 @@ open class FKColumn<C, T: Table>(table: T, name: String, columnType: ColumnType,
     fun <T2: Table, A2, B2> times(template: Template2<T2, A2, B2>): FKTemplate2<T, C, T2, A2, B2> {
         return FKTemplate2(table, this, template.table, template.a, template.b) as FKTemplate2<T, C, T2, A2, B2>
     }
+}
+
+fun <T: Table, C, T2: Table, C2> FKColumn<C, T>.times(c: Column<C2, T2>): FKTemplate<T, C, T2, C2> {
+    return FKTemplate<T, C, T2, C2>(table, this, c.table, c) as FKTemplate<T, C, T2, C2>
+}
+
+class FKTemplate<T1: Table, C1, T2: Table, C2>(val t1: T1, val c1: Column<C1, T1>, val t2: T2, val c2: Column<C2, T2>) {
+
 }
 
 class GeneratedPKColumn<C, T: Table>(table: T, name: String, columnType: ColumnType, length: Int) : PKColumn<C, T>(table, name, columnType, length), GeneratedValue<C> {
