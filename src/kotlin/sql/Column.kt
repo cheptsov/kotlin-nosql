@@ -41,6 +41,10 @@ open class Column<C, T: Table>(val table: T, val name: String, val columnType: C
         (table.primaryKeys as ArrayList<PKColumn<*, T>>).add(column)
         return column
     }
+
+    fun <C2> plus(c: Column<C2, T>): Template2<T, C, C2> {
+        return Template2(table, this, c) as Template2<T, C, C2>
+    }
 }
 
 fun <C, T : Table> Column<C, T>.nullable(): Column<C?, T> {
@@ -71,12 +75,21 @@ open class PKColumn<C, T: Table>(table: T, name: String, columnType: ColumnType,
 
 fun <T:Table> PKColumn<Int, T>.auto(): GeneratedPKColumn<Int, T> {
     (table.tableColumns as ArrayList<Column<*, T>>).remove(this)
+    (table.primaryKeys as ArrayList<PKColumn<*, T>>).remove(this)
     val column = GeneratedPKColumn<Int, T>(table, name, columnType, length)
     (table.tableColumns as ArrayList<Column<*, T>>).add(column)
+    (table.primaryKeys as ArrayList<PKColumn<*, T>>).add(column)
     return column
 }
 
 open class FKColumn<C, T: Table>(table: T, name: String, columnType: ColumnType, length: Int, val reference: Column<C, *>?) : Column<C, T>(table, name, columnType, true, length) {
+    fun <T2: Table, A2, B2, C2> times(template: Template3<T2, A2, B2, C2>): FKTemplate3<T, C, T2, A2, B2, C2> {
+        return FKTemplate3(table, this, template.table, template.a, template.b, template.c) as FKTemplate3<T, C, T2, A2, B2, C2>
+    }
+
+    fun <T2: Table, A2, B2> times(template: Template2<T2, A2, B2>): FKTemplate2<T, C, T2, A2, B2> {
+        return FKTemplate2(table, this, template.table, template.a, template.b) as FKTemplate2<T, C, T2, A2, B2>
+    }
 }
 
 class GeneratedPKColumn<C, T: Table>(table: T, name: String, columnType: ColumnType, length: Int) : PKColumn<C, T>(table, name, columnType, length), GeneratedValue<C> {

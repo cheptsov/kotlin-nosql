@@ -51,18 +51,27 @@ fun main(args: Array<String>) {
             println("$id: $name")
         }
 
-        println("Select city by name: ")
+        println("Select city by name:")
 
         Cities.all.filter { name.equals("St. Petersburg") } forEach {
             val (id, name) = it
             println("$id: $name")
         }
 
-        println("Select from two tables: ")
+        println("Select from two tables:")
 
         (Cities.name * Users.name).filter { Users.cityId.equals(Cities.id) } forEach {
             val (cityName, userName) = it
             println("$userName lives in $cityName")
+        }
+
+        (Users.id + Users.name + Users.cityId * Cities.all).forEach {
+            val (userId, userName, userCityId, cityId, cityName) = it
+            if (userCityId != null) {
+                println("$userName lives in $cityName")
+            } else {
+                println("$userName lives nowhere")
+            }
         }
 
         array(Users, Cities).forEach { it.drop() }
@@ -94,6 +103,10 @@ Outputs:
     1: St. Petersburg
     Select from two tables:
     SQL: SELECT Cities.name, Users.name FROM Users, Cities WHERE Users.city_id = Cities.id
+    Andrey lives in St. Petersburg
+    Sergey lives in Munich
+    Eugene lives in Munich
+    SQL: SELECT Users.id, Users.name, Users.city_id, Cities.id, Cities.name FROM Users INNER JOIN Cities ON Users.city_id = Cities.id
     Andrey lives in St. Petersburg
     Sergey lives in Munich
     Eugene lives in Munich

@@ -64,18 +64,14 @@ fun main(args: Array<String>) {
             println("$userName lives in $cityName")
         }
 
-        // FKColumn * Template3 -> FKTemplate3
-        // Column + Column -> Template2
-        // Template2 + Column -> Template3
-
-        /*(Users.id + Users.name + Users.cityId * Cities.all) forEach {
+        (Users.id + Users.name + Users.cityId * Cities.all).forEach {
             val (userId, userName, userCityId, cityId, cityName) = it
             if (userCityId != null) {
                 println("$userName lives in $cityName")
             } else {
                 println("$userName lives nowhere")
             }
-        }*/
+        }
 
         array(Users, Cities).forEach { it.drop() }
     }

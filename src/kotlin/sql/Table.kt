@@ -154,6 +154,14 @@ class Quadruple<A1, A2, A3, A4>(val a1: A1, val a2: A2, val a3: A3, val a4: A4) 
     public fun component4(): A4 = a4
 }
 
+class Quintuple<A1, A2, A3, A4, A5>(val a1: A1, val a2: A2, val a3: A3, val a4: A4, val a5: A5) {
+    public fun component1(): A1 = a1
+    public fun component2(): A2 = a2
+    public fun component3(): A3 = a3
+    public fun component4(): A4 = a4
+    public fun component5(): A5 = a5
+}
+
 fun <T: Table, A, B> T.template(a: Column<A, T>, b: Column<B, T>): Template2<T, A, B> {
     return Template2(this, a, b)
 }
@@ -167,6 +175,16 @@ class Template2<T: Table, A, B>(val table: T, val a: Column<A, T>, val b: Column
         val results = ArrayList<Pair<A, B>>()
         Query<Pair<A, B>>(Session.get(), array(a, b)).forEach{ results.add(it) }
         return results
+    }
+
+    fun <A1, T2: Table, A2, B2> plus(template: FKTemplate2<T, A1, T2, A2, B2>): Template2FKTemplate2<T, A, B, A1, T2, A2, B2> {
+        return Template2FKTemplate2(table, a, b, template.a1, template.t2, template.a2, template.b2) as Template2FKTemplate2<T, A, B, A1, T2, A2, B2>
+    }
+}
+
+class Template2FKTemplate2<T1: Table, A1, B1, C1, T2: Table, A2, B2>(val t1: T1, val a1: Column<A1, T1>, val b1: Column<B1, T1>, val c1: Column<C1, T1>, val t2: T2, val a2: Column<A2, T2>, val b2: Column<B2, T2>) {
+    fun forEach(statement: (row: Quintuple<A1, B1, C1, A2, B2>) -> Unit) {
+        Query<Quintuple<A1, B1, C1, A2, B2>>(Session.get(), array(a1, b1, c1, a2, b2)).from(t1).join(t2).forEach(statement)
     }
 }
 
@@ -190,20 +208,10 @@ class Template3<T: Table, A, B, C>(val table: T, val a: Column<A, T>, val b: Col
     }
 }
 
-/*
-class A<T> {
+class FKTemplate2<T1: Table, A1, T2: Table, A2, B2>(val t1: T1, val a1: Column<A1, T1>, val t2: T2, val a2: Column<A2, T2>, val b2: Column<B2, T2>) {
+
 }
 
-fun <T: Table> A<T>.forEach(statement: T.(Map<Any, Any>) -> Unit) {
-}
+class FKTemplate3<T1: Table, A1, T2: Table, A2, B2, C2>(val t1: T1, val a1: Column<A1, T1>, val t2: T2, val a2: Column<A2, T2>, val b2: Column<B2, T2>, val c2: Column<C2, T2>) {
 
-fun <T: Table, B> A<T>.orderBy(statement: T.(Map<Any, Any>) -> B): A<T> {
-    return this
 }
-
-fun <T: Table> T.filter(predicate: T.() -> Op) : A<T> {
-    this.predicate();
-    return A<T>();
-}
-*/
-
