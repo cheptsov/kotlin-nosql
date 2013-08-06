@@ -5,19 +5,20 @@ _Exposed_ is a prototype for a lightweight SQL library written over JDBC driver 
 
 ```java
 object Users : Table() {
-    val id = varchar("id", length = 10).primaryKey // PKColumn<String>
-    val name = varchar("name", length = 50) // Column<String>
-    val cityId = integer("city_id", references = Cities.id).nullable // Column<Int?>
+    val id = varchar("id", length = 10).primaryKey // PKColumn<String, Users>
+    val name = varchar("name", length = 50) // Column<String, Users>
+    val cityId = integer("city_id", references = Cities.id).nullable // Column<Int?, Users>
 
-    val values = template(id, name, cityId) // Column3<String, String, Int?> Insert template
+    val all = template(id, name, cityId) // Template3<Users, String, String, Int?> Select template
+    val values = template(id, name, cityId) // Template3<Users, String, String, Int?> Insert template
 }
 
 object Cities : Table() {
-    val id = integer("id").primaryKey.auto // GeneratedPKColumn<Int>
-    val name = varchar("name", 50) // Column<String>
+    val id = integer("id").primaryKey.auto // GeneratedPKColumn<Int, Cities>
+    val name = varchar("name", 50) // Column<String, Cities>
 
-    val all = template(id, name) // Column2<Int, String> Select template
-    val values = template(name) // Column<String> Insert template
+    val all = template(id, name) // Template2<Cities, Int, String> Select template
+    val values = template(name) // Template<Cities, String> Insert template
 }
 
 fun main(args: Array<String>) {
@@ -57,6 +58,13 @@ fun main(args: Array<String>) {
             println("$id: $name")
         }
 
+        println("Select from two tables: ")
+
+        (Cities.name * Users.name).filter { Users.cityId.equals(Cities.id) } forEach {
+            val (cityName, userName) = it
+            println("$userName lives in $cityName")
+        }
+
         drop (Users, Cities)
     }
 }
@@ -84,5 +92,10 @@ Outputs:
     Select city by name:
     SQL: SELECT Cities.id, Cities.name FROM Cities WHERE Cities.name = 'St. Petersburg'
     1: St. Petersburg
+    Select from two tables:
+    SQL: SELECT Cities.name, Users.name FROM Users, Cities WHERE Users.city_id = Cities.id
+    Andrey lives in St. Petersburg
+    Sergey lives in Munich
+    Eugene lives in Munich
     SQL: DROP TABLE Users
     SQL: DROP TABLE Cities

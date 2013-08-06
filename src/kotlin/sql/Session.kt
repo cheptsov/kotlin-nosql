@@ -16,7 +16,7 @@ open class Session (val connection: Connection, val driver: Driver) {
         return Query(this, array(a))
     }
 
-    fun count(column: Column<*>): Count {
+    fun count(column: Column<*, *>): Count {
         return Count(column)
     }
 
@@ -28,13 +28,13 @@ open class Session (val connection: Connection, val driver: Driver) {
         return Query<Triple<A, B, C>>(this, array(a, b, c))
     }
 
-    fun <A, B> select(a: Column2<A, B>): Query<Pair<A, B>> {
+    /*fun <A, B> select(a: Column2<A, B>): Query<Pair<A, B>> {
         return Query(this, array(a.a, a.b))
     }
 
     fun <A, B, C> select(a: Column3<A, B, C>): Query<Triple<A, B, C>> {
         return Query(this, array(a.a, a.b, a. c))
-    }
+    }*/
 
     fun delete(table: Table): DeleteQuery {
         return DeleteQuery(this, table)
@@ -72,14 +72,14 @@ open class Session (val connection: Connection, val driver: Driver) {
             table.tableName else "$identityQuoteString${table.tableName}$identityQuoteString"
     }
 
-    fun fullIdentity(column: Column<*>): String {
+    fun fullIdentity(column: Column<*, *>): String {
         return (if (identifierPattern.matcher(column.table.tableName).matches())
             column.table.tableName else "$identityQuoteString${column.table.tableName}$identityQuoteString") + "." +
         (if (identifierPattern.matcher(column.name).matches())
             column.name else "$identityQuoteString${column.name}$identityQuoteString")
     }
 
-    fun identity(column: Column<*>): String {
+    fun identity(column: Column<*, *>): String {
         return if (identifierPattern.matcher(column.name).matches())
             column.name else "$identityQuoteString${column.name}$identityQuoteString"
     }
@@ -99,15 +99,15 @@ open class Session (val connection: Connection, val driver: Driver) {
         }
     }
 
-    fun <T: Table> T.insert(columns: T.() -> Array<Pair<Column<*>, *>>): InsertQuery<T> {
-        return insert(columns() as Array<Pair<Column<*>, *>>)
+    fun <T: Table> T.insert(columns: T.() -> Array<Pair<Column<*, T>, *>>): InsertQuery<T> {
+        return insert(columns() as Array<Pair<Column<*, T>, *>>)
     }
 
-    fun <T: Table> T.insert(column: Pair<Column<T>, T>): InsertQuery<T> {
-        return insert(array(column) as Array<Pair<Column<*>, *>>)
-    }
+    /*fun <T: Table> T.insert(column: Pair<Column<*, T>, *>): InsertQuery<T> { // TODO
+        return insert(array(column) as Array<Pair<Column<*, *>, *>>)
+    }*/
 
-    fun <T: Table> T.insert(columns: Array<Pair<Column<*>, *>>): InsertQuery<T> {
+    fun <T: Table> T.insert(columns: Array<Pair<Column<*, T>, *>>): InsertQuery<T> {
         val table = columns[0].component1().table
         var sql = StringBuilder("INSERT INTO ${identity(table)}")
         var c = 0
@@ -140,7 +140,7 @@ open class Session (val connection: Connection, val driver: Driver) {
     }
 
 
-    fun autoIncrement(column: Column<*>): String {
+    fun autoIncrement(column: Column<*, *>): String {
         return when (driver.getClass().getName()) {
             "com.mysql.jdbc.Driver", /*"oracle.jdbc.driver.OracleDriver",*/
             "com.microsoft.sqlserver.jdbc.SQLServerDriver", /*"org.postgresql.Driver",*/

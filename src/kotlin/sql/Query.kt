@@ -8,10 +8,10 @@ open class Query<T>(val session: Session, val fields: Array<Field<*>>) {
     var op: Op? = null;
     var selectedTables = ArrayList<Table>();
     var joinedTables = ArrayList<Table>();
-    var selectedColumns = HashSet<Column<*>>();
+    var selectedColumns = HashSet<Column<*, *>>();
     //var leftJoins = HashSet<ForeignKey>();
     //var inverseJoins = HashSet<ForeignKey>();
-    var groupedByColumns = ArrayList<Column<*>>();
+    var groupedByColumns = ArrayList<Column<*, *>>();
 
     /*fun join (vararg foreignKeys: ForeignKey): Query<T> {
         for (foreignKey in foreignKeys) {
@@ -62,7 +62,7 @@ open class Query<T>(val session: Session, val fields: Array<Field<*>>) {
         return this
     }
 
-    fun groupBy(vararg columns: Column<*>): Query<T> {
+    fun groupBy(vararg columns: Column<*, *>): Query<T> {
         for (column in columns) {
             groupedByColumns.add(column)
         }
@@ -83,7 +83,7 @@ open class Query<T>(val session: Session, val fields: Array<Field<*>>) {
         if (fields.size > 0) {
             var c = 0;
             for (field in fields) {
-                if (field is Column<*>) {
+                if (field is Column<*, *>) {
                     selectedColumns.add(field)
                     if (!joinedTables.contains(field.table)) {
                         tables.add(field.table)

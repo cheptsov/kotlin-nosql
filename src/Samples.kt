@@ -4,19 +4,20 @@ import kotlin.sql.*
 import java.util.ArrayList
 
 object Users : Table() {
-    val id = varchar("id", length = 10).primaryKey // PKColumn<String>
-    val name = varchar("name", length = 50) // Column<String>
-    val cityId = integer("city_id", references = Cities.id).nullable // Column<Int?>
+    val id = varchar("id", length = 10).primaryKey // PKColumn<String, Users>
+    val name = varchar("name", length = 50) // Column<String, Users>
+    val cityId = integer("city_id", references = Cities.id).nullable // Column<Int?, Users>
 
-    val values = template(id, name, cityId) // Column3<String, String, Int?> Insert template
+    val all = template(id, name, cityId) // Template3<Users, String, String, Int?> Select template
+    val values = template(id, name, cityId) // Template3<Users, String, String, Int?> Insert template
 }
 
 object Cities : Table() {
-    val id = integer("id").primaryKey.auto // GeneratedPKColumn<Int>
-    val name = varchar("name", 50) // Column<String>
+    val id = integer("id").primaryKey.auto // GeneratedPKColumn<Int, Cities>
+    val name = varchar("name", 50) // Column<String, Cities>
 
-    val all = template(id, name) // Column2<Int, String> Select template
-    val values = template(name) // Column<String> Insert template
+    val all = template(id, name) // Template2<Cities, Int, String> Select template
+    val values = template(name) // Template<Cities, String> Insert template
 }
 
 fun main(args: Array<String>) {
@@ -56,38 +57,12 @@ fun main(args: Array<String>) {
             println("$id: $name")
         }
 
-        /*
-        println("Manual join:")
+        println("Select from two tables: ")
 
-        select (Users.name, Cities.name) where (Users.id.equals("andrey") or Users.name.equals("Sergey")) and
-                Users.id.equals("sergey") and Users.cityId.equals(Cities.id) forEach {
-            val (userName, cityName) = it
+        (Cities.name * Users.name).filter { Users.cityId.equals(Cities.id) } forEach {
+            val (cityName, userName) = it
             println("$userName lives in $cityName")
         }
-
-        println("Join with foreign key:")
-
-        select (Users.name, Users.cityId, Cities.name) from Users join Cities where
-                Cities.name.equals("St. Petersburg") or Users.cityId.isNull() forEach {
-            val (userName, cityId, cityName) = it
-            if (cityId != null) {
-                println("$userName lives in $cityName")
-            } else {
-                println("$userName lives nowhere")
-            }
-        }
-
-        println("Functions and group by:")
-
-        select (Cities.name, count(Users.id)) from Cities join Users groupBy Cities.name forEach {
-            val (cityName, userCount) = it
-            if (userCount > 0) {
-                println("$userCount user(s) live(s) in $cityName")
-            } else {
-                println("Nobody lives in $cityName")
-            }
-        }
-        */
 
         drop (Users, Cities)
     }

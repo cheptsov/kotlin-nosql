@@ -2,12 +2,12 @@ package kotlin.sql
 
 import java.util.ArrayList
 
-open class Column<T>(val table: Table, val name: String, val columnType: ColumnType, val _nullable: Boolean, val length: Int, val autoIncrement: Boolean, val references: Column<*>?) : Field<T>() {
+open class Column<C, T: Table>(val table: T, val name: String, val columnType: ColumnType, val _nullable: Boolean, val length: Int, val autoIncrement: Boolean, val references: Column<*, *>?) : Field<C>() {
     fun equals(other: Expression): Op {
         return EqualsOp(this, other)
     }
 
-    fun equals(other: T): Op {
+    fun equals(other: C): Op {
         return EqualsOp(this, LiteralOp(other))
     }
 
@@ -19,82 +19,51 @@ open class Column<T>(val table: Table, val name: String, val columnType: ColumnT
         return Session.get().fullIdentity(this);
     }
 
-    fun invoke(value: T): Array<Pair<Column<T>, T>> {
-        return array(Pair<Column<T>, T>(this, value))
+    fun toString(): String {
+        return "${table.tableName}.$name"
     }
 
-    fun <B> plus(b: Column<B>): Column2<T, B> {
-        return Column2<T, B>(this, b)
+    fun <T2: Table, C2> times(c2: Column<C2, T2>): Template11<T, C, T2, C2> {
+        return Template11<T, C, T2, C2>(table, this, c2.table, c2)
     }
 
-    val primaryKey: PKColumn<T>
+    val primaryKey: PKColumn<C, T>
         get() {
-            (table.tableColumns as ArrayList<Column<*>>).remove(this)
-            val column = PKColumn<T>(table, name, columnType, length, autoIncrement, references)
-            (table.tableColumns as ArrayList<Column<*>>).add(column)
-            (table.primaryKeys as ArrayList<PKColumn<*>>).add(column)
+            (table.tableColumns as ArrayList<Column<*, T>>).remove(this)
+            val column = PKColumn<C, T>(table, name, columnType, length, autoIncrement, references)
+            (table.tableColumns as ArrayList<Column<*, T>>).add(column)
+            (table.primaryKeys as ArrayList<PKColumn<*, T>>).add(column)
             return column
         }
 
-    val nullable: Column<T?>
+    val nullable: Column<C?, T>
         get() {
-            (table.tableColumns as ArrayList<Column<*>>).remove(this)
-            val column = (Column<T?>(table, name, columnType, true, length, autoIncrement, references)) as Column<T?>
-            (table.tableColumns as ArrayList<Column<*>>).add(column)
+            (table.tableColumns as ArrayList<Column<*, T>>).remove(this)
+            val column = (Column<C?, T>(table, name, columnType, true, length, autoIncrement, references)) as Column<C?, T>
+            (table.tableColumns as ArrayList<Column<*, T>>).add(column)
             return column
         }
 }
 
-fun <T:Any?> Column<T>.isNull(): Op {
+fun Column<*, *>.isNull(): Op {
     return IsNullOp(this)
 }
 
-fun <T:Any?> Column<T>.equals(other: Expression): Op {
+fun Column<*, *>.equals(other: Expression): Op {
     return EqualsOp(this, other)
 }
-open class PKColumn<T>(table: Table, name: String, columnType: ColumnType, length: Int, autoIncrement: Boolean, references: Column<*>?) : Column<T>(table, name, columnType, false, length, autoIncrement, references) {
-    val auto: GeneratedPKColumn<T>
+
+open class PKColumn<C, T: Table>(table: T, name: String, columnType: ColumnType, length: Int, autoIncrement: Boolean, references: Column<*, *>?) : Column<C, T>(table, name, columnType, false, length, autoIncrement, references) {
+    val auto: GeneratedPKColumn<C, T>
         get() {
-            (table.tableColumns as ArrayList<Column<*>>).remove(this)
-            val column = GeneratedPKColumn<T>(table, name, columnType, length, autoIncrement = true, references = references)
-            (table.tableColumns as ArrayList<Column<*>>).add(column)
+            (table.tableColumns as ArrayList<Column<*, T>>).remove(this)
+            val column = GeneratedPKColumn<C, T>(table, name, columnType, length, autoIncrement = true, references = references)
+            (table.tableColumns as ArrayList<Column<*, T>>).add(column)
             return column
         }
 }
 
 
 
-class GeneratedPKColumn<T>(table: Table, name: String, columnType: ColumnType, length: Int, autoIncrement: Boolean, references: Column<*>?) : PKColumn<T>(table, name, columnType, length, autoIncrement, references), GeneratedValue<T> {
+class GeneratedPKColumn<C, T: Table>(table: T, name: String, columnType: ColumnType, length: Int, autoIncrement: Boolean, references: Column<*, *>?) : PKColumn<C, T>(table, name, columnType, length, autoIncrement, references), GeneratedValue<C> {
 }
-
-/*
-class GeneratedColumn<T>(table: Table, name: String, columnType: ColumnType, length: Int, autoIncrement: Boolean, references: Column<*>?) : Column<T>(table, name, columnType, false, length, autoIncrement, references), GeneratedValue {
-}
-*/
-
-class Column2<A, B>(val a: Column<A>, val b: Column<B>) {
-    fun <C> plus(c: Column<C>): Column3<A, B, C> {
-        return Column3<A, B, C>(a, b, c)
-    }
-
-    fun invoke(av: A, bv: B): Array<Pair<Column<*>, *>> {
-        return array(Pair(a, av), Pair(b, bv))
-    }
-}
-
-class Column3<A, B, C>(val a: Column<A>, val b: Column<B>, val c: Column<C>) {
-    fun <D> plus(d: Column<D>): Column4<A, B, C, D> {
-        return Column4<A, B, C, D>(a, b, c, d)
-    }
-
-    fun invoke(av: A, bv: B, cv: C): Array<Pair<Column<*>, *>> {
-        return array(Pair(a, av), Pair(b, bv), Pair(c, cv))
-    }
-}
-
-class Column4<A, B, C, D>(val a: Column<A>, val b: Column<B>, val c: Column<C>, val d: Column<D>) {
-    fun invoke(av: A, bv: B, cv: C, dv: D): Array<Pair<Column<*>, *>> {
-        return array(Pair(a, av), Pair(b, bv), Pair(c, cv), Pair(d, dv))
-    }
-}
-

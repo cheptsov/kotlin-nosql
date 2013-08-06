@@ -3,10 +3,10 @@ package kotlin.sql
 import java.sql.Connection
 import java.util.LinkedHashMap
 
-class UpdateQuery(val table: Table, val where: Op) {
-    val values = LinkedHashMap<Column<*>, Any>()
+class UpdateQuery<T: Table>(val table: T, val where: Op) {
+    val values = LinkedHashMap<Column<*, T>, Any>()
 
-    fun <T> set(column: Column<T>, value: T) {
+    fun <C> set(column: Column<C, T>, value: C) {
         if (values containsKey column) {
             throw RuntimeException("$column is already initialized")
         }
