@@ -59,6 +59,10 @@ open class Table(name: String = "") {
                     val fKDdl = Session.get().foreignKey(column);
                     println("SQL: " + fKDdl)
                     Session.get().connection.createStatement()?.executeUpdate(fKDdl)
+                } else if (column is FKOptionColumn<*, *>) {
+                    val fKDdl = Session.get().foreignKey(column);
+                    println("SQL: " + fKDdl)
+                    Session.get().connection.createStatement()?.executeUpdate(fKDdl)
                 }
             }
         }
@@ -140,6 +144,9 @@ class Template1t1<T1: Table, A1, T2: Table, A2>(val table1: T1, val a1: Column<A
 class Template3t1<T1: Table, A1, A2, A3, T2: Table, A4>(val table1: T1, val a1: Column<A1, T1>, val a2: Column<A2, T1>, val a3: Column<A3, T1>, val table2: T2, val a4: Column<A4, T2>) {
 }
 
+class Template4t1<T1: Table, A1, A2, A3, A4, T2: Table, A5>(val table1: T1, val a1: Column<A1, T1>, val a2: Column<A2, T1>, val a3: Column<A3, T1>, val a4: Column<A4, T1>, val table2: T2, val a5: Column<A5, T2>) {
+}
+
 fun <T1: Table, A1, T2: Table, A2> Template1t1<T1, A1, T2, A2>.filter(op: () -> Op): Query<Pair<A1, A2>> {
     return Query<Pair<A1, A2>>(Session.get(), array(a1, a2)).where(op())
 }
@@ -181,16 +188,30 @@ class Template2<T: Table, A, B>(val table: T, val a: Column<A, T>, val b: Column
     fun <A1, T2: Table, A2, B2> plus(template: FKTemplate2<T, A1, T2, A2, B2>): Template2FKTemplate2<T, A, B, A1, T2, A2, B2> {
         return Template2FKTemplate2(table, a, b, template.a1, template.t2, template.a2, template.b2) as Template2FKTemplate2<T, A, B, A1, T2, A2, B2>
     }
+
+    fun <A1, T2: Table, A2, B2> plus(template: FKOptionTemplate2<T, A1, T2, A2, B2>): Template2FKOptionTemplate2<T, A, B, A1, T2, A2, B2> {
+        return Template2FKOptionTemplate2(table, a, b, template.a1, template.t2, template.a2, template.b2) as Template2FKOptionTemplate2<T, A, B, A1, T2, A2, B2>
+    }
 }
 
-class Template2FKTemplate2<T1: Table, A1, B1, C1, T2: Table, A2, B2>(val t1: T1, val a1: Column<A1, T1>, val b1: Column<B1, T1>, val c1: Column<C1, T1>, val t2: T2, val a2: Column<A2, T2>, val b2: Column<B2, T2>) {
+class Template2FKTemplate2<T1: Table, A1, B1, C1, T2: Table, A2, B2>(val t1: T1, val a1: Column<A1, T1>, val b1: Column<B1, T1>, val c1: FKColumn<C1, T1>, val t2: T2, val a2: Column<A2, T2>, val b2: Column<B2, T2>) {
     fun forEach(statement: (row: Quadruple<A1, B1, A2, B2>) -> Unit) {
-        Query<Quadruple<A1, B1, A2, B2>>(Session.get(), array(a1, b1, a2, b2)).from(t1).join(t2).forEach(statement)
+        Query<Quadruple<A1, B1, A2, B2>>(Session.get(), array(a1, b1, a2, b2)).from(t1).join(c1).forEach(statement)
+    }
+}
+
+class Template2FKOptionTemplate2<T1: Table, A1, B1, C1, T2: Table, A2, B2>(val t1: T1, val a1: Column<A1, T1>, val b1: Column<B1, T1>, val c1: FKOptionColumn<C1, T1>, val t2: T2, val a2: Column<A2, T2>, val b2: Column<B2, T2>) {
+    fun forEach(statement: (row: Quadruple<A1, B1, A2?, B2?>) -> Unit) {
+        Query<Quadruple<A1, B1, A2?, B2?>>(Session.get(), array(a1, b1, a2, b2)).from(t1).join(c1).forEach(statement)
     }
 }
 
 fun <T: Table, A, B, C> T.template(a: Column<A, T>, b: Column<B, T>, c: Column<C, T>): Template3<T, A, B, C> {
     return Template3(this, a, b, c)
+}
+
+fun <T: Table, A, B, C, D> T.template(a: Column<A, T>, b: Column<B, T>, c: Column<C, T>, d: Column<D, T>): Template4<T, A, B, C, D> {
+    return Template4(this, a, b, c, d)
 }
 
 class Template3<T: Table, A, B, C>(val table: T, val a: Column<A, T>, val b: Column<B, T>, val c: Column<C, T>) {
@@ -209,8 +230,26 @@ class Template3<T: Table, A, B, C>(val table: T, val a: Column<A, T>, val b: Col
     }
 }
 
-class FKTemplate2<T1: Table, A1, T2: Table, A2, B2>(val t1: T1, val a1: Column<A1, T1>, val t2: T2, val a2: Column<A2, T2>, val b2: Column<B2, T2>) {
+class Template4<T: Table, A, B, C, D>(val table: T, val a: Column<A, T>, val b: Column<B, T>, val c: Column<C, T>, val d: Column<D, T>) {
+    fun invoke(av: A, bv: B, cv: C, dv: D): Array<Pair<Column<*, T>, *>> {
+        return array(Pair(a, av), Pair(b, bv), Pair(c, cv), Pair(d, dv))
+    }
 
+    fun invoke(): List<Quad<A, B, C, D>> {
+        val results = ArrayList<Quad<A, B, C, D>>()
+        Query<Quad<A, B, C, D>>(Session.get(), array(a, b, c, d)).forEach{ results.add(it) }
+        return results
+    }
+
+    fun <T2: Table, E> times(t2: Column<E, T2>): Template4t1<T, A, B, C, D, T2, E> {
+        return Template4t1(table, a, b, c, d, t2.table, t2)
+    }
+}
+
+class FKTemplate2<T1: Table, A1, T2: Table, A2, B2>(val t1: T1, val a1: FKColumn<A1, T1>, val t2: T2, val a2: Column<A2, T2>, val b2: Column<B2, T2>) {
+}
+
+class FKOptionTemplate2<T1: Table, A1, T2: Table, A2, B2>(val t1: T1, val a1: FKOptionColumn<A1, T1>, val t2: T2, val a2: Column<A2, T2>, val b2: Column<B2, T2>) {
 }
 
 class FKTemplate3<T1: Table, A1, T2: Table, A2, B2, C2>(val t1: T1, val a1: Column<A1, T1>, val t2: T2, val a2: Column<A2, T2>, val b2: Column<B2, T2>, val c2: Column<C2, T2>) {

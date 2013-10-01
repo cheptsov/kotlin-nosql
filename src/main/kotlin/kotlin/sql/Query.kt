@@ -5,12 +5,11 @@ import java.util.HashSet
 import java.util.ArrayList
 
 open class Query<T>(val session: Session, val fields: Array<Field<*>>) {
-    var op: Op? = null;
-    var selectedTables = ArrayList<Table>();
-    var joinedTables = ArrayList<Table>();
-    var selectedColumns = HashSet<Column<*, *>>();
-    var leftJoins = HashSet<FKColumn<*, *>>();
-    var groupedByColumns = ArrayList<Column<*, *>>();
+    private var op: Op? = null;
+    private var selectedTables = ArrayList<Table>();
+    private var joins = ArrayList<Column<*, *>>();
+    private var selectedColumns = HashSet<Column<*, *>>();
+    private var groupedByColumns = ArrayList<Column<*, *>>();
 
     fun from (vararg tables: Table) : Query<T> {
         for (table in tables) {
@@ -19,28 +18,9 @@ open class Query<T>(val session: Session, val fields: Array<Field<*>>) {
         return this
     }
 
-    fun join (vararg tables: Table): Query<T> {
-        for (table in tables) {
-            /*for (foreignKey in table.foreignKeys) {
-                for (field in fields) {
-                    if (field is Column<*> && foreignKey.table == field.table) {
-                        inverseJoins.add(foreignKey)
-                    } else if (field is Function<*>) {
-                        for (column in field.columns)
-                            if (foreignKey.table == column.table) {
-                                inverseJoins.add(foreignKey)
-                            }
-                    }
-                }
-            }*/
-            joinedTables.add(table)
-        }
-        return this
-    }
-
-    fun leftJoin (vararg foreignKeys: FKColumn<*, *>): Query<T> {
+    fun join (vararg foreignKeys: Column<*, *>): Query<T> {
         for (foreignKey in foreignKeys) {
-            leftJoins.add(foreignKey)
+            joins.add(foreignKey)
         }
         return this
     }
@@ -75,6 +55,17 @@ open class Query<T>(val session: Session, val fields: Array<Field<*>>) {
         return results
     }
 
+    fun joined(column: Column<*, *>): Boolean {
+        for (foreignKey in joins) {
+            if (foreignKey is FKColumn<*, *> && foreignKey.reference.table == column.table) {
+                return true
+            } else if (foreignKey is FKOptionColumn<*, *> && foreignKey.reference.table == column.table) {
+                return true
+            }
+        }
+        return false
+    }
+
     fun forEach(statement: (row: T) -> Unit) {
         val tables: MutableSet<Table> = HashSet<Table>()
         val sql = StringBuilder("SELECT ")
@@ -83,13 +74,13 @@ open class Query<T>(val session: Session, val fields: Array<Field<*>>) {
             for (field in fields) {
                 if (field is Column<*, *>) {
                     selectedColumns.add(field)
-                    if (!joinedTables.contains(field.table)) {
+                    if (!joined(field)) {
                         tables.add(field.table)
                     }
                 } else if (field is Function<*>) {
                     for (column in field.columns) {
                         selectedColumns.add(column)
-                        if (!joinedTables.contains(column.table)) {
+                        if (!joined(column)) {
                             tables.add(column.table)
                         }
                     }
@@ -120,51 +111,17 @@ open class Query<T>(val session: Session, val fields: Array<Field<*>>) {
                 }
             }
         }
-        if (!joinedTables.isEmpty()) {
-            for (table in joinedTables) {
-                if (table.primaryKeys.size == 1) {
-                    val primaryKey = table.primaryKeys.get(0)
-                    /*for (column in selectedColumns) {
-                        if (column is FKColumn<*, *> && column.reference == primaryKey) {
-                            sql.append(" INNER JOIN ").append(session.identity(column.reference.table)).append(" ON ").
-                            append(session.fullIdentity(column)).append(" = ").append(session.fullIdentity(primaryKey));
-                        }
-                    }*/
-                    for (selectedTable in selectedTables) {
-                        for (column in selectedTable.tableColumns) {
-                            if (column is FKColumn<*, *> && column.reference == primaryKey) {
-                                sql.append(" INNER JOIN ").append(session.identity(column.reference.table)).append(" ON ").
-                                append(session.fullIdentity(column)).append(" = ").append(session.fullIdentity(primaryKey));
-                            }
-                        }
-                    }
-                }
-                for (selectedTable in selectedTables) {
-                    if (selectedTable.primaryKeys.size == 1) {
-                        val primaryKey = selectedTable.primaryKeys.get(0)
-                        for (column in table.tableColumns) {
-                            if (column is FKColumn<*, *> && column.reference == primaryKey) {
-                                sql.append(" INNER JOIN ").append(session.identity(table)).append(" ON ").
-                                append(session.fullIdentity(column)).append(" = ").append(session.fullIdentity(primaryKey));
-                            }
-                        }
-                    }
-                }
+        for (join in joins) {
+            if (join is FKColumn<*, *>) {
+                val primaryKey = join.reference.table.primaryKeys[0]
+                sql.append(" INNER JOIN ").append(session.identity(join.reference.table)).append(" ON ").
+                append(session.fullIdentity(join)).append(" = ").append(session.fullIdentity(primaryKey))
+            } else if (join is FKOptionColumn<*, *>) {
+                val primaryKey = join.reference.table.primaryKeys[0]
+                sql.append(" LEFT JOIN ").append(session.identity(join.reference.table)).append(" ON ").
+                append(session.fullIdentity(join)).append(" = ").append(session.fullIdentity(primaryKey))
             }
         }
-        if (leftJoins.size > 0) {
-            for (foreignKey in leftJoins) {
-                sql.append(" LEFT JOIN ").append(session.identity(foreignKey.reference.table)).append(" ON ").
-                append(session.fullIdentity(foreignKey.reference.table.primaryKeys[0])).append(" = ").append(session.fullIdentity(foreignKey));
-            }
-        }
-        /*
-        if (inverseJoins.size > 0) {
-            for (foreignKey in inverseJoins) {
-                sql.append(" LEFT JOIN ").append(session.identity(foreignKey.table)).append(" ON ").
-                append(session.fullIdentity(foreignKey.referencedTable.primaryKeys[0])).append(" = ").append(session.fullIdentity(foreignKey.column));
-            }
-        }*/
         if (op != null) {
             sql.append(" WHERE ").append(op!!.toSQL())
         }

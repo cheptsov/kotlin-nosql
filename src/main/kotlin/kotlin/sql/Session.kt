@@ -72,6 +72,17 @@ open class Session (val connection: Connection, val driver: Driver) {
         }
     }
 
+    fun foreignKey(foreignKey: FKOptionColumn<*, *>): String {
+        return when (driver.getClass().getName()) {
+            "com.mysql.jdbc.Driver", "oracle.jdbc.driver.OracleDriver",
+            "com.microsoft.sqlserver.jdbc.SQLServerDriver", "org.postgresql.Driver",
+            "org.h2.Driver" -> {
+                "ALTER TABLE ${identity(foreignKey.table)} ADD CONSTRAINT ${identity(foreignKey)} FOREIGN KEY (${identity(foreignKey)}) REFERENCES ${identity(foreignKey.reference.table)}(${identity(foreignKey.table.primaryKeys[0])})"
+            }
+            else -> throw UnsupportedOperationException("Unsupported driver: " + driver.getClass().getName())
+        }
+    }
+
     fun <T: Table> T.insert(columns: T.() -> Array<Pair<Column<*, T>, *>>): InsertQuery<T> {
         return insert(columns() as Array<Pair<Column<*, T>, *>>)
     }
