@@ -64,14 +64,14 @@ fun main(args: Array<String>) {
             println("$userName lives in $cityName")
         }
 
-        println("Left join: ")
+        println("Inner join: ")
 
         (Users.name + Users.requiredCityId * Cities.name) forEach {
             val (userName, cityName) = it // String, String
             println("$userName's required city is $cityName")
         }
 
-        println("Inner join: ")
+        println("Left join: ")
 
         (Users.id + Users.name + Users.optionalCityId * Cities.all).forEach {
             val (userId, userName, cityId, cityName) = it  // String, String, Int?, String?
