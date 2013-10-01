@@ -3,17 +3,17 @@ package demo
 import kotlin.sql.*
 
 object Users : Table() {
-    val id = varchar("id", length = 10).primaryKey() // PKColumn<String, Users>
+    val id = varchar("id", length = 10).id() // PKColumn<String, Users>
     val name = varchar("name", length = 50) // Column<String, Users>
-    val requiredCityId = integer("required_city_id").foreignKey(Cities.id) // FKColumn<Int, Users>
-    val cityId = integer("city_id").foreignKey(Cities.id).nullable() // FKOptionColumn<Int, Users>
+    val requiredCityId = integer("required_city_id").references(Cities.id) // FKColumn<Int, Users>
+    val optionalCityId = integer("optional_city_id").references(Cities.id).optional() // FKOptionColumn<Int, Users>
 
-    val all = template(id, name, requiredCityId, cityId) // Template4<Users, String, String, Int?> Select template
-    val values = template(id, name, requiredCityId, cityId) // Template4<Users, String, String, Int?> Insert template
+    val all = template(id, name, requiredCityId, optionalCityId) // Template4<Users, String, String, Int?> Select template
+    val values = template(id, name, requiredCityId, optionalCityId) // Template4<Users, String, String, Int?> Insert template
 }
 
 object Cities : Table() {
-    val id = integer("id").primaryKey().auto() // GeneratedPKColumn<Int, Cities>
+    val id = integer("id").id().generated() // GeneratedPKColumn<Int, Cities>
     val name = varchar("name", 50) // Column<String, Cities>
 
     val all = template(id, name) // Template2<Cities, Int, String> Select template
@@ -59,27 +59,27 @@ fun main(args: Array<String>) {
 
         println("Select from two tables:")
 
-        (Cities.name * Users.name).filter { Users.cityId.equals(Cities.id) } forEach {
+        (Cities.name * Users.name).filter { Users.optionalCityId.equals(Cities.id) } forEach {
             val (cityName, userName) = it // String, String
             println("$userName lives in $cityName")
-        }
-
-        println("Inner join: ")
-
-        (Users.id + Users.name + Users.cityId * Cities.all).forEach {
-            val (userId, userName, cityId, cityName) = it  // String, String, Int?, String?
-            if (cityName != null) {
-                println("$userName lives in $cityName")
-            } else {
-                println("$userName lives nowhere")
-            }
         }
 
         println("Left join: ")
 
         (Users.name + Users.requiredCityId * Cities.name) forEach {
             val (userName, cityName) = it // String, String
-            println("$userName has required city $cityName")
+            println("$userName's required city is $cityName")
+        }
+
+        println("Inner join: ")
+
+        (Users.id + Users.name + Users.optionalCityId * Cities.all).forEach {
+            val (userId, userName, cityId, cityName) = it  // String, String, Int?, String?
+            if (cityName != null) {
+                println("$userName's optional city is $cityName")
+            } else {
+                println("$userName has no optional city")
+            }
         }
 
         array(Users, Cities).forEach { it.drop() }

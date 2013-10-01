@@ -5,16 +5,17 @@ _Exposed_ is a prototype for a lightweight SQL library written over JDBC driver 
 
 ```java
 object Users : Table() {
-    val id = varchar("id", length = 10).primaryKey() // PKColumn<String, Users>
+    val id = varchar("id", length = 10).id() // PKColumn<String, Users>
     val name = varchar("name", length = 50) // Column<String, Users>
-    val cityId = integer("city_id").foreignKey(Cities.id).nullable() // FKColumn<Int?, Users>
+    val requiredCityId = integer("required_city_id").references(Cities.id) // FKColumn<Int, Users>
+    val optionalCityId = integer("optional_city_id").references(Cities.id).optional() // FKOptionColumn<Int, Users>
 
-    val all = template(id, name, cityId) // Template3<Users, String, String, Int?> Select template
-    val values = template(id, name, cityId) // Template3<Users, String, String, Int?> Insert template
+    val all = template(id, name, requiredCityId, optionalCityId) // Template4<Users, String, String, Int?> Select template
+    val values = template(id, name, requiredCityId, optionalCityId) // Template4<Users, String, String, Int?> Insert template
 }
 
 object Cities : Table() {
-    val id = integer("id").primaryKey().auto() // GeneratedPKColumn<Int, Cities>
+    val id = integer("id").id().generated() // GeneratedPKColumn<Int, Cities>
     val name = varchar("name", 50) // Column<String, Cities>
 
     val all = template(id, name) // Template2<Cities, Int, String> Select template
@@ -32,11 +33,11 @@ fun main(args: Array<String>) {
         val munichId = Cities.insert { values("Munich") } get { id }
         Cities.insert { values("Prague") }
 
-        Users.insert { values("andrey", "Andrey", saintPetersburgId) }
-        Users.insert { values("sergey", "Sergey", munichId) }
-        Users.insert { values("eugene", "Eugene", munichId) }
-        Users.insert { values("alex", "Alex", null) }
-        Users.insert { values("smth", "Something", null) }
+        Users.insert { values("andrey", "Andrey", saintPetersburgId, saintPetersburgId) }
+        Users.insert { values("sergey", "Sergey", munichId, munichId) }
+        Users.insert { values("eugene", "Eugene", munichId, null) }
+        Users.insert { values("alex", "Alex", munichId, null) }
+        Users.insert { values("smth", "Something", munichId, null) }
 
         Users.filter { id.equals("alex") } update {
             it[name] = "Alexey"
@@ -60,35 +61,26 @@ fun main(args: Array<String>) {
 
         println("Select from two tables:")
 
-        (Cities.name * Users.name).filter { Users.cityId.equals(Cities.id) } forEach {
+        (Cities.name * Users.name).filter { Users.optionalCityId.equals(Cities.id) } forEach {
             val (cityName, userName) = it // String, String
-            println("$userName lives in $cityName")
-        }
-
-        println("Inner join: ")
-
-        (Users.id + Users.name + Users.cityId * Cities.all).forEach {
-            val (userId, userName, cityId, cityName) = it  // String, String, Int, String
-            println("$userName lives in $cityName")
-        }
-
-        println("Inner join 2: ")
-
-        (Users.name + Users.cityId * Cities.name) forEach {
-            val (userName, cityName) = it // String, String
             println("$userName lives in $cityName")
         }
 
         println("Left join: ")
 
-        // To be replaced: Users.name | Users.cityId * Cities.name
+        (Users.name + Users.requiredCityId * Cities.name) forEach {
+            val (userName, cityName) = it // String, String
+            println("$userName's required city is $cityName")
+        }
 
-        (Users.name).join(Cities.name, on = Users.cityId) forEach {
-            val (userName, cityName) = it // String, String?
+        println("Inner join: ")
+
+        (Users.id + Users.name + Users.optionalCityId * Cities.all).forEach {
+            val (userId, userName, cityId, cityName) = it  // String, String, Int?, String?
             if (cityName != null) {
-                println("$userName lives in $cityName")
+                println("$userName's optional city is $cityName")
             } else {
-                println("$userName lives in nowhere")
+                println("$userName has no optional city")
             }
         }
 
@@ -100,16 +92,17 @@ fun main(args: Array<String>) {
 Outputs:
 
     SQL: CREATE TABLE Cities (id INT PRIMARY KEY AUTO_INCREMENT NOT NULL, name VARCHAR(50) NOT NULL)
-    SQL: CREATE TABLE Users (id VARCHAR(10) PRIMARY KEY NOT NULL, name VARCHAR(50) NOT NULL, city_id INT NULL)
-    SQL: ALTER TABLE Users ADD CONSTRAINT city_id FOREIGN KEY (city_id) REFERENCES Cities(id)
+    SQL: CREATE TABLE Users (id VARCHAR(10) PRIMARY KEY NOT NULL, name VARCHAR(50) NOT NULL, required_city_id INT NULL, optional_city_id INT NULL)
+    SQL: ALTER TABLE Users ADD CONSTRAINT required_city_id FOREIGN KEY (required_city_id) REFERENCES Cities(id)
+    SQL: ALTER TABLE Users ADD CONSTRAINT optional_city_id FOREIGN KEY (optional_city_id) REFERENCES Cities(id)
     SQL: INSERT INTO Cities (name) VALUES ('St. Petersburg')
     SQL: INSERT INTO Cities (name) VALUES ('Munich')
     SQL: INSERT INTO Cities (name) VALUES ('Prague')
-    SQL: INSERT INTO Users (id, name, city_id) VALUES ('andrey', 'Andrey', 1)
-    SQL: INSERT INTO Users (id, name, city_id) VALUES ('sergey', 'Sergey', 2)
-    SQL: INSERT INTO Users (id, name, city_id) VALUES ('eugene', 'Eugene', 2)
-    SQL: INSERT INTO Users (id, name, city_id) VALUES ('alex', 'Alex', null)
-    SQL: INSERT INTO Users (id, name, city_id) VALUES ('smth', 'Something', null)
+    SQL: INSERT INTO Users (id, name, required_city_id, optional_city_id) VALUES ('andrey', 'Andrey', 1, 1)
+    SQL: INSERT INTO Users (id, name, required_city_id, optional_city_id) VALUES ('sergey', 'Sergey', 2, 2)
+    SQL: INSERT INTO Users (id, name, required_city_id, optional_city_id) VALUES ('eugene', 'Eugene', 2, null)
+    SQL: INSERT INTO Users (id, name, required_city_id, optional_city_id) VALUES ('alex', 'Alex', 2, null)
+    SQL: INSERT INTO Users (id, name, required_city_id, optional_city_id) VALUES ('smth', 'Something', 2, null)
     SQL: UPDATE Users SET name = 'Alexey' WHERE Users.id = 'alex'
     SQL: DELETE FROM Users WHERE Users.name LIKE '%thing'
     All cities:
@@ -121,25 +114,20 @@ Outputs:
     SQL: SELECT Cities.id, Cities.name FROM Cities WHERE Cities.name = 'St. Petersburg'
     1: St. Petersburg
     Select from two tables:
-    SQL: SELECT Cities.name, Users.name FROM Users, Cities WHERE Users.city_id = Cities.id
+    SQL: SELECT Cities.name, Users.name FROM Cities, Users WHERE Users.optional_city_id = Cities.id
     Andrey lives in St. Petersburg
     Sergey lives in Munich
-    Eugene lives in Munich
-    Inner join:
-    SQL: SELECT Users.id, Users.name, Cities.id, Cities.name FROM Users INNER JOIN Cities ON Users.city_id = Cities.id
-    Andrey lives in St. Petersburg
-    Sergey lives in Munich
-    Eugene lives in Munich
-    Inner join 2:
-    SQL: SELECT Users.name, Cities.name FROM Users INNER JOIN Cities ON Users.city_id = Cities.id
-    Andrey lives in St. Petersburg
-    Sergey lives in Munich
-    Eugene lives in Munich
     Left join:
-    SQL: SELECT Users.name, Cities.name FROM Users LEFT JOIN Cities ON Cities.id = Users.city_id
-    Andrey lives in St. Petersburg
-    Sergey lives in Munich
-    Eugene lives in Munich
-    Alexey lives nowhere
+    SQL: SELECT Users.name, Cities.name FROM Users INNER JOIN Cities ON Users.required_city_id = Cities.id
+    Andrey's required city is St. Petersburg
+    Sergey's required city is Munich
+    Eugene's required city is Munich
+    Alexey's required city is Munich
+    Inner join:
+    SQL: SELECT Users.id, Users.name, Cities.id, Cities.name FROM Users LEFT JOIN Cities ON Users.optional_city_id = Cities.id
+    Andrey's optional city is St. Petersburg
+    Sergey's optional city is Munich
+    Eugene has no optional city
+    Alexey has no optional city
     SQL: DROP TABLE Users
     SQL: DROP TABLE Cities

@@ -23,14 +23,14 @@ open class Column<C, T: Table>(val table: T, val name: String, val columnType: C
         return "${table.tableName}.$name"
     }
 
-    fun foreignKey(reference: Column<C, *>) : FKColumn<C, T> {
+    fun references(reference: Column<C, *>) : FKColumn<C, T> {
         (table.tableColumns as ArrayList<Column<*, T>>).remove(this)
         val column = FKColumn<C, T>(table, name, columnType, length, reference)
         (table.tableColumns as ArrayList<Column<*, T>>).add(column)
         return column
     }
 
-    fun primaryKey(): PKColumn<C, T> {
+    fun id(): PKColumn<C, T> {
         (table.tableColumns as ArrayList<Column<*, T>>).remove(this)
         val column = PKColumn<C, T>(table, name, columnType, length)
         (table.tableColumns as ArrayList<Column<*, T>>).add(column)
@@ -76,7 +76,7 @@ fun <C, T : Table> Column<C, T>.nullable(): Column<C?, T> {
     return column
 }
 
-fun <C, T : Table> FKColumn<C, T>.nullable(): FKOptionColumn<C, T> {
+fun <C, T : Table> FKColumn<C, T>.optional(): FKOptionColumn<C, T> {
     (table.tableColumns as ArrayList<Column<*, T>>).remove(this)
     val column = FKOptionColumn<C, T>(table, name, columnType, length, reference) as FKOptionColumn<C, T>
     (table.tableColumns as ArrayList<Column<*, T>>).add(column)
@@ -95,7 +95,7 @@ fun Column<*, *>.equals(other: Expression): Op {
 open class PKColumn<C, T: Table>(table: T, name: String, columnType: ColumnType, length: Int) : Column<C, T>(table, name, columnType, false, length) {
 }
 
-fun <T:Table> PKColumn<Int, T>.auto(): GeneratedPKColumn<Int, T> {
+fun <T:Table> PKColumn<Int, T>.generated(): GeneratedPKColumn<Int, T> {
     (table.tableColumns as ArrayList<Column<*, T>>).remove(this)
     (table.primaryKeys as ArrayList<PKColumn<*, T>>).remove(this)
     val column = GeneratedPKColumn<Int, T>(table, name, columnType, length)
@@ -104,7 +104,7 @@ fun <T:Table> PKColumn<Int, T>.auto(): GeneratedPKColumn<Int, T> {
     return column
 }
 
-fun <T:Table> Column<Int, T>.auto(): GeneratedColumn<Int, T> {
+fun <T:Table> Column<Int, T>.generated(): GeneratedColumn<Int, T> {
     (table.tableColumns as ArrayList<Column<*, T>>).remove(this)
     (table.primaryKeys as ArrayList<PKColumn<*, T>>).remove(this)
     val column = GeneratedColumn<Int, T>(table, name, columnType, length)
