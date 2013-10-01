@@ -38,6 +38,10 @@ open class Column<C, T: Table>(val table: T, val name: String, val columnType: C
         return column
     }
 
+    fun invoke(av: C): Array<Pair<Column<*, T>, *>> {
+        return array(Pair(this, av))
+    }
+
     fun <C2> plus(c: Column<C2, T>): Template2<T, C, C2> {
         return Template2(table, this, c) as Template2<T, C, C2>
     }
@@ -114,7 +118,7 @@ fun <T:Table> Column<Int, T>.generated(): GeneratedColumn<Int, T> {
 }
 
 
-open class FKColumn<C, T: Table>(table: T, name: String, columnType: ColumnType, length: Int, val reference: Column<C, *>) : Column<C, T>(table, name, columnType, true, length) {
+open class FKColumn<C, T: Table>(table: T, name: String, columnType: ColumnType, length: Int, val reference: Column<C, *>) : Column<C, T>(table, name, columnType, false, length) {
     fun <T2: Table, A2, B2, C2> times(template: Template3<T2, A2, B2, C2>): FKTemplate3<T, C, T2, A2, B2, C2> {
         return FKTemplate3(table, this, template.table, template.a, template.b, template.c) as FKTemplate3<T, C, T2, A2, B2, C2>
     }

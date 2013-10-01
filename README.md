@@ -10,16 +10,16 @@ object Users : Table() {
     val requiredCityId = integer("required_city_id").references(Cities.id) // FKColumn<Int, Users>
     val optionalCityId = integer("optional_city_id").references(Cities.id).optional() // FKOptionColumn<Int, Users>
 
-    val all = template(id, name, requiredCityId, optionalCityId) // Template4<Users, String, String, Int?> Select template
-    val values = template(id, name, requiredCityId, optionalCityId) // Template4<Users, String, String, Int?> Insert template
+    val all = id + name + requiredCityId + optionalCityId // Template4<Users, String, String, Int?> Select template
+    val values = id + name + requiredCityId + optionalCityId // Template4<Users, String, String, Int?> Insert template
 }
 
 object Cities : Table() {
     val id = integer("id").id().generated() // GeneratedPKColumn<Int, Cities>
     val name = varchar("name", 50) // Column<String, Cities>
 
-    val all = template(id, name) // Template2<Cities, Int, String> Select template
-    val values = template(name) // Template<Cities, String> Insert template
+    val all = id + name // Template2<Cities, Int, String> Select template
+    val values = name // Column<String, Cities>
 }
 
 fun main(args: Array<String>) {

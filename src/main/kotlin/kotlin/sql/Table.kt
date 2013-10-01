@@ -185,6 +185,10 @@ class Template2<T: Table, A, B>(val table: T, val a: Column<A, T>, val b: Column
         return results
     }
 
+    fun <C> plus(c: Column<C, T>): Template3<T, A, B, C> {
+        return Template3(table, a, b, c)
+    }
+
     fun <A1, T2: Table, A2, B2> plus(template: FKTemplate2<T, A1, T2, A2, B2>): Template2FKTemplate2<T, A, B, A1, T2, A2, B2> {
         return Template2FKTemplate2(table, a, b, template.a1, template.t2, template.a2, template.b2) as Template2FKTemplate2<T, A, B, A1, T2, A2, B2>
     }
@@ -223,6 +227,10 @@ class Template3<T: Table, A, B, C>(val table: T, val a: Column<A, T>, val b: Col
         val results = ArrayList<Triple<A, B, C>>()
         Query<Triple<A, B, C>>(Session.get(), array(a, b, c)).forEach{ results.add(it) }
         return results
+    }
+
+    fun <D> plus(d: Column<D, T>): Template4<T, A, B, C, D> {
+        return Template4(table, a, b, c, d)
     }
 
     fun <T2: Table, D> times(t2: Column<D, T2>): Template3t1<T, A, B, C, T2, D> {
