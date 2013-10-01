@@ -86,7 +86,7 @@ fun main(args: Array<String>) {
             if (cityName != null) {
                 println("$userName lives in $cityName")
             } else {
-                println("$userName lives in nowhere")
+                println("$userName lives nowhere")
             }
         }
 

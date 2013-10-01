@@ -140,6 +140,6 @@ Outputs:
     Andrey lives in St. Petersburg
     Sergey lives in Munich
     Eugene lives in Munich
-    Alexey lives in nowhere
+    Alexey lives nowhere
     SQL: DROP TABLE Users
     SQL: DROP TABLE Cities
