@@ -10,8 +10,8 @@ object Users : Table() {
     val requiredCityId = integer("required_city_id").references(Cities.id) // FKColumn<Int, Users>
     val optionalCityId = integer("optional_city_id").references(Cities.id).optional() // FKOptionColumn<Int, Users>
 
-    val all = id + name + requiredCityId + optionalCityId // Template4<Users, String, String, Int?> Select template
-    val values = id + name + requiredCityId + optionalCityId // Template4<Users, String, String, Int?> Insert template
+    val all = id + name + requiredCityId + optionalCityId // Template4<Users, String, String, Int, Int?> Select template
+    val values = id + name + requiredCityId + optionalCityId // Template4<Users, String, String, Int, Int?> Insert template
 }
 
 object Cities : Table() {
