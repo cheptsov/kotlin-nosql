@@ -9,17 +9,8 @@ open class Query<T>(val session: Session, val fields: Array<Field<*>>) {
     var selectedTables = ArrayList<Table>();
     var joinedTables = ArrayList<Table>();
     var selectedColumns = HashSet<Column<*, *>>();
-    //var leftJoins = HashSet<ForeignKey>();
-    //var inverseJoins = HashSet<ForeignKey>();
+    var leftJoins = HashSet<FKColumn<*, *>>();
     var groupedByColumns = ArrayList<Column<*, *>>();
-
-    /*fun join (vararg foreignKeys: ForeignKey): Query<T> {
-        for (foreignKey in foreignKeys) {
-            //leftJoins.add(foreignKey)
-            joinedTables.add(foreignKey.referencedTable)
-        }
-        return this
-    }*/
 
     fun from (vararg tables: Table) : Query<T> {
         for (table in tables) {
@@ -43,6 +34,13 @@ open class Query<T>(val session: Session, val fields: Array<Field<*>>) {
                 }
             }*/
             joinedTables.add(table)
+        }
+        return this
+    }
+
+    fun leftJoin (vararg foreignKeys: FKColumn<*, *>): Query<T> {
+        for (foreignKey in foreignKeys) {
+            leftJoins.add(foreignKey)
         }
         return this
     }
@@ -117,7 +115,7 @@ open class Query<T>(val session: Session, val fields: Array<Field<*>>) {
             for (table in selectedTables) {
                 sql.append(session.identity(table))
                 c++
-                if (c < tables.size) {
+                if (c < selectedTables.size) {
                     sql.append(", ")
                 }
             }
@@ -154,12 +152,13 @@ open class Query<T>(val session: Session, val fields: Array<Field<*>>) {
                 }
             }
         }
-        /*if (leftJoins.size > 0) {
+        if (leftJoins.size > 0) {
             for (foreignKey in leftJoins) {
-                sql.append(" LEFT JOIN ").append(session.identity(foreignKey.referencedTable)).append(" ON ").
-                append(session.fullIdentity(foreignKey.referencedTable.primaryKeys[0])).append(" = ").append(session.fullIdentity(foreignKey.column));
+                sql.append(" LEFT JOIN ").append(session.identity(foreignKey.reference.table)).append(" ON ").
+                append(session.fullIdentity(foreignKey.reference.table.primaryKeys[0])).append(" = ").append(session.fullIdentity(foreignKey));
             }
         }
+        /*
         if (inverseJoins.size > 0) {
             for (foreignKey in inverseJoins) {
                 sql.append(" LEFT JOIN ").append(session.identity(foreignKey.table)).append(" ON ").

@@ -54,29 +54,42 @@ fun main(args: Array<String>) {
         println("Select city by name:")
 
         Cities.all.filter { name.equals("St. Petersburg") } forEach {
-            val (id, name) = it
+            val (id, name) = it // Int, String
             println("$id: $name")
         }
 
         println("Select from two tables:")
 
         (Cities.name * Users.name).filter { Users.cityId.equals(Cities.id) } forEach {
-            val (cityName, userName) = it
+            val (cityName, userName) = it // String, String
             println("$userName lives in $cityName")
         }
 
-         println("Inner join: ")
+        println("Inner join: ")
 
         (Users.id + Users.name + Users.cityId * Cities.all).forEach {
-            val (userId, userName, cityId, cityName) = it
+            val (userId, userName, cityId, cityName) = it  // String, String, Int, String
             println("$userName lives in $cityName")
         }
 
         println("Inner join 2: ")
 
         (Users.name + Users.cityId * Cities.name) forEach {
-            val (userName, cityName) = it
+            val (userName, cityName) = it // String, String
             println("$userName lives in $cityName")
+        }
+
+        println("Left join: ")
+
+        // To be replaced: Users.name | Users.cityId * Cities.name
+
+        (Users.name).join(Cities.name, on = Users.cityId) forEach {
+            val (userName, cityName) = it // String, String?
+            if (cityName != null) {
+                println("$userName lives in $cityName")
+            } else {
+                println("$userName lives in nowhere")
+            }
         }
 
         array(Users, Cities).forEach { it.drop() }
@@ -88,6 +101,7 @@ Outputs:
 
     SQL: CREATE TABLE Cities (id INT PRIMARY KEY AUTO_INCREMENT NOT NULL, name VARCHAR(50) NOT NULL)
     SQL: CREATE TABLE Users (id VARCHAR(10) PRIMARY KEY NOT NULL, name VARCHAR(50) NOT NULL, city_id INT NULL)
+    SQL: ALTER TABLE Users ADD CONSTRAINT city_id FOREIGN KEY (city_id) REFERENCES Cities(id)
     SQL: INSERT INTO Cities (name) VALUES ('St. Petersburg')
     SQL: INSERT INTO Cities (name) VALUES ('Munich')
     SQL: INSERT INTO Cities (name) VALUES ('Prague')
@@ -107,7 +121,7 @@ Outputs:
     SQL: SELECT Cities.id, Cities.name FROM Cities WHERE Cities.name = 'St. Petersburg'
     1: St. Petersburg
     Select from two tables:
-    SQL: SELECT Cities.name, Users.name FROM Cities, Users WHERE Users.city_id = Cities.id
+    SQL: SELECT Cities.name, Users.name FROM Users, Cities WHERE Users.city_id = Cities.id
     Andrey lives in St. Petersburg
     Sergey lives in Munich
     Eugene lives in Munich
@@ -121,5 +135,11 @@ Outputs:
     Andrey lives in St. Petersburg
     Sergey lives in Munich
     Eugene lives in Munich
+    Left join:
+    SQL: SELECT Users.name, Cities.name FROM Users LEFT JOIN Cities ON Cities.id = Users.city_id
+    Andrey lives in St. Petersburg
+    Sergey lives in Munich
+    Eugene lives in Munich
+    Alexey lives in nowhere
     SQL: DROP TABLE Users
     SQL: DROP TABLE Cities

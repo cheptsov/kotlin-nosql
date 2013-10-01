@@ -8,7 +8,6 @@ open class Table(name: String = "") {
     val tableColumns = ArrayList<Column<*, *>>()
 
     val primaryKeys = ArrayList<PKColumn<*, *>>()
-    val foreignKeys = ArrayList<ForeignKey>()
 
     val ddl: String
         get() = ddl()
@@ -54,11 +53,13 @@ open class Table(name: String = "") {
     fun create() {
         println("SQL: " + ddl.toString())
         Session.get().connection.createStatement()?.executeUpdate(ddl.toString())
-        if (foreignKeys.size > 0) {
-            for (foreignKey in foreignKeys) {
-                val fKDdl = Session.get().foreignKey(foreignKey);
-                println("SQL: " + fKDdl)
-                Session.get().connection.createStatement()?.executeUpdate(fKDdl)
+        if (tableColumns.size > 0) {
+            for (column in tableColumns) {
+                if (column is FKColumn<*, *>) {
+                    val fKDdl = Session.get().foreignKey(column);
+                    println("SQL: " + fKDdl)
+                    Session.get().connection.createStatement()?.executeUpdate(fKDdl)
+                }
             }
         }
     }

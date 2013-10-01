@@ -1,7 +1,6 @@
 package demo
 
 import kotlin.sql.*
-import java.util.ArrayList
 
 object Users : Table() {
     val id = varchar("id", length = 10).primaryKey() // PKColumn<String, Users>
@@ -53,29 +52,42 @@ fun main(args: Array<String>) {
         println("Select city by name:")
 
         Cities.all.filter { name.equals("St. Petersburg") } forEach {
-            val (id, name) = it
+            val (id, name) = it // Int, String
             println("$id: $name")
         }
 
         println("Select from two tables:")
 
         (Cities.name * Users.name).filter { Users.cityId.equals(Cities.id) } forEach {
-            val (cityName, userName) = it
+            val (cityName, userName) = it // String, String
             println("$userName lives in $cityName")
         }
 
         println("Inner join: ")
 
         (Users.id + Users.name + Users.cityId * Cities.all).forEach {
-            val (userId, userName, cityId, cityName) = it
+            val (userId, userName, cityId, cityName) = it  // String, String, Int, String
             println("$userName lives in $cityName")
         }
 
         println("Inner join 2: ")
 
         (Users.name + Users.cityId * Cities.name) forEach {
-            val (userName, cityName) = it
+            val (userName, cityName) = it // String, String
             println("$userName lives in $cityName")
+        }
+
+        println("Left join: ")
+
+        // To be replaced: Users.name | Users.cityId * Cities.name
+
+        (Users.name).join(Cities.name, on = Users.cityId) forEach {
+            val (userName, cityName) = it // String, String?
+            if (cityName != null) {
+                println("$userName lives in $cityName")
+            } else {
+                println("$userName lives in nowhere")
+            }
         }
 
         array(Users, Cities).forEach { it.drop() }

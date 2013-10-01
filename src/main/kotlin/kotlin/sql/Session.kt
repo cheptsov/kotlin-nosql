@@ -61,16 +61,12 @@ open class Session (val connection: Connection, val driver: Driver) {
             column.name else "$identityQuoteString${column.name}$identityQuoteString"
     }
 
-    fun identity(foreignKey: ForeignKey): String {
-        return "$identityQuoteString${foreignKey.name}$identityQuoteString"
-    }
-
-    fun foreignKey(foreignKey: ForeignKey): String {
+    fun foreignKey(foreignKey: FKColumn<*, *>): String {
         return when (driver.getClass().getName()) {
             "com.mysql.jdbc.Driver", "oracle.jdbc.driver.OracleDriver",
             "com.microsoft.sqlserver.jdbc.SQLServerDriver", "org.postgresql.Driver",
             "org.h2.Driver" -> {
-                "ALTER TABLE ${identity(foreignKey.table)} ADD CONSTRAINT ${identity(foreignKey)} FOREIGN KEY (${identity(foreignKey.column)}) REFERENCES ${identity(foreignKey.referencedTable)}(${identity(foreignKey.column.table.primaryKeys[0])})"
+                "ALTER TABLE ${identity(foreignKey.table)} ADD CONSTRAINT ${identity(foreignKey)} FOREIGN KEY (${identity(foreignKey)}) REFERENCES ${identity(foreignKey.reference.table)}(${identity(foreignKey.table.primaryKeys[0])})"
             }
             else -> throw UnsupportedOperationException("Unsupported driver: " + driver.getClass().getName())
         }
