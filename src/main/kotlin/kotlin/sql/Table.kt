@@ -99,8 +99,47 @@ fun <T:Table> T.filter(body: T.() -> Op): FilterQuery<T> {
     return FilterQuery(this, body())
 }
 
-fun <T: Table, A, B> Template2<T, A, B>.filter(op: T.() -> Op): Query<Pair<A, B>> {
-    return Query<Pair<A, B>>(Session.get(), array(a, b)).where(table.op())
+
+fun <T: Table, A, B> Template2<T, A, B>.forEach(statement: (a: A, b: B) -> Unit) {
+    Query<Pair<A, B>>(Session.get(), array(a, b)).forEach{
+        val (a, b) = it
+        statement(a, b);
+    }
+}
+
+fun <T: Table, A, B> Template2<T, A, B>.find(op: T.() -> Op): Pair<A, B> {
+    var t: Pair<A, B>? = null
+    filter(op).forEach { a,b ->
+        t = Pair(a, b)
+    }
+    return t as Pair<A, B>;
+}
+
+fun <T: Table, C> Column<C, T>.filter(op: T.() -> Op): Query<C> {
+    return Query<C>(Session.get(), array(this)).where(table.op())
+}
+
+fun <T: Table, C> Column<C, T>.find(op: T.() -> Op): C {
+    var c: C? = null
+    filter(op).forEach {
+        c = it
+    }
+    return c as C;
+}
+
+/*
+fun <T: Table, A> T.select(selector: T.() -> Field<A>): Field<A> {
+    return selector();
+}
+*/
+
+fun <T: Table, X> T.select(selector: T.() -> X): X {
+    return selector();
+}
+
+
+fun <T: Table, A, B> Template2<T, A, B>.filter(op: T.() -> Op): Query2<A, B> {
+    return Query2<A, B>(Session.get(), a, b).where(table.op())
 }
 
 fun <T: Table> FilterQuery<T>.update(body: T.(UpdateQuery<T>) -> Unit): UpdateQuery<T> {
@@ -179,10 +218,12 @@ class Template2<T: Table, A, B>(val table: T, val a: Column<A, T>, val b: Column
         return array(Pair(a, av), Pair(b, bv))
     }
 
-    fun invoke(): List<Pair<A, B>> {
+    fun iterator() : Iterator<Pair<A, B>> {
         val results = ArrayList<Pair<A, B>>()
-        Query<Pair<A, B>>(Session.get(), array(a, b)).forEach{ results.add(it) }
-        return results
+        Query<Pair<A, B>>(Session.get(), array(a, b)).forEach {
+            results.add(it)
+        }
+        return results.iterator()
     }
 
     fun <C> plus(c: Column<C, T>): Template3<T, A, B, C> {

@@ -3,11 +3,11 @@ package kotlin.sql
 import java.util.ArrayList
 
 open class Column<C, T: Table>(val table: T, val name: String, val columnType: ColumnType, val _nullable: Boolean, val length: Int) : Field<C>() {
-    fun equals(other: Expression): Op {
+    fun eq(other: Expression): Op {
         return EqualsOp(this, other)
     }
 
-    fun equals(other: C): Op {
+    fun eq(other: C): Op {
         return EqualsOp(this, LiteralOp(other))
     }
 
@@ -54,6 +54,12 @@ open class Column<C, T: Table>(val table: T, val name: String, val columnType: C
     fun <A1, A2, T2: Table> plus(template: FKOptionTemplate<T, A1, T2, A2>): TemplateFKOptionTemplate<T, C, A1, T2, A2> {
         return TemplateFKOptionTemplate<T, C, A1, T2, A2>(table, this, template.c1, template.t2, template.c2) as TemplateFKOptionTemplate<T, C, A1, T2, A2>
     }
+
+    fun forEach(statement: (C) -> Unit) {
+        Query<C>(Session.get(), array(this)).forEach {
+            statement(it)
+        }
+    }
 }
 
 class TemplateFKTemplate<T1: Table, A1, B1, T2: Table, A2>(val t1: T1, val a1: Column<A1, T1>, val b1: Column<B1, T1>, val t2: T2, val a2: Column<A2, T2>) {
@@ -92,7 +98,7 @@ val Column<*, *>.isNull: Op
         return IsNullOp(this)
     }
 
-fun Column<*, *>.equals(other: Expression): Op {
+fun Column<*, *>.eq(other: Expression): Op {
     return EqualsOp(this, other)
 }
 

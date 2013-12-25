@@ -25,7 +25,7 @@ open class Query<T>(val session: Session, val fields: Array<Field<*>>) {
         return this
     }
 
-    fun where(op: Op): Query<T> {
+    open fun where(op: Op): Query<T> {
         this.op = op
         return this
     }
@@ -151,5 +151,26 @@ open class Query<T>(val session: Session, val fields: Array<Field<*>>) {
                 statement(Quintuple(rs.getObject(1), rs.getObject(2), rs.getObject(3), rs.getObject(4), rs.getObject(5)) as T)
             }
         }
+    }
+}
+
+class Query2<A, B>(session: Session, a: Field<A>, b: Field<B>): Query<Pair<A, B>>(session, array(a, b)) {
+    fun forEach(statement: (a: A, b: B) -> Unit) {
+        super.forEach {
+            val (a, b) = it
+            statement(a, b);
+        }
+    }
+
+    fun iterator() : Iterator<Pair<A, B>> {
+        val results = ArrayList<Pair<A, B>>()
+        forEach { a, b ->
+            results.add(Pair(a, b))
+        }
+        return results.iterator()
+    }
+
+    override fun where(op: Op): Query2<A, B> {
+        return super.where(op) as Query2<A, B>
     }
 }

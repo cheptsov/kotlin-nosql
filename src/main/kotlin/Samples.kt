@@ -37,49 +37,35 @@ fun main(args: Array<String>) {
         Users.insert { values("alex", "Alex", munichId, null) }
         Users.insert { values("smth", "Something", munichId, null) }
 
-        Users.filter { id.equals("alex") } update {
+        Users.filter { id.eq("alex") } update {
             it[name] = "Alexey"
         }
 
         Users.delete { name.like("%thing") }
 
-        println("All cities:")
+        Cities select { name } forEach {
+            println(it)
+        }
 
-        Cities.all().forEach {
-            val (id, name) = it
+        for ((id, name) in Cities select { all }) {
             println("$id: $name")
         }
 
-        println("Select city by name:")
+        println("Select city by name via forEach:")
 
-        Cities.all.filter { name.equals("St. Petersburg") } forEach {
-            val (id, name) = it // Int, String
+        Cities select { all } filter { name.eq("St. Petersburg") } forEach { id, name ->
             println("$id: $name")
         }
 
-        println("Select from two tables:")
+        println("Select city by name via forEach:")
 
-        (Cities.name * Users.name).filter { Users.optionalCityId.equals(Cities.id) } forEach {
-            val (cityName, userName) = it // String, String
-            println("$userName lives in $cityName")
+        for ((id, name) in Cities select { all } filter { name.eq("St. Petersburg") }) {
+            println("$id: $name")
         }
 
-        println("Inner join: ")
-
-        (Users.name + Users.requiredCityId * Cities.name) forEach {
-            val (userName, cityName) = it // String, String
+        Users select { name + Users.requiredCityId } forEach { userName, userRequiredCityId ->
+            val cityName = Cities select {name } find { id.eq(userRequiredCityId) }
             println("$userName's required city is $cityName")
-        }
-
-        println("Left join: ")
-
-        (Users.id + Users.name + Users.optionalCityId * Cities.all).forEach {
-            val (userId, userName, cityId, cityName) = it  // String, String, Int?, String?
-            if (cityName != null) {
-                println("$userName's optional city is $cityName")
-            } else {
-                println("$userName has no optional city")
-            }
         }
 
         array(Users, Cities).forEach { it.drop() }
