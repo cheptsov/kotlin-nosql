@@ -51,13 +51,9 @@ fun main(args: Array<String>) {
             println("$id: $name")
         }
 
-        println("Select city by name via forEach:")
-
         Cities select { all } filter { name.eq("St. Petersburg") } forEach { id, name ->
             println("$id: $name")
         }
-
-        println("Select city by name via forEach:")
 
         for ((id, name) in Cities select { all } filter { name.eq("St. Petersburg") }) {
             println("$id: $name")
