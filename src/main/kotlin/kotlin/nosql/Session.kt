@@ -1,4 +1,4 @@
-package kotlin.sql
+package kotlin.nosql
 
 import java.sql.Connection
 import org.h2.engine.Session

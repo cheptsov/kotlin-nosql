@@ -1,4 +1,4 @@
-package kotlin.sql
+package kotlin.nosql
 
 enum class ColumnType {
     public INTEGER

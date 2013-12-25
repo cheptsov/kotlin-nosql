@@ -1,9 +1,11 @@
-Kotlin SQL Library
+Kotlin NoSQL Library
 ==================
 
-_Exposed_ is a prototype for a lightweight No SQL (or SQL without joins) library for [Kotlin](https://github.com/JetBrains/kotlin) language.
+_Exposed_ is a prototype for a NoSQL (SQL without JOINs) library for [Kotlin](https://github.com/JetBrains/kotlin) language.
 
 ```java
+import kotlin.nosql.*
+
 object Users : Table() {
     val id = varchar("id", length = 10).id() // PKColumn<String, Users>
     val name = varchar("name", length = 50) // Column<String, Users>

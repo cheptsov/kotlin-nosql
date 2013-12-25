@@ -1,4 +1,4 @@
-package kotlin.sql
+package kotlin.nosql
 
 trait GeneratedValue<T> {
 }

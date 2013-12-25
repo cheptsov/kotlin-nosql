@@ -1,4 +1,4 @@
-package kotlin.sql
+package kotlin.nosql
 
 abstract class Field<T> : Expression {
 }

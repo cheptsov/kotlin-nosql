@@ -1,4 +1,4 @@
-package kotlin.sql
+package kotlin.nosql
 
 class Quad<A, B, C, D>(val first: A, val second: B, val third: C, val fourth: D) {
     fun component1() = first

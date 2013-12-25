@@ -1,6 +1,6 @@
 package demo
 
-import kotlin.sql.*
+import kotlin.nosql.*
 
 object Users : Table() {
     val id = varchar("id", length = 10).id() // PKColumn<String, Users>

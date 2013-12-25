@@ -1,4 +1,4 @@
-package kotlin.sql
+package kotlin.nosql
 
 import java.sql.Connection
 import java.util.HashSet
