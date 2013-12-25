@@ -95,7 +95,7 @@ fun <T: Table, C> T.insert(column: T.() -> Pair<Column<C>, C>): InsertQuery {
 }
 */
 
-fun <T:Table> T.filter(body: T.() -> Op): FilterQuery<T> {
+fun <T:Table> T.update(body: T.() -> Op): FilterQuery<T> {
     return FilterQuery(this, body())
 }
 
@@ -142,7 +142,7 @@ fun <T: Table, A, B> Template2<T, A, B>.filter(op: T.() -> Op): Query2<A, B> {
     return Query2<A, B>(Session.get(), a, b).where(table.op())
 }
 
-fun <T: Table> FilterQuery<T>.update(body: T.(UpdateQuery<T>) -> Unit): UpdateQuery<T> {
+fun <T: Table> FilterQuery<T>.set(body: T.(UpdateQuery<T>) -> Unit): UpdateQuery<T> {
     val answer = UpdateQuery(table, op)
     table.body(answer)
     answer.execute(Session.get())

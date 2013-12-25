@@ -25,23 +25,23 @@ fun main(args: Array<String>) {
     // var db = Database("jdbc:mysql://localhost/test", driver = "com.mysql.jdbc.Driver", user = "root")
 
     db.withSession {
-        array(Cities, Users).forEach { it.create() }
+        array(Cities, Users) forEach { it.create() }
 
-        val saintPetersburgId = Cities.insert { values("St. Petersburg") } get { id }
-        val munichId = Cities.insert { values("Munich") } get { id }
-        Cities.insert { values("Prague") }
+        val saintPetersburgId = Cities insert { values("St. Petersburg") } get { id }
+        val munichId = Cities insert { values("Munich") } get { id }
+        Cities insert { values("Prague") }
 
-        Users.insert { values("andrey", "Andrey", saintPetersburgId, saintPetersburgId) }
-        Users.insert { values("sergey", "Sergey", munichId, munichId) }
-        Users.insert { values("eugene", "Eugene", munichId, null) }
-        Users.insert { values("alex", "Alex", munichId, null) }
-        Users.insert { values("smth", "Something", munichId, null) }
+        Users insert { values("andrey", "Andrey", saintPetersburgId, saintPetersburgId) }
+        Users insert { values("sergey", "Sergey", munichId, munichId) }
+        Users insert { values("eugene", "Eugene", munichId, null) }
+        Users insert { values("alex", "Alex", munichId, null) }
+        Users insert { values("smth", "Something", munichId, null) }
 
-        Users.filter { id.eq("alex") } update {
+        Users update { id eq "alex" } set {
             it[name] = "Alexey"
         }
 
-        Users.delete { name.like("%thing") }
+        Users delete { name like "%thing" }
 
         Cities select { name } forEach {
             println(it)
@@ -55,15 +55,15 @@ fun main(args: Array<String>) {
             println("$id: $name")
         }
 
-        for ((id, name) in Cities select { all } filter { name.eq("St. Petersburg") }) {
+        for ((id, name) in Cities select { all } filter { name eq "St. Petersburg" }) {
             println("$id: $name")
         }
 
         Users select { name + Users.requiredCityId } forEach { userName, userRequiredCityId ->
-            val cityName = Cities select {name } find { id.eq(userRequiredCityId) }
+            val cityName = Cities select {name } find { id eq userRequiredCityId }
             println("$userName's required city is $cityName")
         }
 
-        array(Users, Cities).forEach { it.drop() }
+        array(Users, Cities) forEach { it.drop() }
     }
 }
