@@ -1,7 +1,7 @@
 Kotlin SQL Library
 ==================
 
-_Exposed_ is a prototype for a lightweight SQL library written over JDBC driver for [Kotlin](https://github.com/JetBrains/kotlin) language.
+_Exposed_ is a prototype for a lightweight No SQL (or SQL without joins) library for [Kotlin](https://github.com/JetBrains/kotlin) language.
 
 ```java
 object Users : Table() {
@@ -10,8 +10,8 @@ object Users : Table() {
     val requiredCityId = integer("required_city_id").references(Cities.id) // FKColumn<Int, Users>
     val optionalCityId = integer("optional_city_id").references(Cities.id).optional() // FKOptionColumn<Int, Users>
 
-    val all = id + name + requiredCityId + optionalCityId // Template4<Users, String, String, Int, Int?> Select template
-    val values = id + name + requiredCityId + optionalCityId // Template4<Users, String, String, Int, Int?> Insert template
+    val all = id + name + requiredCityId + optionalCityId // Template4<Users, String, Int, Int?> Select template
+    val values = id + name + requiredCityId + optionalCityId // Template4<Users, String, Int, Int?> Insert template
 }
 
 object Cities : Table() {
@@ -39,49 +39,35 @@ fun main(args: Array<String>) {
         Users.insert { values("alex", "Alex", munichId, null) }
         Users.insert { values("smth", "Something", munichId, null) }
 
-        Users.filter { id.equals("alex") } update {
+        Users.filter { id.eq("alex") } update {
             it[name] = "Alexey"
         }
 
         Users.delete { name.like("%thing") }
 
-        println("All cities:")
+        Cities select { name } forEach {
+            println(it)
+        }
 
-        Cities.all().forEach {
-            val (id, name) = it
+        for ((id, name) in Cities select { all }) {
             println("$id: $name")
         }
 
-        println("Select city by name:")
+        println("Select city by name via forEach:")
 
-        Cities.all.filter { name.equals("St. Petersburg") } forEach {
-            val (id, name) = it // Int, String
+        Cities select { all } filter { name.eq("St. Petersburg") } forEach { id, name ->
             println("$id: $name")
         }
 
-        println("Select from two tables:")
+        println("Select city by name via forEach:")
 
-        (Cities.name * Users.name).filter { Users.optionalCityId.equals(Cities.id) } forEach {
-            val (cityName, userName) = it // String, String
-            println("$userName lives in $cityName")
+        for ((id, name) in Cities select { all } filter { name.eq("St. Petersburg") }) {
+            println("$id: $name")
         }
 
-        println("Inner join: ")
-
-        (Users.name + Users.requiredCityId * Cities.name) forEach {
-            val (userName, cityName) = it // String, String
+        Users select { name + Users.requiredCityId } forEach { userName, userRequiredCityId ->
+            val cityName = Cities select {name } find { id.eq(userRequiredCityId) }
             println("$userName's required city is $cityName")
-        }
-
-        println("Left join: ")
-
-        (Users.id + Users.name + Users.optionalCityId * Cities.all).forEach {
-            val (userId, userName, cityId, cityName) = it  // String, String, Int?, String?
-            if (cityName != null) {
-                println("$userName's optional city is $cityName")
-            } else {
-                println("$userName has no optional city")
-            }
         }
 
         array(Users, Cities).forEach { it.drop() }
@@ -92,7 +78,7 @@ fun main(args: Array<String>) {
 Outputs:
 
     SQL: CREATE TABLE Cities (id INT PRIMARY KEY AUTO_INCREMENT NOT NULL, name VARCHAR(50) NOT NULL)
-    SQL: CREATE TABLE Users (id VARCHAR(10) PRIMARY KEY NOT NULL, name VARCHAR(50) NOT NULL, required_city_id INT NULL, optional_city_id INT NULL)
+    SQL: CREATE TABLE Users (id VARCHAR(10) PRIMARY KEY NOT NULL, name VARCHAR(50) NOT NULL, required_city_id INT NOT NULL, optional_city_id INT NULL)
     SQL: ALTER TABLE Users ADD CONSTRAINT required_city_id FOREIGN KEY (required_city_id) REFERENCES Cities(id)
     SQL: ALTER TABLE Users ADD CONSTRAINT optional_city_id FOREIGN KEY (optional_city_id) REFERENCES Cities(id)
     SQL: INSERT INTO Cities (name) VALUES ('St. Petersburg')
@@ -105,29 +91,30 @@ Outputs:
     SQL: INSERT INTO Users (id, name, required_city_id, optional_city_id) VALUES ('smth', 'Something', 2, null)
     SQL: UPDATE Users SET name = 'Alexey' WHERE Users.id = 'alex'
     SQL: DELETE FROM Users WHERE Users.name LIKE '%thing'
-    All cities:
+    All cities via forEach:
+    SQL: SELECT Cities.name FROM Cities
+    St. Petersburg
+    Munich
+    Prague
+    All cities via for:
     SQL: SELECT Cities.id, Cities.name FROM Cities
     1: St. Petersburg
     2: Munich
     3: Prague
-    Select city by name:
+    Select city by name via forEach:
     SQL: SELECT Cities.id, Cities.name FROM Cities WHERE Cities.name = 'St. Petersburg'
     1: St. Petersburg
-    Select from two tables:
-    SQL: SELECT Cities.name, Users.name FROM Cities, Users WHERE Users.optional_city_id = Cities.id
-    Andrey lives in St. Petersburg
-    Sergey lives in Munich
-    Left join:
-    SQL: SELECT Users.name, Cities.name FROM Users INNER JOIN Cities ON Users.required_city_id = Cities.id
+    Select city by name via forEach:
+    SQL: SELECT Cities.id, Cities.name FROM Cities WHERE Cities.name = 'St. Petersburg'
+    1: St. Petersburg
+    SQL: SELECT Users.name, Users.required_city_id FROM Users
+    SQL: SELECT Cities.name FROM Cities WHERE Cities.id = 1
     Andrey's required city is St. Petersburg
+    SQL: SELECT Cities.name FROM Cities WHERE Cities.id = 2
     Sergey's required city is Munich
+    SQL: SELECT Cities.name FROM Cities WHERE Cities.id = 2
     Eugene's required city is Munich
+    SQL: SELECT Cities.name FROM Cities WHERE Cities.id = 2
     Alexey's required city is Munich
-    Inner join:
-    SQL: SELECT Users.id, Users.name, Cities.id, Cities.name FROM Users LEFT JOIN Cities ON Users.optional_city_id = Cities.id
-    Andrey's optional city is St. Petersburg
-    Sergey's optional city is Munich
-    Eugene has no optional city
-    Alexey has no optional city
     SQL: DROP TABLE Users
     SQL: DROP TABLE Cities
