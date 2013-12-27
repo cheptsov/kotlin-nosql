@@ -8,17 +8,17 @@ import kotlin.nosql.*
 import kotlin.nosql.dynamodb.*
 
 object Users : Table() {
-    val id = string("id", length = 10).id() // PKColumn<String, Users>
-    val name = string("name", length = 50) // Column<String, Users>
+    val id = string("id").key() // PKColumn<String, Users>
+    val name = string("name") // Column<String, Users>
     val requiredCityId = integer("required_city_id") // Column<Int, Users>
-    val optionalCityId = integer("optional_city_id").nullable() // Column<Int?, Users>
+    val optionalCityId = integer("optional_city_id").optional() // Column<Int?, Users>
 
     val all = id + name + requiredCityId + optionalCityId // Template4<Users, String, Int, Int?>
 }
 
 object Cities : Table() {
-    val id = integer("id").id() // PKColumn<Int, Cities>
-    val name = string("name", 50) // Column<String, Cities>
+    val id = integer("id").key() // PKColumn<Int, Cities>
+    val name = string("name") // Column<String, Cities>
 
     val all = id + name // Template2<Cities, Int, String>
 }
