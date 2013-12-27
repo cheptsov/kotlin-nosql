@@ -11,19 +11,19 @@ abstract class Op() : Expression {
 }
 
 class IsNullOp(val column: Column<*, *>): Op() {
-    override fun toSQL():String {
+    /*override fun toSQL():String {
         return "${Session.get().fullIdentity(column)} IS NULL"
-    }
+    }*/
 }
 
 class LiteralOp(val value: Any): Op() {
-    override fun toSQL():String {
+    /*override fun toSQL():String {
         return if (value is String) "'" + value + "'" else value.toString()
-    }
+    }*/
 }
 
 class EqualsOp(val expr1: Expression, val expr2: Expression): Op() {
-    override fun toSQL():String {
+    /*override fun toSQL():String {
         val sb = StringBuilder()
         if (expr1 is OrOp) {
             sb.append("(").append(expr1.toSQL()).append(")")
@@ -37,11 +37,11 @@ class EqualsOp(val expr1: Expression, val expr2: Expression): Op() {
             sb.append(expr2.toSQL())
         }
         return sb.toString()
-    }
+    }*/
 }
 
 class LikeOp(val expr1: Expression, val expr2: Expression): Op() {
-    override fun toSQL():String {
+    /*override fun toSQL():String {
         val sb = StringBuilder()
         if (expr1 is OrOp) {
             sb.append("(").append(expr1.toSQL()).append(")")
@@ -55,11 +55,11 @@ class LikeOp(val expr1: Expression, val expr2: Expression): Op() {
             sb.append(expr2.toSQL())
         }
         return sb.toString()
-    }
+    }*/
 }
 
 class AndOp(val expr1: Expression, val expr2: Expression): Op() {
-    override fun toSQL():String {
+    /*override fun toSQL():String {
         val sb = StringBuilder()
         if (expr1 is OrOp) {
             sb.append("(").append(expr1.toSQL()).append(")")
@@ -73,11 +73,11 @@ class AndOp(val expr1: Expression, val expr2: Expression): Op() {
             sb.append(expr2.toSQL())
         }
         return sb.toString()
-    }
+    }*/
 }
 
 class OrOp(val expr1: Expression, val expr2: Expression): Op() {
-    override fun toSQL():String {
+    /*override fun toSQL():String {
         return expr1.toSQL() + " or " + expr2.toSQL()
-    }
+    }*/
 }
