@@ -1,71 +1,69 @@
 Kotlin NoSQL Library
 ==================
 
-_Exposed_ is a prototype for a NoSQL (SQL without JOINs) library for [Kotlin](https://github.com/JetBrains/kotlin) language.
+A type safe [Kotlin](https://github.com/JetBrains/kotlin) DSL for working with NoSQL databases.
 
 ```java
 import kotlin.nosql.*
+import kotlin.nosql.dynamodb.*
 
 object Users : Table() {
-    val id = varchar("id", length = 10).id() // PKColumn<String, Users>
-    val name = varchar("name", length = 50) // Column<String, Users>
-    val requiredCityId = integer("required_city_id").references(Cities.id) // FKColumn<Int, Users>
-    val optionalCityId = integer("optional_city_id").references(Cities.id).optional() // FKOptionColumn<Int, Users>
+    val id = string("id", length = 10).id() // PKColumn<String, Users>
+    val name = string("name", length = 50) // Column<String, Users>
+    val requiredCityId = integer("required_city_id") // Column<Int, Users>
+    val optionalCityId = integer("optional_city_id").nullable() // Column<Int?, Users>
 
-    val all = id + name + requiredCityId + optionalCityId // Template4<Users, String, Int, Int?> Select template
-    val values = id + name + requiredCityId + optionalCityId // Template4<Users, String, Int, Int?> Insert template
+    val all = id + name + requiredCityId + optionalCityId // Template4<Users, String, Int, Int?>
 }
 
 object Cities : Table() {
-    val id = integer("id").id().generated() // GeneratedPKColumn<Int, Cities>
-    val name = varchar("name", 50) // Column<String, Cities>
+    val id = integer("id").id() // PKColumn<Int, Cities>
+    val name = string("name", 50) // Column<String, Cities>
 
-    val all = id + name // Template2<Cities, Int, String> Select template
-    val values = name // Column<String, Cities>
+    val all = id + name // Template2<Cities, Int, String>
 }
 
 fun main(args: Array<String>) {
-    var db = Database("jdbc:h2:mem:test", driver = "org.h2.Driver")
-    // var db = Database("jdbc:mysql://localhost/test", driver = "com.mysql.jdbc.Driver", user = "root")
+    var db = DynamoDB()
 
-    db.withSession {
+    db {
         array(Cities, Users) forEach { it.create() }
 
-        val saintPetersburgId = Cities insert { values("St. Petersburg") } get { id }
-        val munichId = Cities insert { values("Munich") } get { id }
-        Cities insert { values("Prague") }
+        Cities columns { all } insert { values(1, "St. Petersburg") }
+        Cities columns { all } insert { values(2, "Munich") }
+        Cities columns { all } insert { values(3, "Prague") }
 
-        Users insert { values("andrey", "Andrey", saintPetersburgId, saintPetersburgId) }
-        Users insert { values("sergey", "Sergey", munichId, munichId) }
-        Users insert { values("eugene", "Eugene", munichId, null) }
-        Users insert { values("alex", "Alex", munichId, null) }
-        Users insert { values("smth", "Something", munichId, null) }
+        Users columns { all } insert { values("andrey", "Andrey", 1, 1) }
+        Users columns { all } insert { values("sergey", "Sergey", 2, 2) }
+        Users columns { all } insert { values("eugene", "Eugene", 2, null) }
+        Users columns { all } insert { values("alex", "Alex", 2, null) }
+        Users columns { all } insert { values("xmth", "Something", 2, 1) }
 
         Users update { id eq "alex" } set {
             it[name] = "Alexey"
         }
 
-        Users delete { name like "%thing" }
+        Users delete { id eq "xmth" }
 
-        Cities select { name } forEach {
+        Cities columns { name } forEach {
             println(it)
         }
 
-        for ((id, name) in Cities select { all }) {
+        for ((id, name) in Cities columns { all }) {
             println("$id: $name")
         }
 
-        Cities select { all } filter { name.eq("St. Petersburg") } forEach { id, name ->
-            println("$id: $name")
+        Cities columns { all } filter { name eq "St. Petersburg" } forEach { id, name ->
+            println("$id")
         }
 
-        for ((id, name) in Cities select { all } filter { name eq "St. Petersburg" }) {
-            println("$id: $name")
+        for ((id, name) in Cities columns { all } filter { name eq "St. Petersburg" }) {
+            println("$id")
         }
 
-        Users select { name + Users.requiredCityId } forEach { userName, userRequiredCityId ->
-            val cityName = Cities select {name } find { id eq userRequiredCityId }
-            println("$userName's required city is $cityName")
+        Users columns { name + requiredCityId } forEach { userName, requiredCityId ->
+            val cityName = Cities columns { name } find { id eq requiredCityId }
+            println("${userName}'s required city is $cityName")
         }
 
         array(Users, Cities) forEach { it.drop() }
