@@ -45,9 +45,15 @@ fun main(args: Array<String>) {
             println(it)
         }
 
+        val names = Cities columns { name } map { it }
+        println(names)
+
         for ((id, name) in Cities columns { all }) {
             println("$id: $name")
         }
+
+        val cities = Cities columns { all } map { id, name -> Pair(id, name) }
+        println(cities)
 
         Cities columns { all } filter { name eq "St. Petersburg" } forEach { id, name ->
             println("$id")

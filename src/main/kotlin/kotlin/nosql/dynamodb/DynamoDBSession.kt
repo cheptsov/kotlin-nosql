@@ -95,6 +95,22 @@ class DynamoDBSession(val client: AmazonDynamoDBClient) : Session() {
             statement(item.get(name)!! to columnType)
         }
     }
+
+    override fun <T : Table, C, M> Column<C, T>.map(statement: (C) -> M): List<M> {
+        val results = ArrayList<M>()
+        val scanRequest = ScanRequest(table.tableName)
+                .withAttributesToGet(name)
+        val scanResult = client.scan(scanRequest)!!
+        for (item in scanResult.getItems()!!) {
+            results.add(statement(item.get(name)!! to columnType))
+        }
+        return results
+    }
+
+    override fun <T : Table, C> Column<C, T>.iterator(): Iterator<C> {
+        return map { it }.iterator()
+    }
+
     override fun <T : Table, A, B> Template2<T, A, B>.forEach(statement: (A, B) -> Unit) {
         val scanRequest = ScanRequest(table.tableName)
                 .withAttributesToGet(a.name, b.name)
@@ -103,6 +119,18 @@ class DynamoDBSession(val client: AmazonDynamoDBClient) : Session() {
             statement(item.get(a.name)!! to a.columnType, item.get(b.name)!! to b.columnType)
         }
     }
+
+    override fun <T : Table, A, B, M> Template2<T, A, B>.map(statement: (A, B) -> M): List<M> {
+        val results = ArrayList<M>()
+        val scanRequest = ScanRequest(table.tableName)
+                .withAttributesToGet(a.name, b.name)
+        val scanResult = client.scan(scanRequest)!!
+        for (item in scanResult.getItems()!!) {
+            results.add(statement(item.get(a.name)!! to a.columnType, item.get(b.name)!! to b.columnType))
+        }
+        return results
+    }
+
     override fun <T : Table, A, B> Template2<T, A, B>.iterator(): Iterator<Pair<A, B>> {
         val results = ArrayList<Pair<A, B>>()
         val scanRequest = ScanRequest(table.tableName)
@@ -160,7 +188,11 @@ class DynamoDBSession(val client: AmazonDynamoDBClient) : Session() {
     }
 
     override fun <T : Table> T.drop() {
-        client.deleteTable(DeleteTableRequest().withTableName(tableName))!!.getTableDescription()
+        try {
+            client.deleteTable(DeleteTableRequest().withTableName(tableName))!!.getTableDescription()
+        } catch(e: AmazonServiceException) {
+            println(e.getMessage())
+        }
     }
 
     override fun <T : Table> T.create() {
@@ -179,11 +211,8 @@ class DynamoDBSession(val client: AmazonDynamoDBClient) : Session() {
         try {
             client.createTable(createTableRequest)!!.getTableDescription()
         } catch (e: AmazonServiceException) {
-            if (e.getErrorCode() == "400" && e.getMessage()!!.contains("Duplicate table name")) {
-                println("Table $tableName already exists")
-                // Skip as table is already exist
-                return
-            }
+            println(e.getMessage())
+            return
         }
 
         System.out.println("Waiting for " + tableName + " to become ACTIVE...")

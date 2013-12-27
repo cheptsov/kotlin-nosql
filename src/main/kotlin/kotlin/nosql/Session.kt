@@ -29,10 +29,15 @@ abstract class Session () {
 
     abstract fun <T: Table, C> Column<C, T>.forEach(statement: (C) -> Unit)
 
+    abstract fun <T : Table, C> Column<C, T>.iterator(): Iterator<C>
+
+    abstract fun <T : Table, C, M> Column<C, T>.map(statement: (C) -> M): List<M>
+
     abstract fun <T: Table, C> Column<C, T>.find(op: T.() -> Op) : C?
 
     abstract fun <T: Table, A, B> Template2<T, A, B>.forEach(statement: (A, B) -> Unit)
     abstract fun <T: Table, A, B> Template2<T, A, B>.iterator(): Iterator<Pair<A, B>>
+    abstract fun <T : Table, A, B, M> Template2<T, A, B>.map(statement: (A, B) -> M): List<M>
 
     abstract fun <T: Table, A, B> Query2<T, A, B>.forEach(statement: (A, B) -> Unit)
     abstract fun <T: Table, A, B> Query2<T, A, B>.iterator(): Iterator<Pair<A, B>>
