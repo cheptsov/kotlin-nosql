@@ -19,12 +19,12 @@ fun <T: Table> T.integer(name: String): Column<Int, T> {
     return column(name, ColumnType.INTEGER)
 }
 
-fun <T: Table> T.string(name: String, length: Int): Column<String, T> {
-    return column(name, ColumnType.STRING, length = length)
+fun <T: Table> T.string(name: String): Column<String, T> {
+    return column(name, ColumnType.STRING)
 }
 
-private fun <C, T: Table> T.column(name: String, columnType: ColumnType, length: Int = 0, autoIncrement: Boolean = false): Column<C, T> {
-    val column = Column<C, T>(this, name, columnType, false, length)
+private fun <C, T: Table> T.column(name: String, columnType: ColumnType): Column<C, T> {
+    val column = Column<C, T>(this, name, columnType, false)
     (tableColumns as ArrayList<Column<*, T>>).add(column)
     return column
 }

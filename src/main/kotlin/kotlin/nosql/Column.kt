@@ -2,7 +2,7 @@ package kotlin.nosql
 
 import java.util.ArrayList
 
-open class Column<C, T: Table>(table: T, val name: String, val columnType: ColumnType, val _nullable: Boolean, val length: Int) : Field<C, T>(table) {
+open class Column<C, T: Table>(table: T, val name: String, val columnType: ColumnType, val _nullable: Boolean) : Field<C, T>(table) {
     fun eq(other: Expression): Op {
         return EqualsOp(this, other)
     }
@@ -19,9 +19,9 @@ open class Column<C, T: Table>(table: T, val name: String, val columnType: Colum
         return "${table.tableName}.$name"
     }
 
-    fun id(): PKColumn<C, T> {
+    fun key(): PKColumn<C, T> {
         (table.tableColumns as ArrayList<Column<*, T>>).remove(this)
-        val column = PKColumn<C, T>(table, name, columnType, length)
+        val column = PKColumn<C, T>(table, name, columnType)
         (table.tableColumns as ArrayList<Column<*, T>>).add(column)
         (table.primaryKeys as ArrayList<PKColumn<*, T>>).add(column)
         return column
@@ -36,9 +36,9 @@ open class Column<C, T: Table>(table: T, val name: String, val columnType: Colum
     }
 }
 
-fun <C, T : Table> Column<C, T>.nullable(): Column<C?, T> {
+fun <C, T : Table> Column<C, T>.optional(): Column<C?, T> {
     (table.tableColumns as ArrayList<Column<*, T>>).remove(this)
-    val column = (Column<C?, T>(table, name, columnType, true, length)) as Column<C?, T>
+    val column = (Column<C?, T>(table, name, columnType, true)) as Column<C?, T>
     (table.tableColumns as ArrayList<Column<*, T>>).add(column)
     return column
 }
@@ -52,30 +52,5 @@ fun Column<*, *>.eq(other: Expression): Op {
     return EqualsOp(this, other)
 }
 
-open class PKColumn<C, T: Table>(table: T, name: String, columnType: ColumnType, length: Int) : Column<C, T>(table, name, columnType, false, length) {
-}
-
-fun <T:Table> PKColumn<Int, T>.generated(): GeneratedPKColumn<Int, T> {
-    (table.tableColumns as ArrayList<Column<*, T>>).remove(this)
-    (table.primaryKeys as ArrayList<PKColumn<*, T>>).remove(this)
-    val column = GeneratedPKColumn<Int, T>(table, name, columnType, length)
-    (table.tableColumns as ArrayList<Column<*, T>>).add(column)
-    (table.primaryKeys as ArrayList<PKColumn<*, T>>).add(column)
-    return column
-}
-
-fun <T:Table> Column<Int, T>.generated(): GeneratedColumn<Int, T> {
-    (table.tableColumns as ArrayList<Column<*, T>>).remove(this)
-    (table.primaryKeys as ArrayList<PKColumn<*, T>>).remove(this)
-    val column = GeneratedColumn<Int, T>(table, name, columnType, length)
-    (table.tableColumns as ArrayList<Column<*, T>>).add(column)
-    (table.primaryKeys as ArrayList<Column<*, T>>).add(column)
-    return column
-}
-
-
-class GeneratedPKColumn<C, T: Table>(table: T, name: String, columnType: ColumnType, length: Int) : PKColumn<C, T>(table, name, columnType, length), GeneratedValue<C> {
-}
-
-class GeneratedColumn<C, T: Table>(table: T, name: String, columnType: ColumnType, length: Int) : Column<C, T>(table, name, columnType, false, length), GeneratedValue<C> {
+open class PKColumn<C, T: Table>(table: T, name: String, columnType: ColumnType) : Column<C, T>(table, name, columnType, false) {
 }
