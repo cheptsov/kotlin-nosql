@@ -1,7 +1,7 @@
 Kotlin NoSQL Library
 ==================
 
-A type safe [Kotlin](https://github.com/JetBrains/kotlin) DSL for working with NoSQL databases.
+A type-safe [Kotlin](https://github.com/JetBrains/kotlin) DSL for accessing NoSQL database.
 
 ```java
 import kotlin.nosql.*
