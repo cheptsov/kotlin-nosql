@@ -10,20 +10,18 @@ import kotlin.nosql.dynamodb.*
 object Users : Table() {
     val id = string("id").key() // PKColumn<String, Users>
     val name = string("name") // Column<String, Users>
-    val requiredCityId = integer("required_city_id") // Column<Int, Users>
-    val optionalCityId = integer("optional_city_id").optional() // Column<Int?, Users>
-
-    val all = id + name + requiredCityId + optionalCityId // Template4<Users, String, Int, Int?>
-}
-
-object Users : Table() {
-    val id = string("id").key() // PKColumn<String, Users>
-    val name = string("name") // Column<String, Users>
     val favoriteCityId = integer("favorite_city_id").nullable() // Column<Int?, Users>
 
     val friendUserIds = string("friend_user_ids").set() // Column<Set<String>, Users>
 
     val all = id + name + favoriteCityId + friendUserIds // Template4<Users, String, Int, Int?>
+}
+
+object Cities : Table() {
+    val id = integer("id").key() // PKColumn<Int, Cities>
+    val name = string("name") // Column<String, Cities>
+
+    val all = id + name // Template2<Cities, Int, String>
 }
 
 object Cities : Table() {
