@@ -41,11 +41,21 @@ abstract class Query<C, T: Table>(val fields: Array<Field<*, T>>) {
     fun forEach(statement: (row: T) -> Unit) {
         session.forEach(this, statement)
     }*/
+
+    fun set(c: () -> C) {
+
+    }
 }
 
 
 class Query2<T: Table, A, B>(val a: Column<A, T>, val b: Column<B, T>): Query<Pair<A, B>, T>(array(a, b)) {
     override fun where(op: Op): Query2<T, A, B> {
         return super.where(op) as Query2<T, A, B>
+    }
+}
+
+class Query1<T: Table, A>(val a: Column<A, T>): Query<A, T>(array(a)) {
+    override fun where(op: Op): Query1<T, A> {
+        return super.where(op) as Query1<T, A>
     }
 }

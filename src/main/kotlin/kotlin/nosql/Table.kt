@@ -29,7 +29,7 @@ private fun <C, T: Table> T.column(name: String, columnType: ColumnType): Column
     return column
 }
 
-fun <T:Table> T.update(body: T.() -> Op): FilterQuery<T> {
+fun <T: Table> T.filter(body: T.() -> Op): FilterQuery<T> {
     return FilterQuery(this, body())
 }
 
@@ -62,7 +62,7 @@ fun <T: Table, C> Column<C, T>.find(op: T.() -> Op): C {
 }
 */
 
-fun <T: Table, X> T.columns(selector: T.() -> X): X {
+fun <T: Table, X> T.attrs(selector: T.() -> X): X {
     return selector();
 }
 
@@ -115,7 +115,7 @@ class Template2<T: Table, A, B>(val table: T, val a: Column<A, T>, val b: Column
         return Template3(table, a, b, c)
     }
 
-    fun insert(statement: () -> Pair<A, B>) {
+    fun put(statement: () -> Pair<A, B>) {
         val tt = statement()
         Session.get().insert(array(Pair(a, tt.first), Pair(b, tt.second)))
     }
@@ -156,7 +156,7 @@ class Template4<T: Table, A, B, C, D>(val table: T, val a: Column<A, T>, val b: 
         Session.get().insert(array(Pair(a, va), Pair(b, vb), Pair(c, vc), Pair(d, vd)))
     }
 
-    fun insert(statement: () -> Quadruple<A, B, C, D>) {
+    fun put(statement: () -> Quadruple<A, B, C, D>) {
         val tt = statement()
         Session.get().insert(array(Pair(a, tt.component1()), Pair(b, tt.component2()), Pair(c, tt.component3()), Pair(d, tt.component4())))
     }
