@@ -8,7 +8,7 @@ class DynamoDBTests {
     object Users : Table("users") {
         val id = string("id").key() // PKColumn<String, Users>
         val name = string("name") // Column<String, Users>
-        val favoriteCityId = nullableInteger("favorite_city_id").nullable() // Column<Int?, Users>
+        val favoriteCityId = nullableInteger("favorite_city_id") // Column<Int?, Users>
 
         val friendUserIds = setOfString("friend_user_ids") // Column<Set<String>, Users>
 
