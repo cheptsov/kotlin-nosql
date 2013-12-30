@@ -23,11 +23,15 @@ abstract class Session () {
 
     abstract fun <T : Table> insert(columns: Array<Pair<Column<*, T>, *>>)
 
-    abstract fun <T : Table> update(columns: Array<Pair<Column<*, T>, *>>)
+    /*abstract fun <T : Table> update(columns: Array<Pair<Column<*, T>, *>>)*/
 
     abstract fun <T: Table> delete(table: T, op: Op)
 
-    abstract fun <T: Table> update(query: UpdateQuery<T>)
+    /*abstract fun <T: Table> update(query: UpdateQuery<T>)*/
+
+    abstract fun <T: Table, C> Query1<T, C>.set(c: () -> C)
+
+    abstract fun <T: Table, C> Query1<T, Set<C>>.push(c: () -> C)
 
     abstract fun <T: Table, C> Column<C, T>.forEach(statement: (C) -> Unit)
 
@@ -36,6 +40,8 @@ abstract class Session () {
     abstract fun <T : Table, C, M> Column<C, T>.map(statement: (C) -> M): List<M>
 
     abstract fun <T: Table, C> Column<C, T>.get(op: T.() -> Op) : C?
+
+    abstract fun <T: Table, A, B> Template2<T, A, B>.get(op: T.() -> Op) : Pair<A, B>?
 
     abstract fun <T: Table, A, B> Template2<T, A, B>.forEach(statement: (A, B) -> Unit)
     abstract fun <T: Table, A, B> Template2<T, A, B>.iterator(): Iterator<Pair<A, B>>

@@ -3,7 +3,6 @@ package kotlin.nosql.dynamodb
 import kotlin.nosql.Session
 import kotlin.nosql.Table
 import kotlin.nosql.Column
-import kotlin.nosql.UpdateQuery
 import kotlin.nosql.Op
 import com.amazonaws.services.dynamodb.AmazonDynamoDBClient
 import com.amazonaws.services.dynamodb.model.CreateTableRequest
@@ -33,6 +32,8 @@ import com.amazonaws.services.dynamodb.model.AttributeValueUpdate
 import com.amazonaws.services.dynamodb.model.AttributeAction
 import com.amazonaws.services.dynamodb.model.DeleteItemRequest
 import java.util.Collections
+import kotlin.nosql.Query1
+import kotlin.nosql.UpdateQuery
 
 class DynamoDBSession(val client: AmazonDynamoDBClient) : Session() {
     override fun <T : Table, C> Column<C, T>.get(op: T.() -> Op): C? {
@@ -45,7 +46,17 @@ class DynamoDBSession(val client: AmazonDynamoDBClient) : Session() {
         return null
     }
 
-    override fun <T : Table> delete(table:T, op: Op) {
+    override fun <T : Table, A, B> Template2<T, A, B>.get(op: T.() -> Op): Pair<A, B>? {
+        val scanRequest = ScanRequest(a.table.tableName)
+                .withAttributesToGet(a.name, b.name)!!.withScanFilter(getScanFilter(a.table.op()))!!
+        val scanResult = client.scan(scanRequest)!!
+        for (item in scanResult.getItems()!!) {
+            return Pair(item.get(a.name)!! to a.columnType, item.get(b.name)!! to b.columnType)
+        }
+        return null
+    }
+
+    override fun <T : Table> delete(table: T, op: Op) {
         if (op is EqualsOp) {
             if (op.expr1 is PKColumn<*, *> && op.expr2 is LiteralOp) {
                 var deleteItemRequest = DeleteItemRequest().withTableName(table.tableName)!!
@@ -55,7 +66,7 @@ class DynamoDBSession(val client: AmazonDynamoDBClient) : Session() {
         }
     }
 
-    override fun <T : Table> update(query: UpdateQuery<T>) {
+    private fun <T : Table> update(query: UpdateQuery<T>) {
         if (query.where is EqualsOp && query.where.expr1 is PKColumn<*, *> && query.where.expr2 is LiteralOp) {
             val updates = HashMap<String, AttributeValueUpdate>()
             for (v in query.values) {
@@ -67,6 +78,26 @@ class DynamoDBSession(val client: AmazonDynamoDBClient) : Session() {
             client.updateItem(updateItemRequest)
         }
     }
+
+    override fun <T : Table, C> Query1<T, C>.set(c: () -> C) {
+        val updateQuery = UpdateQuery(a.table, op!!)
+        updateQuery.set(a, c())
+        update(updateQuery)
+    }
+
+    override fun <T : Table, C> Query1<T, Set<C>>.push(c: () -> C) {
+        val where = op!!
+        if (where is EqualsOp && where.expr1 is PKColumn<*, *> && where.expr2 is LiteralOp) {
+            val updates = HashMap<String, AttributeValueUpdate>()
+            val v = c()
+            updates.put(a.name, AttributeValueUpdate(toAttributeValue(setOf(v), a.columnType), AttributeAction.ADD))
+            var updateItemRequest = UpdateItemRequest().withTableName(a.table.tableName)!!
+                    .withKey(Key(toAttributeValue((where.expr2 as LiteralOp).value, where.expr1.columnType)))!!
+                    .withAttributeUpdates(updates)
+            client.updateItem(updateItemRequest)
+        }
+    }
+
 
     private fun <C> AttributeValue.to(columnType: ColumnType): C {
         return when (columnType) {
@@ -198,24 +229,6 @@ class DynamoDBSession(val client: AmazonDynamoDBClient) : Session() {
                         val values = column.second as Set<String>
                         AttributeValue().withSS(values)!!
                     }
-                    else ->
-                        throw IllegalArgumentException()
-                })
-            }
-        }
-        var putItemRequest = PutItemRequest(columns[0].first.table.tableName, item)
-        client.putItem(putItemRequest)
-    }
-
-    override fun <T : Table> update(columns: Array<Pair<Column<*, T>, *>>) {
-        val item = HashMap<String, AttributeValue>()
-        for (column in columns) {
-            if (column.second != null) {
-                item.put(column.first.name, when (column.first.columnType) {
-                    ColumnType.INTEGER -> AttributeValue().withN(column.second.toString())!!
-                    ColumnType.INTEGER_SET -> AttributeValue().withNS((column.second as Set<Int>).map { it.toString() })!!
-                    ColumnType.STRING -> AttributeValue().withS(column.second as String)!!
-                    ColumnType.STRING_SET -> AttributeValue().withSS(column.second as Set<String>)!!
                     else ->
                         throw IllegalArgumentException()
                 })

@@ -19,6 +19,22 @@ fun <T: Table> T.integer(name: String): Column<Int, T> {
     return column(name, ColumnType.INTEGER)
 }
 
+fun <T: Table> T.nullableInteger(name: String): Column<Int?, T> {
+    return column<Int, T>(name, ColumnType.INTEGER).nullable()
+}
+
+fun <T: Table> T.nullableString(name: String): Column<String?, T> {
+    return column<String, T>(name, ColumnType.STRING).nullable()
+}
+
+fun <T: Table> T.setOfInteger(name: String): Column<Set<Int>, T> {
+    return column(name, ColumnType.INTEGER_SET)
+}
+
+fun <T: Table> T.setOfString(name: String): Column<Set<String>, T> {
+    return column(name, ColumnType.STRING_SET)
+}
+
 fun <T: Table> T.string(name: String): Column<String, T> {
     return column(name, ColumnType.STRING)
 }
@@ -115,7 +131,7 @@ class Template2<T: Table, A, B>(val table: T, val a: Column<A, T>, val b: Column
         return Template3(table, a, b, c)
     }
 
-    fun put(statement: () -> Pair<A, B>) {
+    fun set(statement: () -> Pair<A, B>) {
         val tt = statement()
         Session.get().insert(array(Pair(a, tt.first), Pair(b, tt.second)))
     }
@@ -156,7 +172,7 @@ class Template4<T: Table, A, B, C, D>(val table: T, val a: Column<A, T>, val b: 
         Session.get().insert(array(Pair(a, va), Pair(b, vb), Pair(c, vc), Pair(d, vd)))
     }
 
-    fun put(statement: () -> Quadruple<A, B, C, D>) {
+    fun set(statement: () -> Quadruple<A, B, C, D>) {
         val tt = statement()
         Session.get().insert(array(Pair(a, tt.component1()), Pair(b, tt.component2()), Pair(c, tt.component3()), Pair(d, tt.component4())))
     }

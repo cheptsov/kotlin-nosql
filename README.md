@@ -7,24 +7,17 @@ A type-safe [Kotlin](https://github.com/JetBrains/kotlin) DSL for accessing NoSQ
 import kotlin.nosql.*
 import kotlin.nosql.dynamodb.*
 
-object Users : Table() {
+object Users : Table("users") {
     val id = string("id").key() // PKColumn<String, Users>
     val name = string("name") // Column<String, Users>
-    val favoriteCityId = integer("favorite_city_id").nullable() // Column<Int?, Users>
+    val favoriteCityId = nullableInteger("favorite_city_id").nullable() // Column<Int?, Users>
 
-    val friendUserIds = string("friend_user_ids").set() // Column<Set<String>, Users>
+    val friendUserIds = setOfString("friend_user_ids") // Column<Set<String>, Users>
 
     val all = id + name + favoriteCityId + friendUserIds // Template4<Users, String, Int, Int?>
 }
 
-object Cities : Table() {
-    val id = integer("id").key() // PKColumn<Int, Cities>
-    val name = string("name") // Column<String, Cities>
-
-    val all = id + name // Template2<Cities, Int, String>
-}
-
-object Cities : Table() {
+object Cities : Table("cities") {
     val id = integer("id").key() // PKColumn<Int, Cities>
     val name = string("name") // Column<String, Cities>
 
@@ -32,24 +25,26 @@ object Cities : Table() {
 }
 
 fun main(args: Array<String>) {
-    var db = DynamoDB(accessKey = "...", secretKey = "...")
+    var db = DynamoDB(accessKey = System.getenv("AWS_KEY")!!,secretKey = System.getenv("AWS_SECRET")!!)
 
     db {
         array(Cities, Users) forEach { it.create() }
 
-        Cities attrs { all } put { values(1, "St. Petersburg") }
-        Cities attrs { all } put { values(2, "Munich") }
-        Cities attrs { all } put { values(3, "Prague") }
+        Cities attrs { all } set { values(1, "St. Petersburg") }
+        Cities attrs { all } set { values(2, "Munich") }
+        Cities attrs { all } set { values(3, "Prague") }
 
-        Users attrs { all } put { values("andrey", "Andrey", 1, setOf("sergey", "eugene", "alex")) }
-        Users attrs { all } put { values("sergey", "Sergey", 2, setOf("andrey", "eugene", "alex"))}
-        Users attrs { all } put { values("eugene", "Eugene", 1, setOf("sergey", "andrey", "alex")) }
-        Users attrs { all } put { values("alex", "Alex", 1, setOf("sergey", "eugene", "andrey")) }
-        Users attrs { all } put { values("xmth", "Something", null, setOf()) }
+        Users attrs { all } set { values("andrey", "Andrey", 1, setOf("sergey", "eugene")) }
+        Users attrs { all } set { values("sergey", "Sergey", 2, setOf("andrey", "eugene", "alex")) }
+        Users attrs { all } set { values("eugene", "Eugene", 1, setOf("sergey", "andrey", "alex")) }
+        Users attrs { all } set { values("alex", "Alex", 1, setOf("sergey", "eugene", "andrey")) }
+        Users attrs { all } set { values("xmth", "Something", null, setOf()) }
+
+        Users attrs { friendUserIds } filter { id eq "andrey" } push { "alex" }
 
         Users attrs { name } filter { id eq "alex" } set { "Alexey" }
 
-        Users filter { id eq "xmth" } delete {}
+        Users filter { id eq "xmth" } delete { }
 
         Cities attrs { name } forEach {
             println(it)

@@ -41,12 +41,10 @@ abstract class Query<C, T: Table>(val fields: Array<Field<*, T>>) {
     fun forEach(statement: (row: T) -> Unit) {
         session.forEach(this, statement)
     }*/
-
-    fun set(c: () -> C) {
-
-    }
 }
 
+fun <T: Table, C> Query<Set<C>, T>.remove(value: () -> C) {
+}
 
 class Query2<T: Table, A, B>(val a: Column<A, T>, val b: Column<B, T>): Query<Pair<A, B>, T>(array(a, b)) {
     override fun where(op: Op): Query2<T, A, B> {
