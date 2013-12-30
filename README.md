@@ -25,7 +25,7 @@ object Cities : Table("cities") {
 }
 
 fun main(args: Array<String>) {
-    var db = DynamoDB(accessKey = System.getenv("AWS_KEY")!!,secretKey = System.getenv("AWS_SECRET")!!)
+    var db = DynamoDB(accessKey = "...", secretKey = "...")
 
     db {
         array(Cities, Users) forEach { it.create() }
