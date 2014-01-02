@@ -55,8 +55,7 @@ class RedisTests {
                     Posts columns { text } get { id eq postId }
                 }
                 println("User '$name' has following posts: $posts")
-                val followerIds: Set<Int> = Users columns { followers } get { id eq aUserId }
-                val followers = followerIds map { userId ->
+                val followers = Users columns { followers } get { id eq aUserId } map { userId ->
                     Users columns { this.name } get { id eq userId }
                 }
                 println("User '$name' has followers $followers")
