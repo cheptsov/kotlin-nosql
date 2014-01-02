@@ -59,8 +59,6 @@ class RedisTests {
                 }
                 println("User '$name' has followers $followers")
             }
-
-            array(Posts, Users).forEach { it.drop() }
         }
     }
 }
