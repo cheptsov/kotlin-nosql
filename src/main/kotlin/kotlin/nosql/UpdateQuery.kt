@@ -3,7 +3,7 @@ package kotlin.nosql
 import java.sql.Connection
 import java.util.LinkedHashMap
 
-class UpdateQuery<T: Table>(val table: T, val where: Op) {
+class UpdateQuery<T: Schema>(val table: T, val where: Op) {
     val values = LinkedHashMap<Column<*, T>, Any>()
 
     fun <C> set(column: Column<C, T>, value: C) {

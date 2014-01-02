@@ -1,88 +1,69 @@
 Kotlin NoSQL Library
 ==================
 
-A type-safe [Kotlin](https://github.com/JetBrains/kotlin) DSL for accessing NoSQL database.
+A type-safe [Kotlin](https://github.com/JetBrains/kotlin) DSL for accessing NoSQL databases (Redis, DynamoDB).
 
 ```java
-import kotlin.nosql.*
-import kotlin.nosql.dynamodb.*
+class RedisTests {
+    object Users: Schema("users") {
+        val id = integerPK("id") // PKColumn<Int, Users>
+        val name = string("username") // Column<String, Users>
+        val password = string("password") // Column<String, Users>
+        val posts = listOfInteger("posts") // Column<List<Int>>, Users>
+        val followers = setOfInteger("followers") // Column<Set<Int>>, Users>
+        val following = setOfInteger("following") // Column<Set<Int>>, Users>
+        val auth = nullableString("auth") // Column<String?>, Users>
 
-object Users : Table("users") {
-    val id = string("id").key() // PKColumn<String, Users>
-    val name = string("name") // Column<String, Users>
-    val favoriteCityId = nullableInteger("favorite_city_id") // Column<Int?, Users>
+        val all = id + name + password // Template3<Users, Int, String, String>
+    }
 
-    val friendUserIds = setOfString("friend_user_ids") // Column<Set<String>, Users>
+    object Posts: Schema("posts") {
+        val id = integerPK("id") // PKColumn<Int, Posts>
+        val text = string("text") // Column<String, Posts>
+    }
 
-    val all = id + name + favoriteCityId + friendUserIds // Template4<Users, String, Int, Int?>
-}
+    object Global: Schema("global") {
+        val userId = integer("nextUserId") // Column<Int, Global>
+        val postId = integer("nextPostId") // Column<Int, Global>
+    }
 
-object Cities : Table("cities") {
-    val id = integer("id").key() // PKColumn<Int, Cities>
-    val name = string("name") // Column<String, Cities>
+    Test
+    fun test() {
+        var db = Redis("localhost")
 
-    val all = id + name // Template2<Cities, Int, String>
-}
+        db {
+            val aUserId = Global next { userId }
+            val anotherUserId = Global next { userId }
 
-fun main(args: Array<String>) {
-    var db = DynamoDB(accessKey = "...", secretKey = "...")
+            Users columns { all } insert { values(aUserId, "antirez", "p1pp0") }
+            Users columns { all } insert { values(anotherUserId, "pippo", "p1pp0") }
 
-    db {
-        array(Cities, Users) forEach { it.create() }
+            val aPostId = Global next { postId }
+            val anotherPostId = Global next { postId }
 
-        Cities attrs { all } set { values(1, "St. Petersburg") }
-        Cities attrs { all } set { values(2, "Munich") }
-        Cities attrs { all } set { values(3, "Prague") }
+            Posts columns { id + text } insert { values(aPostId, "A post") }
+            Posts columns { id + text } insert { values(anotherPostId, "Another post") }
 
-        Users attrs { all } set { values("andrey", "Andrey", 1, setOf("sergey", "eugene")) }
-        Users attrs { all } set { values("sergey", "Sergey", 2, setOf("andrey", "eugene", "alex")) }
-        Users attrs { all } set { values("eugene", "Eugene", 1, setOf("sergey", "andrey", "alex")) }
-        Users attrs { all } set { values("alex", "Alex", 1, setOf("sergey", "eugene", "andrey")) }
-        Users attrs { all } set { values("xmth", "Something", null, setOf()) }
+            Users columns { posts } filter { id eq aUserId } add { aPostId }
+            Users columns { posts } filter { id eq aUserId } add { anotherPostId }
 
-        Users attrs { friendUserIds } filter { id eq "andrey" } push { "alex" }
+            Users columns { followers } filter { id eq aUserId } add { anotherUserId }
 
-        Users attrs { name } filter { id eq "alex" } set { "Alexey" }
-
-        Users filter { id eq "xmth" } delete { }
-
-        Cities attrs { name } forEach {
-            println(it)
-        }
-
-        val names = Cities attrs { name } map { it }
-        println(names)
-
-        for ((id, name) in Cities attrs { all }) {
-            println("$id: $name")
-        }
-
-        val cities = Cities attrs { all } map { id, name -> Pair(id, name) }
-        println(cities)
-
-        Cities attrs { all } filter { name eq "St. Petersburg" } forEach { id, name ->
-            println("$id")
-        }
-
-        for ((id, name) in Cities attrs { all } filter { name eq "St. Petersburg" }) {
-            println("$id")
-        }
-
-        Users attrs { name + favoriteCityId } forEach { userName, cityId ->
-            if (cityId != null) {
-                val cityName = Cities attrs { name } get { id eq cityId }
-                println("${userName}'s favorite city is $cityName")
-            } else {
-                println("${userName} has no favorite city")
+            Users columns { name + password } filter { id eq aUserId } get { name, password ->
+                println("User '$name' has password '$password'")
+                val posts = Users columns { posts } filter { id eq aUserId } get { 0..20 } map { postId ->
+                    Posts columns { text } get { id eq postId }
+                }
+                println("User '$name' has following posts: $posts")
+                val followerIds: Set<Int> = Users columns { followers } get { id eq aUserId }
+                val followers = followerIds map { userId ->
+                    Users columns { this.name } get { id eq userId }
+                }
+                println("User '$name' has followers $followers")
             }
-        }
 
-        Users attrs { name + friendUserIds } forEach { userName, friendUserIds ->
-            val friends = friendUserIds.map { friendUserId -> Users attrs { name } get { id eq friendUserId } }
-            println("${userName}'s friends are: $friends")
+            array(Posts, Users).forEach { it.drop() }
         }
-
-        array(Users, Cities) forEach { it.drop() }
     }
 }
 ```

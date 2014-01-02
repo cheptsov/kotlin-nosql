@@ -1,6 +1,6 @@
 package kotlin.nosql
 
-class FilterQuery<T: Table>(val table: T, val op: Op) {
+class FilterQuery<T: Schema>(val table: T, val op: Op) {
 }
 
 /*
@@ -12,6 +12,6 @@ fun <T: Table> FilterQuery<T>.set(body: T.(UpdateQuery<T>) -> Unit): UpdateQuery
 }
 */
 
-fun <T: Table> FilterQuery<T>.delete(st: () -> Unit = {}) {
+fun <T: Schema> FilterQuery<T>.delete(st: () -> Unit = {}) {
     Session.get().delete(table, op)
 }

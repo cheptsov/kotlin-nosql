@@ -2,7 +2,7 @@ package kotlin.nosql
 
 import java.util.ArrayList
 
-open class Column<C, T : Table>(table: T, val name: String, val columnType: ColumnType, val _nullable: Boolean) : Field<C, T>(table) {
+open class Column<C, T : Schema>(table: T, val name: String, val columnType: ColumnType, val _nullable: Boolean) : Field<C, T>(table) {
     fun eq(other: Expression): Op {
         return EqualsOp(this, other)
     }
@@ -19,7 +19,7 @@ open class Column<C, T : Table>(table: T, val name: String, val columnType: Colu
         return "${table.tableName}.$name"
     }
 
-    fun key(): PKColumn<C, T> {
+    fun primaryKey(): PKColumn<C, T> {
         (table.tableColumns as ArrayList<Column<*, T>>).remove(this)
         val column = PKColumn<C, T>(table, name, columnType)
         (table.tableColumns as ArrayList<Column<*, T>>).add(column)
@@ -36,20 +36,31 @@ open class Column<C, T : Table>(table: T, val name: String, val columnType: Colu
     }
 }
 
-fun <C, T : Table> Column<C, T>.nullable(): Column<C?, T> {
+fun <C, T : Schema> Column<C, T>.nullable(): Column<C?, T> {
     (table.tableColumns as ArrayList<Column<*, T>>).remove(this)
     val column = (Column<C?, T>(table, name, columnType, true)) as Column<C?, T>
     (table.tableColumns as ArrayList<Column<*, T>>).add(column)
     return column
 }
 
-fun <C, T : Table> Column<C, T>.set(): Column<Set<C>, T> {
+fun <C, T : Schema> Column<C, T>.set(): Column<Set<C>, T> {
     (table.tableColumns as ArrayList<Column<*, T>>).remove(this)
     val column = (Column<Set<C>, T>(table, name,
             when (columnType) { ColumnType.INTEGER -> ColumnType.INTEGER_SET
                 ColumnType.STRING -> ColumnType.STRING_SET
                 else -> throw IllegalArgumentException()
             }, true)) as Column<Set<C>, T>
+    (table.tableColumns as ArrayList<Column<*, T>>).add(column)
+    return column
+}
+
+fun <C, T : Schema> Column<C, T>.list(): Column<List<C>, T> {
+    (table.tableColumns as ArrayList<Column<*, T>>).remove(this)
+    val column = (Column<List<C>, T>(table, name,
+            when (columnType) { ColumnType.INTEGER -> ColumnType.INTEGER_LIST
+                ColumnType.STRING -> ColumnType.STRING_LIST
+                else -> throw IllegalArgumentException()
+            }, true)) as Column<List<C>, T>
     (table.tableColumns as ArrayList<Column<*, T>>).add(column)
     return column
 }
@@ -63,5 +74,5 @@ fun Column<*, *>.eq(other: Expression): Op {
     return EqualsOp(this, other)
 }
 
-open class PKColumn<C, T : Table>(table: T, name: String, columnType: ColumnType) : Column<C, T>(table, name, columnType, false) {
+open class PKColumn<C, T : Schema>(table: T, name: String, attributeType: ColumnType) : Column<C, T>(table, name, attributeType, false) {
 }

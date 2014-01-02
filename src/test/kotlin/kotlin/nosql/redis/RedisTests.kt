@@ -2,48 +2,66 @@ package kotlin.nosql.redis
 
 import org.junit.Test
 import kotlin.nosql.*
-import kotlin.nosql.dynamodb.DynamoDB
 
 class RedisTests {
-    object Users: Table("users") {
-        val id = integer("id").key()
-        val username = string("username")
-        val password = string("password")
-        val posts = setOfString("posts")
-        val followers = setOfInteger("followers")
-        val following = setOfInteger("following")
-        val auth = nullableString("auth")
+    object Users: Schema("users") {
+        val id = integerPK("id") // PKColumn<Int, Users>
+        val name = string("username") // Column<String, Users>
+        val password = string("password") // Column<String, Users>
+        val posts = listOfInteger("posts") // Column<List<Int>>, Users>
+        val followers = setOfInteger("followers") // Column<Set<Int>>, Users>
+        val following = setOfInteger("following") // Column<Set<Int>>, Users>
+        val auth = nullableString("auth") // Column<String?>, Users>
+
+        val all = id + name + password // Template3<Users, Int, String, String>
     }
 
-    object Posts: Table("posts") {
-        val id = integer("id").key()
-        val text = string("text")
+    object Posts: Schema("posts") {
+        val id = integerPK("id") // PKColumn<Int, Posts>
+        val text = string("text") // Column<String, Posts>
+    }
+
+    object Global: Schema("global") {
+        val userId = integer("nextUserId") // Column<Int, Global>
+        val postId = integer("nextPostId") // Column<Int, Global>
     }
 
     Test
     fun test() {
-        var db = DynamoDB(System.getenv("AWS_KEY")!!, System.getenv("AWS_SECRET")!!)
+        var db = Redis("localhost")
 
         db {
-            // Add new post
+            val aUserId = Global next { userId }
+            val anotherUserId = Global next { userId }
 
-            Posts attrs { id + text } set { values(1, "New post") }
+            Users columns { all } insert { values(aUserId, "antirez", "p1pp0") }
+            Users columns { all } insert { values(anotherUserId, "pippo", "p1pp0") }
 
-            // Update existing post
+            val aPostId = Global next { postId }
+            val anotherPostId = Global next { postId }
 
-            Posts attrs { text } filter { id eq 1 } set { "" }
+            Posts columns { id + text } insert { values(aPostId, "A post") }
+            Posts columns { id + text } insert { values(anotherPostId, "Another post") }
 
-            // Delete existing post
+            Users columns { posts } filter { id eq aUserId } add { aPostId }
+            Users columns { posts } filter { id eq aUserId } add { anotherPostId }
 
-            Posts filter { id eq 1 } delete { }
+            Users columns { followers } filter { id eq aUserId } add { anotherUserId }
 
-            // Get post's text by its id
+            Users columns { name + password } filter { id eq aUserId } get { name, password ->
+                println("User '$name' has password '$password'")
+                val posts = Users columns { posts } filter { id eq aUserId } get { 0..20 } map { postId ->
+                    Posts columns { text } get { id eq postId }
+                }
+                println("User '$name' has following posts: $posts")
+                val followerIds: Set<Int> = Users columns { followers } get { id eq aUserId }
+                val followers = followerIds map { userId ->
+                    Users columns { this.name } get { id eq userId }
+                }
+                println("User '$name' has followers $followers")
+            }
 
-            Posts attrs { text } get { id eq 1 }
-
-            val (id, followers) = (Users attrs { id + followers } get { id eq 1 })!!
-
-            followers.forEach {  }
+            array(Posts, Users).forEach { it.drop() }
         }
     }
 }

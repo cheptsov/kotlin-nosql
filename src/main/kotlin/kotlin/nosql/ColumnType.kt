@@ -5,4 +5,6 @@ enum class ColumnType {
     public STRING
     public INTEGER_SET
     public STRING_SET
+    public INTEGER_LIST
+    public STRING_LIST
 }
