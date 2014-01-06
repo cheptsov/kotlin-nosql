@@ -5,21 +5,21 @@ import kotlin.nosql.dynamodb.*
 import org.junit.Test
 
 class DynamoDBTests {
-    object Users : Schema("users") {
-        val id = stringPK("id") // PkColumn<String, Users>
-        val name = string("name") // Column<String, Users>
-        val favoriteCityId = nullableInteger("favorite_city_id") // Column<Int?, Users>
+    object Users : TableSchema("users") {
+        val ID = Column("id", javaClass<String>()).PrimaryKey()
+        val Name = Column("name", javaClass<String>())
+        val FavoriteCityId = Column("favorite_city_id", javaClass<Int>()).Nullable()
 
-        val friendUserIds = setOfString("friend_user_ids") // Column<Set<String>, Users>
+        val FriendUserIds = Column("friend_user_ids", javaClass<String>()).Set() // Column<Set<String>, Users>
 
-        val all = id + name + favoriteCityId + friendUserIds // Template4<Users, String, Int, Int?>
+        val All = ID + Name + FavoriteCityId + FriendUserIds
     }
 
-    object Cities : Schema("cities") {
-        val id = integer("id").primaryKey() // PKColumn<Int, Cities>
-        val name = string("name") // Column<String, Cities>
+    object Cities : TableSchema("cities") {
+        val Id = Column("id", javaClass<Int>()).PrimaryKey()
+        val Name = Column("name", javaClass<String>())
 
-        val all = id + name // Template2<Cities, Int, String>
+        val All = Id + Name
     }
 
     Test
@@ -29,55 +29,55 @@ class DynamoDBTests {
         db {
             array(Cities, Users) forEach { it.create() }
 
-            Cities columns { all } insert { values(1, "St. Petersburg") }
-            Cities columns { all } insert { values(2, "Munich") }
-            Cities columns { all } insert { values(3, "Prague") }
+            Cities columns { All } insert { values(1, "St. Petersburg") }
+            Cities columns { All } insert { values(2, "Munich") }
+            Cities columns { All } insert { values(3, "Prague") }
 
-            Users columns { all } insert { values("andrey", "Andrey", 1, setOf("sergey", "eugene")) }
-            Users columns { all } insert { values("sergey", "Sergey", 2, setOf("andrey", "eugene", "alex")) }
-            Users columns { all } insert { values("eugene", "Eugene", 1, setOf("sergey", "andrey", "alex")) }
-            Users columns { all } insert { values("alex", "Alex", 1, setOf("sergey", "eugene", "andrey")) }
-            Users columns { all } insert { values("xmth", "Something", null, setOf()) }
+            Users columns { All } insert { values("andrey", "Andrey", 1, setOf("sergey", "eugene")) }
+            Users columns { All } insert { values("sergey", "Sergey", 2, setOf("andrey", "eugene", "alex")) }
+            Users columns { All } insert { values("eugene", "Eugene", 1, setOf("sergey", "andrey", "alex")) }
+            Users columns { All } insert { values("alex", "Alex", 1, setOf("sergey", "eugene", "andrey")) }
+            Users columns { All } insert { values("xmth", "Something", null, setOf()) }
 
-            Users columns { friendUserIds } filter { id eq "andrey" } add { "alex" }
+            Users columns { FriendUserIds } filter { ID eq "andrey" } add { "alex" }
 
-            Users columns { name } filter { id eq "alex" } set { "Alexey" }
+            Users columns { Name } filter { ID eq "alex" } set { "Alexey" }
 
-            Users delete { id eq "xmth" }
+            Users delete { ID eq "xmth" }
 
-            Cities columns { name } forEach {
+            Cities columns { Name } forEach {
                 println(it)
             }
 
-            val names = Cities columns { name } map { it }
+            val names = Cities columns { Name } map { it }
             println(names)
 
-            for ((id, name) in Cities columns { all }) {
+            for ((id, name) in Cities columns { All }) {
                 println("$id: $name")
             }
 
-            val cities = Cities columns { all } map { id, name -> Pair(id, name) }
+            val cities = Cities columns { All } map { id, name -> Pair(id, name) }
             println(cities)
 
-            Cities columns { all } filter { name eq "St. Petersburg" } forEach { id, name ->
+            Cities columns { All } filter { Name eq "St. Petersburg" } forEach { id, name ->
                 println("$id")
             }
 
-            for ((id, name) in Cities columns { all } filter { name eq "St. Petersburg" }) {
+            for ((id, name) in Cities columns { All } filter { Name eq "St. Petersburg" }) {
                 println("$id")
             }
 
-            Users columns { name + favoriteCityId } forEach { userName, cityId ->
+            Users columns { Name + FavoriteCityId } forEach { userName, cityId ->
                 if (cityId != null) {
-                    val cityName = Cities columns { name } get { id eq cityId }
+                    val cityName = Cities columns { Name } get { Id eq cityId }
                     println("${userName}'s favorite city is $cityName")
                 } else {
                     println("${userName} has no favorite city")
                 }
             }
 
-            Users columns { name + friendUserIds } forEach { userName, friendUserIds ->
-                val friends = friendUserIds.map { friendUserId -> Users columns { name } get { id eq friendUserId } }
+            Users columns { Name + FriendUserIds } forEach { userName, friendUserIds ->
+                val friends = friendUserIds.map { friendUserId -> Users columns { Name } get { ID eq friendUserId } }
                 println("${userName}'s friends are: $friends")
             }
 

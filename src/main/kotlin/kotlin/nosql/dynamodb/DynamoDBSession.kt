@@ -1,7 +1,7 @@
 package kotlin.nosql.dynamodb
 
 import kotlin.nosql.Session
-import kotlin.nosql.Schema
+import kotlin.nosql.TableSchema
 import kotlin.nosql.Column
 import kotlin.nosql.Op
 import com.amazonaws.services.dynamodb.AmazonDynamoDBClient
@@ -36,34 +36,40 @@ import kotlin.nosql.Query1
 import kotlin.nosql.UpdateQuery
 import kotlin.nosql.RangeQuery
 import kotlin.nosql.NotFoundException
+import kotlin.nosql.KeyValueSchema
+import kotlin.nosql.AbstractSchema
+import kotlin.nosql.DocumentSchema
 
 class DynamoDBSession(val client: AmazonDynamoDBClient) : Session() {
-    override fun <T : Schema, A, B> Query2<T, A, B>.get(statement: (A, B) -> Unit) {
+    override fun <T : DocumentSchema<C>, C> T.get(op: T.() -> Op): C {
         throw UnsupportedOperationException()
     }
-    override fun <T : Schema> T.next(c: T.() -> Column<Int, T>): Int {
+    override fun <T : TableSchema, A, B> Query2<T, A, B>.get(statement: (A, B) -> Unit) {
         throw UnsupportedOperationException()
     }
-    override fun <T : Schema> Column<Int, T>.add(c: () -> Int): Int {
+    override fun <T : KeyValueSchema> T.next(c: T.() -> Column<Int, T>): Int {
         throw UnsupportedOperationException()
     }
-    override fun <T : Schema, C> T.set(c: () -> Column<C, T>, v: C) {
+    override fun <T : TableSchema> Column<Int, T>.add(c: () -> Int): Int {
         throw UnsupportedOperationException()
     }
-    override fun <T : Schema, C> T.get(c: T.() -> Column<C, T>): C {
+    override fun <T : KeyValueSchema, C> T.set(c: () -> Column<C, T>, v: C) {
         throw UnsupportedOperationException()
     }
-    override fun <T : Schema> Query1<T, Int>.add(c: () -> Int): Int {
+    override fun <T : KeyValueSchema, C> T.get(c: T.() -> Column<C, T>): C {
         throw UnsupportedOperationException()
     }
-    override fun <T : Schema, C, CC: Collection<*>> Query1<T, CC>.add(c: () -> C) {
+    override fun <T : TableSchema> Query1<T, Int>.add(c: () -> Int): Int {
+        throw UnsupportedOperationException()
+    }
+    override fun <T : TableSchema, C, CC: Collection<*>> Query1<T, CC>.add(c: () -> C) {
         val where = op!!
         if (where is EqualsOp && where.expr1 is PKColumn<*, *> && where.expr2 is LiteralOp &&
         (a.columnType == ColumnType.INTEGER_SET || a.columnType == ColumnType.STRING_SET )) {
             val updates = HashMap<String, AttributeValueUpdate>()
             val v = c()
             updates.put(a.name, AttributeValueUpdate(toAttributeValue(setOf(v), a.columnType), AttributeAction.ADD))
-            var updateItemRequest = UpdateItemRequest().withTableName(a.table.tableName)!!
+            var updateItemRequest = UpdateItemRequest().withTableName(a.table.name)!!
                     .withKey(Key(toAttributeValue((where.expr2 as LiteralOp).value, where.expr1.columnType)))!!
                     .withAttributeUpdates(updates)
             client.updateItem(updateItemRequest)
@@ -72,12 +78,12 @@ class DynamoDBSession(val client: AmazonDynamoDBClient) : Session() {
         }
     }
 
-    override fun <T : Schema, C> RangeQuery<T, C>.forEach(st: (C) -> Unit) {
+    override fun <T : TableSchema, C> RangeQuery<T, C>.forEach(st: (C) -> Unit) {
         throw UnsupportedOperationException()
     }
 
-    override fun <T : Schema, C> Column<C, T>.get(op: T.() -> Op): C {
-        val scanRequest = ScanRequest(table.tableName)
+    override fun <T : TableSchema, C> Column<C, T>.get(op: T.() -> Op): C {
+        val scanRequest = ScanRequest(table.name)
                 .withAttributesToGet(name)!!.withScanFilter(getScanFilter(table.op()))!!
         val scanResult = client.scan(scanRequest)!!
         for (item in scanResult.getItems()!!) {
@@ -86,8 +92,8 @@ class DynamoDBSession(val client: AmazonDynamoDBClient) : Session() {
         throw NotFoundException("<todo>")
     }
 
-    override fun <T : Schema, A, B> Template2<T, A, B>.get(op: T.() -> Op): Pair<A, B>? {
-        val scanRequest = ScanRequest(a.table.tableName)
+    override fun <T : TableSchema, A, B> Template2<T, A, B>.get(op: T.() -> Op): Pair<A, B>? {
+        val scanRequest = ScanRequest(a.table.name)
                 .withAttributesToGet(a.name, b.name)!!.withScanFilter(getScanFilter(a.table.op()))!!
         val scanResult = client.scan(scanRequest)!!
         for (item in scanResult.getItems()!!) {
@@ -96,30 +102,30 @@ class DynamoDBSession(val client: AmazonDynamoDBClient) : Session() {
         return null
     }
 
-    override fun <T : Schema> delete(table: T, op: Op) {
+    override fun <T : AbstractSchema> delete(table: T, op: Op) {
         if (op is EqualsOp) {
             if (op.expr1 is PKColumn<*, *> && op.expr2 is LiteralOp) {
-                var deleteItemRequest = DeleteItemRequest().withTableName(table.tableName)!!
+                var deleteItemRequest = DeleteItemRequest().withTableName(table.name)!!
                         .withKey(Key(toAttributeValue((op.expr2 as LiteralOp).value, op.expr1.columnType)))!!
                 client.deleteItem(deleteItemRequest)
             }
         }
     }
 
-    private fun <T : Schema> update(query: UpdateQuery<T>) {
+    private fun <T : TableSchema> update(query: UpdateQuery<T>) {
         if (query.where is EqualsOp && query.where.expr1 is PKColumn<*, *> && query.where.expr2 is LiteralOp) {
             val updates = HashMap<String, AttributeValueUpdate>()
             for (v in query.values) {
                 updates.put(v.key.name, AttributeValueUpdate(toAttributeValue(v.value, v.key.columnType), AttributeAction.PUT))
             }
-            var updateItemRequest = UpdateItemRequest().withTableName(query.table.tableName)!!
+            var updateItemRequest = UpdateItemRequest().withTableName(query.table.name)!!
                     .withKey(Key(toAttributeValue((query.where.expr2 as LiteralOp).value, query.where.expr1.columnType)))!!
                     .withAttributeUpdates(updates)
             client.updateItem(updateItemRequest)
         }
     }
 
-    override fun <T : Schema, C> Query1<T, C>.set(c: () -> C) {
+    override fun <T : TableSchema, C> Query1<T, C>.set(c: () -> C) {
         val updateQuery = UpdateQuery(a.table, op!!)
         updateQuery.set(a, c())
         update(updateQuery)
@@ -155,8 +161,8 @@ class DynamoDBSession(val client: AmazonDynamoDBClient) : Session() {
         }
     }
 
-    override fun <T : Schema, C> Column<C, T>.forEach(statement: (C) -> Unit) {
-        val scanRequest = ScanRequest(table.tableName)
+    override fun <T : TableSchema, C> Column<C, T>.forEach(statement: (C) -> Unit) {
+        val scanRequest = ScanRequest(table.name)
                 .withAttributesToGet(name)
         val scanResult = client.scan(scanRequest)!!
         for (item in scanResult.getItems()!!) {
@@ -164,9 +170,9 @@ class DynamoDBSession(val client: AmazonDynamoDBClient) : Session() {
         }
     }
 
-    override fun <T : Schema, C, M> Column<C, T>.map(statement: (C) -> M): List<M> {
+    override fun <T : TableSchema, C, M> Column<C, T>.map(statement: (C) -> M): List<M> {
         val results = ArrayList<M>()
-        val scanRequest = ScanRequest(table.tableName)
+        val scanRequest = ScanRequest(table.name)
                 .withAttributesToGet(name)
         val scanResult = client.scan(scanRequest)!!
         for (item in scanResult.getItems()!!) {
@@ -175,12 +181,12 @@ class DynamoDBSession(val client: AmazonDynamoDBClient) : Session() {
         return results
     }
 
-    override fun <T : Schema, C> Column<C, T>.iterator(): Iterator<C> {
+    override fun <T : TableSchema, C> Column<C, T>.iterator(): Iterator<C> {
         return map { it }.iterator()
     }
 
-    override fun <T : Schema, A, B> Template2<T, A, B>.forEach(statement: (A, B) -> Unit) {
-        val scanRequest = ScanRequest(table.tableName)
+    override fun <T : TableSchema, A, B> Template2<T, A, B>.forEach(statement: (A, B) -> Unit) {
+        val scanRequest = ScanRequest(table.name)
                 .withAttributesToGet(a.name, b.name)
         val scanResult = client.scan(scanRequest)!!
         for (item in scanResult.getItems()!!) {
@@ -190,9 +196,9 @@ class DynamoDBSession(val client: AmazonDynamoDBClient) : Session() {
         }
     }
 
-    override fun <T : Schema, A, B, M> Template2<T, A, B>.map(statement: (A, B) -> M): List<M> {
+    override fun <T : TableSchema, A, B, M> Template2<T, A, B>.map(statement: (A, B) -> M): List<M> {
         val results = ArrayList<M>()
-        val scanRequest = ScanRequest(table.tableName)
+        val scanRequest = ScanRequest(table.name)
                 .withAttributesToGet(a.name, b.name)
         val scanResult = client.scan(scanRequest)!!
         for (item in scanResult.getItems()!!) {
@@ -201,9 +207,9 @@ class DynamoDBSession(val client: AmazonDynamoDBClient) : Session() {
         return results
     }
 
-    override fun <T : Schema, A, B> Template2<T, A, B>.iterator(): Iterator<Pair<A, B>> {
+    override fun <T : TableSchema, A, B> Template2<T, A, B>.iterator(): Iterator<Pair<A, B>> {
         val results = ArrayList<Pair<A, B>>()
-        val scanRequest = ScanRequest(table.tableName)
+        val scanRequest = ScanRequest(table.name)
                 .withAttributesToGet(a.name, b.name)
         val scanResult = client.scan(scanRequest)!!
         for (item in scanResult.getItems()!!) {
@@ -224,17 +230,17 @@ class DynamoDBSession(val client: AmazonDynamoDBClient) : Session() {
         return scanFilter
     }
 
-    override fun <T : Schema, A, B> Query2<T, A, B>.forEach(statement: (A, B) -> Unit) {
-        val scanRequest = ScanRequest(a.table.tableName).withScanFilter(getScanFilter(op!!))!!
+    override fun <T : TableSchema, A, B> Query2<T, A, B>.forEach(statement: (A, B) -> Unit) {
+        val scanRequest = ScanRequest(a.table.name).withScanFilter(getScanFilter(op!!))!!
                 .withAttributesToGet(a.name, b.name)
         val scanResult = client.scan(scanRequest)!!
         for (item in scanResult.getItems()!!) {
             statement(item.get(a.name)!! to a.columnType, item.get(b.name)!! to b.columnType)
         }
     }
-    override fun <T : Schema, A, B> Query2<T, A, B>.iterator(): Iterator<Pair<A, B>> {
+    override fun <T : TableSchema, A, B> Query2<T, A, B>.iterator(): Iterator<Pair<A, B>> {
         val results = ArrayList<Pair<A, B>>()
-        val scanRequest = ScanRequest(a.table.tableName).withScanFilter(getScanFilter(op!!))!!
+        val scanRequest = ScanRequest(a.table.name).withScanFilter(getScanFilter(op!!))!!
                 .withAttributesToGet(a.name, b.name)
         val scanResult = client.scan(scanRequest)!!
         for (item in scanResult.getItems()!!) {
@@ -243,7 +249,7 @@ class DynamoDBSession(val client: AmazonDynamoDBClient) : Session() {
         return results.iterator()
     }
 
-    override fun <T : Schema> insert(columns: Array<Pair<Column<*, T>, *>>) {
+    override fun <T : AbstractSchema> insert(columns: Array<Pair<Column<*, T>, *>>) {
         // TODO Clean everything first
         val item = HashMap<String, AttributeValue>()
         for (column in columns) {
@@ -264,20 +270,20 @@ class DynamoDBSession(val client: AmazonDynamoDBClient) : Session() {
                 })
             }
         }
-        var putItemRequest = PutItemRequest(columns[0].first.table.tableName, item)
+        var putItemRequest = PutItemRequest(columns[0].first.table.name, item)
         client.putItem(putItemRequest)
     }
 
-    override fun <T : Schema> T.drop() {
+    override fun <T : TableSchema> T.drop() {
         try {
-            client.deleteTable(DeleteTableRequest().withTableName(tableName))!!.getTableDescription()
+            client.deleteTable(DeleteTableRequest().withTableName(name))!!.getTableDescription()
         } catch(e: AmazonServiceException) {
             println(e.getMessage())
         }
     }
 
-    override fun <T : Schema> T.create() {
-        val createTableRequest = CreateTableRequest().withTableName(tableName)!!;
+    override fun <T : TableSchema> T.create() {
+        val createTableRequest = CreateTableRequest().withTableName(name)!!;
         if (!primaryKeys.isEmpty()) {
             createTableRequest.withKeySchema(KeySchema(KeySchemaElement().withAttributeName(primaryKeys[0].name)!!
                     .withAttributeType(when (primaryKeys[0].columnType) {
@@ -296,7 +302,7 @@ class DynamoDBSession(val client: AmazonDynamoDBClient) : Session() {
             return
         }
 
-        System.out.println("Waiting for " + tableName + " to become ACTIVE...")
+        System.out.println("Waiting for " + name + " to become ACTIVE...")
         val startTime = System.currentTimeMillis()
         val endTime = startTime + (10 * 60 * 1000).toLong()
         while (System.currentTimeMillis() < endTime)
@@ -307,7 +313,7 @@ class DynamoDBSession(val client: AmazonDynamoDBClient) : Session() {
                 // ignore
             }
             try {
-                val describeTableRequest = DescribeTableRequest().withTableName(tableName)
+                val describeTableRequest = DescribeTableRequest().withTableName(name)
                 val tableDescription = client.describeTable(describeTableRequest)!!.getTable()
                 val tableStatus = tableDescription!!.getTableStatus()
                 if (tableStatus.equals(TableStatus.ACTIVE.toString()))
@@ -319,6 +325,6 @@ class DynamoDBSession(val client: AmazonDynamoDBClient) : Session() {
             }
 
         }
-        throw IllegalStateException("Table " + tableName + " never went status")
+        throw IllegalStateException("Table " + name + " never went status")
     }
 }

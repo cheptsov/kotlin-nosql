@@ -4,7 +4,7 @@ import java.sql.Connection
 import java.util.HashSet
 import java.util.ArrayList
 
-abstract class Query<C, T: Schema>(val fields: Array<Field<*, T>>) {
+abstract class Query<C, T: TableSchema>(val fields: Array<Field<*, T>>) {
     var op: Op? = null;
 
     open fun where(op: Op): Query<C, T> {
@@ -43,16 +43,16 @@ abstract class Query<C, T: Schema>(val fields: Array<Field<*, T>>) {
     }*/
 }
 
-fun <T: Schema, C> Query<Set<C>, T>.remove(value: () -> C) {
+fun <T: TableSchema, C> Query<Set<C>, T>.remove(value: () -> C) {
 }
 
-class Query2<T: Schema, A, B>(val a: Column<A, T>, val b: Column<B, T>): Query<Pair<A, B>, T>(array(a, b)) {
+class Query2<T: TableSchema, A, B>(val a: Column<A, T>, val b: Column<B, T>): Query<Pair<A, B>, T>(array(a, b)) {
     override fun where(op: Op): Query2<T, A, B> {
         return super.where(op) as Query2<T, A, B>
     }
 }
 
-class Query1<T: Schema, A>(val a: Column<A, T>): Query<A, T>(array(a)) {
+class Query1<T: TableSchema, A>(val a: Column<A, T>): Query<A, T>(array(a)) {
     override fun where(op: Op): Query1<T, A> {
         return super.where(op) as Query1<T, A>
     }
