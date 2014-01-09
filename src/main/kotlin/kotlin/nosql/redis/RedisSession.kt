@@ -1,8 +1,8 @@
 package kotlin.nosql.redis
 
 import kotlin.nosql.Session
-import kotlin.nosql.TableSchema
-import kotlin.nosql.Column
+import kotlin.nosql.AbstractTableSchema
+import kotlin.nosql.AbstractColumn
 import kotlin.nosql.Op
 import kotlin.nosql.Query1
 import kotlin.nosql.Template2
@@ -15,13 +15,19 @@ import kotlin.nosql.LiteralOp
 import kotlin.nosql.ColumnType
 import kotlin.nosql.ColumnType.INTEGER
 import kotlin.nosql.RangeQuery
+import kotlin.nosql.NullableColumn
 import kotlin.nosql.NotFoundException
 import kotlin.nosql.KeyValueSchema
 import kotlin.nosql.AbstractSchema
 import kotlin.nosql.DocumentSchema
+import java.util.ArrayList
+import java.util.Arrays
 
 class RedisSession(val jedis: Jedis) : Session() {
-    override fun <T : DocumentSchema<C>, C> T.get(op: T.() -> Op): C {
+    override fun <T : DocumentSchema<P, V>, P, V> T.add(v: () -> V) {
+        throw UnsupportedOperationException()
+    }
+    override fun <T: DocumentSchema<P, C>, P, C> T.filter(op: T.() -> Op): Iterator<C> {
         val op1 = op()
         if (op1 is EqualsOp && op1.expr1 is PKColumn<*, *>
         && op1.expr2 is LiteralOp) {
@@ -40,43 +46,43 @@ class RedisSession(val jedis: Jedis) : Session() {
             val schemaClass = this.javaClass
             val schemaFields = schemaClass.getDeclaredFields()
             for (schemaField in schemaFields) {
-                if (javaClass<Column<Any?, T>>().isAssignableFrom(schemaField.getType()!!)) {
+                if (javaClass<AbstractColumn<Any?, T, Any?>>().isAssignableFrom(schemaField.getType()!!)) {
                     val valueField = valueInstance.javaClass.getDeclaredField(schemaField.getName()!!.toLowerCase())
                     schemaField.setAccessible(true)
                     valueField.setAccessible(true)
-                    val column = schemaField.get(this) as Column<Any?, T>
+                    val column = schemaField.get(this) as AbstractColumn<Any?, T, *>
                     val columnValue = when (column.columnType) {
-                        ColumnType.INTEGER_LIST, ColumnType.STRING_LIST -> (column as Column<List<*>, T>).filter(op).get({0..100})
+                        ColumnType.INTEGER_LIST, ColumnType.STRING_LIST -> (column as AbstractColumn<List<*>, T, *>).filter(op).get({0..100})
                         else -> column.get(op)
                     }
-                    if (columnValue != null || column._nullable) {
+                    if (columnValue != null || column is NullableColumn<*, *>) {
                         valueField.set(valueInstance, columnValue)
                     } else {
                         throw NullPointerException()
                     }
                 }
             }
-            return valueInstance
+            return Arrays.asList(valueInstance).iterator()
         }
         throw NullPointerException()
     }
 
-    override fun <T : KeyValueSchema> T.next(c: T.() -> Column<Int, T>): Int {
+    override fun <T : KeyValueSchema> T.next(c: T.() -> AbstractColumn<Int, T, *>): Int {
         val c = c()
         return jedis.incr(c.table.name + ":" + c.name)!!.toInt()
     }
-    override fun <T : TableSchema> Column<Int, T>.add(c: () -> Int): Int {
+    override fun <T : AbstractTableSchema> AbstractColumn<Int, T, *>.add(c: () -> Int): Int {
         return jedis.incrBy(table.name + ":" + name, c().toLong())!!.toInt()
     }
 
-    override fun <T : TableSchema> T.create() {
+    override fun <T : AbstractTableSchema> T.create() {
         // TODO: Do nothing
     }
-    override fun <T : TableSchema> T.drop() {
+    override fun <T : AbstractTableSchema> T.drop() {
         // TODO: Do nothing
     }
 
-    override fun <T : KeyValueSchema, C> T.get(c: T.() -> Column<C, T>): C {
+    override fun <T : KeyValueSchema, C> T.get(c: T.() -> AbstractColumn<C, T, *>): C {
         val c = c()
         val v = jedis.get(c.table.name + ":" + c.name)
         if (v != null) {
@@ -90,12 +96,12 @@ class RedisSession(val jedis: Jedis) : Session() {
         }
     }
 
-    override fun <T : KeyValueSchema, C> T.set(c: () -> Column<C, T>, v: C) {
+    override fun <T : KeyValueSchema, C> T.set(c: () -> AbstractColumn<C, T, *>, v: C) {
         val c = c()
         val v = jedis.set(c.table.name + ":" + c.name, c.toString())
     }
 
-    override fun <T : AbstractSchema> insert(columns: Array<Pair<Column<out Any?, T>, Any?>>) {
+    override fun <T : AbstractSchema> insert(columns: Array<Pair<AbstractColumn<*, T, *>, *>>) {
         if (columns.isNotEmpty()) {
             var key: String? = null
             for (column in columns) {
@@ -129,7 +135,7 @@ class RedisSession(val jedis: Jedis) : Session() {
         }
     }
 
-    override fun <T : TableSchema, C> RangeQuery<T, C>.forEach(st: (c: C) -> Unit) {
+    override fun <T : AbstractTableSchema, C> RangeQuery<T, C>.forEach(st: (c: C) -> Unit) {
         val op1 = this.query.op
         if (op1 is EqualsOp && op1.expr1 is PKColumn<*, *>
         && op1.expr2 is LiteralOp) {
@@ -151,11 +157,11 @@ class RedisSession(val jedis: Jedis) : Session() {
         throw UnsupportedOperationException()
     }
 
-    override fun <T : TableSchema, C> Query1<T, C>.set(c: () -> C) {
+    override fun <T : AbstractTableSchema, C> Query1<T, C>.set(c: () -> C) {
         throw UnsupportedOperationException()
     }
 
-    override fun <T : TableSchema> Query1<T, Int>.add(c: () -> Int): Int {
+    override fun <T : AbstractTableSchema> Query1<T, Int>.add(c: () -> Int): Int {
         val op1 = op!!
         if (op1 is EqualsOp && op1.expr1 is PKColumn<*, *>
         && op1.expr2 is LiteralOp) {
@@ -165,7 +171,7 @@ class RedisSession(val jedis: Jedis) : Session() {
         }
     }
 
-    override fun <T : TableSchema, C, CC : Collection<*>> Query1<T, CC>.add(c: () -> C) {
+    override fun <T : AbstractTableSchema, C, CC : Collection<*>> Query1<T, CC>.add(c: () -> C) {
         val op1 = op!!
         if (op1 is EqualsOp && op1.expr1 is PKColumn<*, *>
         && op1.expr2 is LiteralOp) {
@@ -178,21 +184,21 @@ class RedisSession(val jedis: Jedis) : Session() {
         }
     }
 
-    override fun <T : TableSchema, C> Column<C, T>.forEach(statement: (C) -> Unit) {
+    override fun <T : AbstractTableSchema, C> AbstractColumn<C, T, *>.forEach(statement: (C) -> Unit) {
         throw UnsupportedOperationException()
     }
-    override fun <T : TableSchema, C> Column<C, T>.iterator(): Iterator<C> {
-        throw UnsupportedOperationException()
-    }
-
-    override fun <T : TableSchema, C, M> Column<C, T>.map(statement: (C) -> M): List<M> {
+    override fun <T : AbstractTableSchema, C> AbstractColumn<C, T, *>.iterator(): Iterator<C> {
         throw UnsupportedOperationException()
     }
 
-    override fun <T : TableSchema, C> Column<C, T>.get(op: T.() -> Op): C {
+    override fun <T : AbstractTableSchema, C, M> AbstractColumn<C, T, *>.map(statement: (C) -> M): List<M> {
+        throw UnsupportedOperationException()
+    }
+
+    override fun <T : AbstractTableSchema, C> AbstractColumn<C, T, *>.get(op: T.() -> Op): C {
         val where = table.op()
         if (where is EqualsOp && where.expr1 is PKColumn<*, *> && where.expr2 is LiteralOp) {
-            if (this is PKColumn<C, T>) {
+            if (this is PKColumn<*, *>) {
                 return where.expr2.value as C
             }
             if (columnType == ColumnType.INTEGER || columnType == ColumnType.STRING) {
@@ -206,7 +212,7 @@ class RedisSession(val jedis: Jedis) : Session() {
                         else -> throw UnsupportedOperationException()
                     }
                 } else {
-                    if (_nullable) {
+                    if (this is NullableColumn<*, *>) {
                         return null as C
                     } else {
                         throw NotFoundException(where.expr1.table.name + ":" + where.expr2.value.toString() + " " + name)
@@ -235,19 +241,19 @@ class RedisSession(val jedis: Jedis) : Session() {
         }
     }
 
-    override fun <T : TableSchema, A, B> Template2<T, A, B>.get(op: T.() -> Op): Pair<A, B>? {
+    override fun <T : AbstractTableSchema, A, B> Template2<T, A, B>.get(op: T.() -> Op): Pair<A, B>? {
         throw UnsupportedOperationException()
     }
-    override fun <T : TableSchema, A, B> Template2<T, A, B>.forEach(statement: (A, B) -> Unit) {
+    override fun <T : AbstractTableSchema, A, B> Template2<T, A, B>.forEach(statement: (A, B) -> Unit) {
         throw UnsupportedOperationException()
     }
-    override fun <T : TableSchema, A, B> Template2<T, A, B>.iterator(): Iterator<Pair<A, B>> {
+    override fun <T : AbstractTableSchema, A, B> Template2<T, A, B>.iterator(): Iterator<Pair<A, B>> {
         throw UnsupportedOperationException()
     }
-    override fun <T : TableSchema, A, B, M> Template2<T, A, B>.map(statement: (A, B) -> M): List<M> {
+    override fun <T : AbstractTableSchema, A, B, M> Template2<T, A, B>.map(statement: (A, B) -> M): List<M> {
         throw UnsupportedOperationException()
     }
-    override fun <T : TableSchema, A, B> Query2<T, A, B>.forEach(statement: (A, B) -> Unit) {
+    override fun <T : AbstractTableSchema, A, B> Query2<T, A, B>.forEach(statement: (A, B) -> Unit) {
 
     }
     private fun <C> convert(st: String?, columnType: ColumnType): C {
@@ -261,7 +267,7 @@ class RedisSession(val jedis: Jedis) : Session() {
             }
         }
     }
-    override fun <T : TableSchema, A, B> Query2<T, A, B>.get(statement: (A, B) -> Unit) {
+    override fun <T : AbstractTableSchema, A, B> Query2<T, A, B>.get(statement: (A, B) -> Unit) {
         val op = op!!
         if (op is EqualsOp && op.expr1 is PKColumn<*, *> && op.expr2 is LiteralOp) {
             var av: String?
@@ -276,15 +282,15 @@ class RedisSession(val jedis: Jedis) : Session() {
             } else {
                 throw UnsupportedOperationException()
             }
-            if ((av != null || a._nullable)
-            && (bv != null || b._nullable)) {
+            if ((av != null || a is NullableColumn<*, *>)
+            && (bv != null || b is NullableColumn<*, *>)) {
                 statement(convert<A>(av, a.columnType), convert<B>(bv, b.columnType))
             } else {
                 throw NullPointerException()
             }
         }
     }
-    override fun <T : TableSchema, A, B> Query2<T, A, B>.iterator(): Iterator<Pair<A, B>> {
+    override fun <T : AbstractTableSchema, A, B> Query2<T, A, B>.iterator(): Iterator<Pair<A, B>> {
         throw UnsupportedOperationException()
     }
 

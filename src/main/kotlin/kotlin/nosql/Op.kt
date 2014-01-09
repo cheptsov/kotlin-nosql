@@ -10,7 +10,7 @@ abstract class Op() : Expression {
     }
 }
 
-class IsNullOp(val column: Column<*, *>): Op() {
+class IsNullOp(val column: AbstractColumn<*, *, *>): Op() {
     /*override fun toSQL():String {
         return "${Session.get().fullIdentity(column)} IS NULL"
     }*/

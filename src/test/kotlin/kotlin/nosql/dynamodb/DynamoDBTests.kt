@@ -5,21 +5,19 @@ import kotlin.nosql.dynamodb.*
 import org.junit.Test
 
 class DynamoDBTests {
-    object Users : TableSchema("users") {
-        val ID = Column("id", javaClass<String>()).PrimaryKey()
-        val Name = Column("name", javaClass<String>())
-        val FavoriteCityId = Column("favorite_city_id", javaClass<Int>()).Nullable()
+    object Users : TableSchema<String>("users", stringPK("id")) {
+        val Name = string("name")
+        val FavoriteCityId = nullableInteger("favorite_city_id")
 
-        val FriendUserIds = Column("friend_user_ids", javaClass<String>()).Set() // Column<Set<String>, Users>
+        val FriendUserIds = setOfString("friend_user_ids")
 
         val All = ID + Name + FavoriteCityId + FriendUserIds
     }
 
-    object Cities : TableSchema("cities") {
-        val Id = Column("id", javaClass<Int>()).PrimaryKey()
-        val Name = Column("name", javaClass<String>())
+    object Cities : TableSchema<Int>("cities", integerPK("id")) {
+        val Name = string("name")
 
-        val All = Id + Name
+        val All = ID + Name
     }
 
     Test
@@ -29,9 +27,9 @@ class DynamoDBTests {
         db {
             array(Cities, Users) forEach { it.create() }
 
-            Cities columns { All } insert { values(1, "St. Petersburg") }
-            Cities columns { All } insert { values(2, "Munich") }
-            Cities columns { All } insert { values(3, "Prague") }
+            Cities columns { All } add { values(1, "St. Petersburg") }
+            Cities columns { All } add { values(2, "Munich") }
+            Cities columns { All } add { values(3, "Prague") }
 
             Users columns { All } insert { values("andrey", "Andrey", 1, setOf("sergey", "eugene")) }
             Users columns { All } insert { values("sergey", "Sergey", 2, setOf("andrey", "eugene", "alex")) }
@@ -69,7 +67,7 @@ class DynamoDBTests {
 
             Users columns { Name + FavoriteCityId } forEach { userName, cityId ->
                 if (cityId != null) {
-                    val cityName = Cities columns { Name } get { Id eq cityId }
+                    val cityName = Cities columns { Name } get { ID eq cityId }
                     println("${userName}'s favorite city is $cityName")
                 } else {
                     println("${userName} has no favorite city")

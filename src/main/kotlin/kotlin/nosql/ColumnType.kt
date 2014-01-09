@@ -7,4 +7,5 @@ enum class ColumnType {
     public STRING_SET
     public INTEGER_LIST
     public STRING_LIST
+    public CUSTOM_CLASS
 }
