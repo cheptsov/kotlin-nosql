@@ -1,94 +1,112 @@
-Kotlin NoSQL Library
-==================
+# Kotlin NoSQL DSL
 
-A type-safe [Kotlin](https://github.com/JetBrains/kotlin) DSL to access NoSQL databases.
+A type-safe Kotlin DSL to access NoSQL databases.
 
-```java
-class RedisTests {
-    object Users: DocumentSchema<Int, User>("users", javaClass(), integerPK("id")) {
-        val Name = string("username")
-        val Password = string("password")
-        val Posts = listOfInteger("password")
-        val Followers = setOfInteger("followers")
-        val Following = setOfInteger("following")
-        val Auth = nullableString("auth")
+## Examples
 
-        val All = ID + Name + Password
-    }
+### Key-value schema
 
-    class User(val id: Int,
-               val name: String,
-               val password: String,
-               val posts: List<Int> = listOf(),
-               val followers: Set<Int> = setOf(),
-               val following: Set<Int> = setOf(),
-               val auth: String? = null) {
+Define schema:
 
-        fun toString(): String {
-            return "User(id = $id, name = $name, password = $password, posts = $posts, followers = $followers, following = $following, auth = $auth)"
-        }
-    }
+```kotlin
+object Global: KeyValueSchema("global") {
+    val UserId = integer("nextUserId")
+    val PostId = integer("nextPostId")
+}
+```
 
-    object Posts: TableSchema<Int>("posts", integerPK("id")) {
-        val Text = string("text")
-    }
+Get value at key:
 
-    object Global: KeyValueSchema("global") {
-        val UserId = integer("nextUserId")
-        val PostId = integer("nextPostId")
-    }
+```kotlin
+val aUserId = Global get { UserId }
+```
 
-    Test
-    fun test() {
-        var db = Redis("localhost")
+### Primary-key table schema
 
-        db {
-            val aUserId = Global next { UserId }
-            val anotherUserId = Global next { UserId }
+Define schema:
 
-            // insert -> filter + set
-            Users columns { All } add { values(aUserId, "antirez", "p1pp0") }
-            Users columns { All } add { values(anotherUserId, "pippo", "p1pp0") }
+```kotlin
+object Users: PKTableSchema<Int>("users", PK.integer("id")) {
+    val Name = string("username")
+    val Password = string("password")
+    val Posts = listOfInteger("password")
+    val Followers = setOfInteger("followers")
+    val Following = setOfInteger("following")
+    val Auth = nullableString("auth")
 
-            val aPostId = Global next { PostId }
-            val anotherPostId = Global next { PostId }
+    val All = Name + Password
+}
+```
 
-            Posts columns { ID + Text } add { values(aPostId, "A post") }
-            Posts columns { ID + Text } add { values(anotherPostId, "Another post") }
+Insert column values by a primary key:
 
-            Users columns { Posts } find { aUserId } add { aPostId }
-            Users columns { Posts } find { aUserId } add { anotherPostId }
+```kotlin
+val aUserId = Global next { UserId }
+Users columns { All } insert { values(aUserId, "antirez", "p1pp0") }
+```
 
-            Users columns { Followers } find { aUserId } add { anotherUserId }
+Receive column values by a primary key:
 
-            Users columns { Name + Password }  find { aUserId } get { name, password ->
-                println("User '$name' has password '$password'")
-                val posts = Users columns { Posts } find { aUserId } get { 0..20 } map { postId ->
-                    Posts columns { Text } get { ID eq postId }
-                }
-                println("User '$name' has following posts: $posts")
-                val followers = Users columns { Followers } get { ID eq aUserId } map { userId ->
-                    Users columns { this.Name } get { ID eq userId }
-                }
-                println("User '$name' has followers $followers")
-            }
+```kotlin
+val (name, password) = Users columns { All } get { aUserId }
+```
 
-            val user = Users find { aUserId }
-            println("User '${user.name}' has password '$${user.password}'")
-            val posts = user.posts map { postId ->
-                Posts columns { Text } get { ID eq postId }
-            }
-            println("User '${user.name}' has following posts: $posts")
-            val followers = user.followers map { userId ->
-                Users columns { this.Name } get { ID eq userId }
-            }
-            println("User '${user.name}' has followers $followers")
+Receive a collection of column values by a filter condition:
 
-            //Users add { User(Global next { UserId }, "andrey.cheptsov", "pass2013") }
+```kotlin
+Users columns { ID } filter { Name eq "antirez" } forEach { id ->
+}
+```
 
-            for (user in Users filter { ID eq aUserId }) {
-                println(user)
-            }
-        }
-    }
+Receive a column value by a primary key:
+
+```kotlin
+val followers = Users columns { Followers } get { aUserId } map { userId ->
+    Users columns { this.Name } get { userId }
+}
+```
+
+### Document schema
+
+Define schema:
+
+```kotlin
+object Users: DocumentSchema<Int, User>("users", javaClass(), PK.integer("id")) {
+    val Name = string("username")
+    val Password = string("password")
+    val Posts = listOfInteger("password")
+    val Followers = setOfInteger("followers")
+    val Following = setOfInteger("following")
+    val Auth = nullableString("auth")
+}
+
+class User(val id: Int,
+           val name: String,
+           val password: String,
+           val posts: List<Int> = listOf(),
+           val followers: Set<Int> = setOf(),
+           val following: Set<Int> = setOf(),
+           val auth: String? = null) {
+}
+```
+
+Insert a document:
+
+```kotlin
+val aUserId = Global next { UserId }
+Users add { User(aUserId, "antirez", "p1pp0") }
+```
+
+Get a document by its primary key:
+
+```kotlin
+val user = Users get { aUserId }
+```
+
+Receive a collection of documents by a filter condition:
+
+```kotlin
+for (user in Users filter { Name eq "antirez" }) {
+    println(user)
+}
 ```

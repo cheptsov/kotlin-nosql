@@ -3,7 +3,7 @@ package kotlin.nosql.mongodb
 import org.junit.Test
 import kotlin.nosql.*
 
-object Products : DocumentSchema<String, Product>("products", javaClass(), stringPK("sku")) {
+object Products : DocumentSchema<String, Product>("products", javaClass(), PK.string("sku")) {
     val sku = string("sku")
 
     // TODO

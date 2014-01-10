@@ -5,7 +5,7 @@ import kotlin.nosql.dynamodb.*
 import org.junit.Test
 
 class DynamoDBTests {
-    object Users : TableSchema<String>("users", stringPK("id")) {
+    object Users : PKTableSchema<String>("users", PK.string("id")) {
         val Name = string("name")
         val FavoriteCityId = nullableInteger("favorite_city_id")
 
@@ -14,7 +14,7 @@ class DynamoDBTests {
         val All = ID + Name + FavoriteCityId + FriendUserIds
     }
 
-    object Cities : TableSchema<Int>("cities", integerPK("id")) {
+    object Cities : PKTableSchema<Int>("cities", PK.integer("id")) {
         val Name = string("name")
 
         val All = ID + Name
@@ -27,9 +27,9 @@ class DynamoDBTests {
         db {
             array(Cities, Users) forEach { it.create() }
 
-            Cities columns { All } add { values(1, "St. Petersburg") }
-            Cities columns { All } add { values(2, "Munich") }
-            Cities columns { All } add { values(3, "Prague") }
+            Cities columns { All } insert { values(1, "St. Petersburg") }
+            Cities columns { All } insert { values(2, "Munich") }
+            Cities columns { All } insert { values(3, "Prague") }
 
             Users columns { All } insert { values("andrey", "Andrey", 1, setOf("sergey", "eugene")) }
             Users columns { All } insert { values("sergey", "Sergey", 2, setOf("andrey", "eugene", "alex")) }
@@ -67,7 +67,7 @@ class DynamoDBTests {
 
             Users columns { Name + FavoriteCityId } forEach { userName, cityId ->
                 if (cityId != null) {
-                    val cityName = Cities columns { Name } get { ID eq cityId }
+                    val cityName = Cities columns { Name } get { cityId!! }
                     println("${userName}'s favorite city is $cityName")
                 } else {
                     println("${userName} has no favorite city")
@@ -75,7 +75,7 @@ class DynamoDBTests {
             }
 
             Users columns { Name + FriendUserIds } forEach { userName, friendUserIds ->
-                val friends = friendUserIds.map { friendUserId -> Users columns { Name } get { ID eq friendUserId } }
+                val friends = friendUserIds.map { friendUserId -> Users columns { Name } get { friendUserId } }
                 println("${userName}'s friends are: $friends")
             }
 

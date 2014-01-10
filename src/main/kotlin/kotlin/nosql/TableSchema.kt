@@ -9,26 +9,27 @@ abstract class AbstractSchema(val name: String) {
 abstract class KeyValueSchema(name: String): AbstractSchema(name) {
 }
 
-abstract class AbstractTableSchema(name: String): AbstractSchema(name) {
+abstract class TableSchema(name: String): AbstractSchema(name) {
     val primaryKeys = ArrayList<PKColumn<*, *>>()
 }
 
-abstract class TableSchema<P>(tableName: String, primaryKey: PK<P>): AbstractTableSchema(tableName) {
-    val pk = PKColumn<P, TableSchema<P>>(this, primaryKey.name, primaryKey.javaClass, primaryKey.columnType)
+abstract class PKTableSchema<P>(tableName: String, primaryKey: PK<P>): TableSchema(tableName) {
+    val pk = PKColumn<P, PKTableSchema<P>>(this, primaryKey.name, primaryKey.javaClass, primaryKey.columnType)
 }
 
 open class PK<P>(val name: jet.String, val javaClass: Class<P>, val columnType: ColumnType) {
+    class object {
+        fun string(name: jet.String) = PK<jet.String>(name, javaClass<jet.String>(), ColumnType.STRING)
+        fun integer(name: jet.String) = PK<Int>(name, javaClass<Int>(), ColumnType.INTEGER)
+    }
 }
 
-fun stringPK(name: jet.String) = PK<jet.String>(name, javaClass<jet.String>(), ColumnType.STRING)
-fun integerPK(name: jet.String) = PK<Int>(name, javaClass<Int>(), ColumnType.INTEGER)
-
-val <C, T : TableSchema<C>> T.ID: AbstractColumn<C, T, C>
+val <C, T : PKTableSchema<C>> T.ID: AbstractColumn<C, T, C>
     get () {
         return pk as AbstractColumn<C, T, C>
     }
 
-abstract class DocumentSchema<P, V>(name: String, val valueClass: Class<V>, primaryKey: PK<P>) : TableSchema<P>(name, primaryKey) {
+abstract class DocumentSchema<P, V>(name: String, val valueClass: Class<V>, primaryKey: PK<P>) : PKTableSchema<P>(name, primaryKey) {
 }
 
 /*
@@ -56,22 +57,22 @@ fun <T: AbstractSchema> T.listOfString(name: String): ListColumn<String, T> = Li
 
 fun <T: AbstractSchema> T.listOfInteger(name: String): ListColumn<Int, T> = ListColumn(this, name, javaClass<Int>(), ColumnType.INTEGER_LIST)
 
-fun <T: AbstractTableSchema> T.delete(body: T.() -> Op) {
+fun <T: TableSchema> T.delete(body: T.() -> Op) {
     FilterQuery(this, body()) delete { }
 }
 
 
-fun <T: AbstractTableSchema, X> T.columns(selector: T.() -> X): X {
+fun <T: TableSchema, X> T.columns(selector: T.() -> X): X {
     return selector();
 }
 
-fun <T: AbstractTableSchema, B> FilterQuery<T>.map(statement: T.(Map<Any, Any>) -> B): List<B> {
+fun <T: TableSchema, B> FilterQuery<T>.map(statement: T.(Map<Any, Any>) -> B): List<B> {
     val results = ArrayList<B>()
     //Query
     return results
 }
 
-class Template1<T: AbstractTableSchema, A>(val table: T, val a: AbstractColumn<A, T, *>) {
+class Template1<T: TableSchema, A>(val table: T, val a: AbstractColumn<A, T, *>) {
     fun invoke(av: A): Array<Pair<AbstractColumn<*, T, *>, *>> {
         return array(Pair(a, av))
     }
@@ -92,7 +93,7 @@ class Quintuple<A1, A2, A3, A4, A5>(val a1: A1, val a2: A2, val a3: A3, val a4: 
     public fun component5(): A5 = a5
 }
 
-fun <T: AbstractTableSchema, A, B> T.template(a: AbstractColumn<A, T, *>, b: AbstractColumn<B, T, *>): Template2<T, A, B> {
+fun <T: TableSchema, A, B> T.template(a: AbstractColumn<A, T, *>, b: AbstractColumn<B, T, *>): Template2<T, A, B> {
     return Template2(this, a, b)
 }
 
@@ -105,7 +106,7 @@ class Template2<T: AbstractSchema, A, B>(val table: T, val a: AbstractColumn<A, 
         return Template3(table, a, b, c)
     }
 
-    fun add(statement: () -> Pair<A, B>) {
+    fun insert(statement: () -> Pair<A, B>) {
         val tt = statement()
         Session.get().insert(array(Pair(a, tt.first), Pair(b, tt.second)))
     }
@@ -130,7 +131,7 @@ class Template3<T: AbstractSchema, A, B, C>(val table: T, val a: AbstractColumn<
         Session.get().insert(array(Pair(a, va), Pair(b, vb), Pair(c, vc)))
     }
 
-    fun add(statement: () -> Triple<A, B, C>) {
+    fun insert(statement: () -> Triple<A, B, C>) {
         val tt = statement()
         Session.get().insert(array(Pair(a, tt.component1()), Pair(b, tt.component2()), Pair(c, tt.component3())))
     }
