@@ -51,8 +51,8 @@ class RedisTests {
             val aPostId = Global next { PostId }
             val anotherPostId = Global next { PostId }
 
-            Posts columns { ID + Text } put { values(aPostId, "A post") }
-            Posts columns { ID + Text } put { values(anotherPostId, "Another post") }
+            Posts columns { Text } insert { values(aPostId, "A post") }
+            Posts columns { Text } insert { values(anotherPostId, "Another post") }
 
             Users columns { Posts } find { aUserId } add { aPostId }
             Users columns { Posts } find { aUserId } add { anotherPostId }

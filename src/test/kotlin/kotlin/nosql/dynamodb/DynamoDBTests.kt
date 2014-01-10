@@ -67,7 +67,7 @@ class DynamoDBTests {
 
             Users columns { Name + FavoriteCityId } forEach { userName, cityId ->
                 if (cityId != null) {
-                    val cityName = Cities columns { Name } get { cityId!! }
+                    val cityName = Cities columns { Name } get { cityId!! } // Type inference failure
                     println("${userName}'s favorite city is $cityName")
                 } else {
                     println("${userName} has no favorite city")

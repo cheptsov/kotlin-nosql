@@ -143,22 +143,18 @@ class Template3<T: AbstractSchema, A, B, C>(val table: T, val a: AbstractColumn<
 
 fun <T : PKTableSchema<P>, P, A, B> Template2<T, A, B>.insert(statement: () -> Triple<P, A, B>) {
     val tt = statement()
-    Session.get().insert(array(Pair(a.table.ID, tt.component1()), Pair(a, tt.component1()), Pair(b, tt.component2())))
+    Session.get().insert(array(Pair(a.table.ID, tt.component1()), Pair(a, tt.component2()), Pair(b, tt.component3())))
+}
+
+fun <T : PKTableSchema<P>, P, C> AbstractColumn<C, T, *>.insert(statement: () -> Pair<P, C>) {
+    val tt = statement()
+    val id: AbstractColumn<P, T, *> = table.ID // Type inference failure
+    Session.get().insert(array(Pair(id, tt.component1()), Pair(this, tt.component2())))
 }
 
 class Template4<T: AbstractSchema, A, B, C, D>(val table: T, val a: AbstractColumn<A, T, *>, val b: AbstractColumn<B, T, *>, val c: AbstractColumn<C, T, *>, val d: AbstractColumn<D, T, *>) {
     fun invoke(av: A, bv: B, cv: C, dv: D): Array<Pair<AbstractColumn<*, T, *>, *>> {
         return array(Pair(a, av), Pair(b, bv), Pair(c, cv), Pair(d, dv))
-    }
-
-    /*fun invoke(): List<Quad<A, B, C, D>> {
-        val results = ArrayList<Quad<A, B, C, D>>()
-        Query<Quad<A, B, C, D>>(Session.get(), array(a, b, c, d)).forEach{ results.add(it) }
-        return results
-    }*/
-
-    fun values(va: A, vb: B, vc: C, vd: D) {
-        Session.get().insert(array(Pair(a, va), Pair(b, vb), Pair(c, vc), Pair(d, vd)))
     }
 
     fun insert(statement: () -> Quadruple<A, B, C, D>) {

@@ -26,8 +26,9 @@ import java.util.Arrays
 
 class RedisSession(val jedis: Jedis) : Session() {
     override fun <T : DocumentSchema<P, V>, P, V> T.insert(v: () -> V) {
-
+        throw UnsupportedOperationException()
     }
+
     override fun <T: DocumentSchema<P, C>, P, C> T.filter(op: T.() -> Op): Iterator<C> {
         val op1 = op()
         if (op1 is EqualsOp && op1.expr1 is PKColumn<*, *>
