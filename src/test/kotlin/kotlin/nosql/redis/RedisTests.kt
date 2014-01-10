@@ -12,7 +12,7 @@ class RedisTests {
         val Following = setOfInteger("following")
         val Auth = nullableString("auth")
 
-        val All = ID + Name + Password
+        val All = Name + Password
     }
 
     class User(val id: Int,
@@ -45,15 +45,14 @@ class RedisTests {
             val aUserId = Global next { UserId }
             val anotherUserId = Global next { UserId }
 
-            // TODO insert -> filter/find + set + put
             Users columns { All } insert { values(aUserId, "antirez", "p1pp0") }
             Users columns { All } insert { values(anotherUserId, "pippo", "p1pp0") }
 
             val aPostId = Global next { PostId }
             val anotherPostId = Global next { PostId }
 
-            Posts columns { ID + Text } insert { values(aPostId, "A post") }
-            Posts columns { ID + Text } insert { values(anotherPostId, "Another post") }
+            Posts columns { ID + Text } put { values(aPostId, "A post") }
+            Posts columns { ID + Text } put { values(anotherPostId, "Another post") }
 
             Users columns { Posts } find { aUserId } add { aPostId }
             Users columns { Posts } find { aUserId } add { anotherPostId }

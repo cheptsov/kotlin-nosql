@@ -27,9 +27,9 @@ class DynamoDBTests {
         db {
             array(Cities, Users) forEach { it.create() }
 
-            Cities columns { All } insert { values(1, "St. Petersburg") }
-            Cities columns { All } insert { values(2, "Munich") }
-            Cities columns { All } insert { values(3, "Prague") }
+            Cities columns { All } put { values(1, "St. Petersburg") }
+            Cities columns { All } put { values(2, "Munich") }
+            Cities columns { All } put { values(3, "Prague") }
 
             Users columns { All } insert { values("andrey", "Andrey", 1, setOf("sergey", "eugene")) }
             Users columns { All } insert { values("sergey", "Sergey", 2, setOf("andrey", "eugene", "alex")) }

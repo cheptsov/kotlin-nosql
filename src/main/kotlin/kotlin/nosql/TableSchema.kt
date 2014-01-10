@@ -106,7 +106,7 @@ class Template2<T: AbstractSchema, A, B>(val table: T, val a: AbstractColumn<A, 
         return Template3(table, a, b, c)
     }
 
-    fun insert(statement: () -> Pair<A, B>) {
+    fun put(statement: () -> Pair<A, B>) {
         val tt = statement()
         Session.get().insert(array(Pair(a, tt.first), Pair(b, tt.second)))
     }
@@ -131,7 +131,7 @@ class Template3<T: AbstractSchema, A, B, C>(val table: T, val a: AbstractColumn<
         Session.get().insert(array(Pair(a, va), Pair(b, vb), Pair(c, vc)))
     }
 
-    fun insert(statement: () -> Triple<A, B, C>) {
+    fun put(statement: () -> Triple<A, B, C>) {
         val tt = statement()
         Session.get().insert(array(Pair(a, tt.component1()), Pair(b, tt.component2()), Pair(c, tt.component3())))
     }
@@ -139,6 +139,11 @@ class Template3<T: AbstractSchema, A, B, C>(val table: T, val a: AbstractColumn<
     fun <D> plus(d: AbstractColumn<D, T, *>): Template4<T, A, B, C, D> {
         return Template4(table, a, b, c, d)
     }
+}
+
+fun <T : PKTableSchema<P>, P, A, B> Template2<T, A, B>.insert(statement: () -> Triple<P, A, B>) {
+    val tt = statement()
+    Session.get().insert(array(Pair(a.table.ID, tt.component1()), Pair(a, tt.component1()), Pair(b, tt.component2())))
 }
 
 class Template4<T: AbstractSchema, A, B, C, D>(val table: T, val a: AbstractColumn<A, T, *>, val b: AbstractColumn<B, T, *>, val c: AbstractColumn<C, T, *>, val d: AbstractColumn<D, T, *>) {
