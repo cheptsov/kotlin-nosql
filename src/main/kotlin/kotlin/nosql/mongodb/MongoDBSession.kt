@@ -1,6 +1,5 @@
 package kotlin.nosql.mongodb
 
-import kotlin.nosql.Database
 import kotlin.nosql.Session
 import com.mongodb.DB
 import kotlin.nosql.TableSchema
@@ -17,59 +16,51 @@ import kotlin.nosql.KeyValueSchema
 import com.mongodb.BasicDBObject
 import java.lang.reflect.Field
 import java.util.ArrayList
+import java.util.HashMap
+import kotlin.nosql.PKColumn
+import kotlin.nosql.util.getAllFields
+import kotlin.nosql.util.getAllFieldsMap
 
 class MongoDBSession(val db: DB) : Session() {
     override fun <T : TableSchema> T.create() {
         throw UnsupportedOperationException()
     }
+
     override fun <T : TableSchema> T.drop() {
         throw UnsupportedOperationException()
     }
+
     override fun <T : DocumentSchema<P, V>, P, V> T.insert(v: () -> V): P {
         val collection = db.getCollection(this.name)!!
-        val dbObject = toDBObject(v(), this)
-        collection.insert(dbObject)
-        return dbObject.get("_id").toString() as P
+        val doc = getDBObject(v(), this)
+        collection.insert(doc)
+        return doc.get("_id").toString() as P
     }
-    private fun toDBObject(o: Any, schema: Any): BasicDBObject {
-        val dbObject = BasicDBObject()
+
+    private fun getDBObject(o: Any, schema: Any): BasicDBObject {
+        val doc = BasicDBObject()
         val javaClass = o.javaClass
-        val fields = getAllFields(ArrayList(), javaClass)
+        val fields = getAllFields(javaClass)
         val schemaClass = schema.javaClass
-        val schemaFields = getAllFields(ArrayList(), schemaClass)
+        val schemaFields = getAllFieldsMap(schemaClass)
         for (field in fields) {
-            for (schemaField in schemaFields) {
-                if (schemaField.getName()!!.equalsIgnoreCase(field.getName()!!) &&
-                javaClass<AbstractColumn<Any?, AbstractSchema, Any?>>().isAssignableFrom(schemaField.getType()!!)) {
-                    field.setAccessible(true)
-                    schemaField.setAccessible(true)
-                    val column = schemaField.get(schema) as AbstractColumn<out Any, out AbstractSchema, out Any>
-                    val value = field.get(o)
-                    if (value != null) {
-                        // TODO TODO TODO
-                        when (value) {
-                            is Int -> dbObject.append(column.name, value)
-                            is String -> dbObject.append(column.name, value)
-                            else -> dbObject.append(column.name, toDBObject(value, column))
-                        }
+            val schemaField = schemaFields.get(field.getName()!!.toLowerCase())
+            if (schemaField != null && javaClass<AbstractColumn<Any?, AbstractSchema, Any?>>().isAssignableFrom(schemaField.getType()!!)) {
+                field.setAccessible(true)
+                schemaField.setAccessible(true)
+                val column = schemaField.get(schema) as AbstractColumn<out Any, out AbstractSchema, out Any>
+                val value = field.get(o)
+                if (value != null) {
+                    // TODO TODO TODO
+                    when (value) {
+                        is Int -> doc.append(column.name, value)
+                        is String -> doc.append(column.name, value)
+                        else -> doc.append(column.name, getDBObject(value, column))
                     }
-                    break
                 }
             }
         }
-        return dbObject
-    }
-
-    fun getAllFields(fields: MutableList<Field> , _type: Class<in Any>): List<Field> {
-        for (field in _type.getDeclaredFields()) {
-            fields.add(field)
-        }
-
-        if (_type.getSuperclass() != null) {
-            return getAllFields(fields, _type.getSuperclass()!!);
-        } else {
-            return fields
-        }
+        return doc
     }
 
     override fun <T : AbstractSchema> insert(columns: Array<Pair<AbstractColumn<out Any?, T, out Any?>, Any?>>) {
