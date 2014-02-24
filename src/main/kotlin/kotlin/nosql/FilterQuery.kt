@@ -13,5 +13,5 @@ fun <T: Table> FilterQuery<T>.set(body: T.(UpdateQuery<T>) -> Unit): UpdateQuery
 */
 
 fun <T: TableSchema> FilterQuery<T>.delete(st: () -> Unit = {}) {
-    Session.get().delete(table, op)
+    Session.current().delete(table, op)
 }

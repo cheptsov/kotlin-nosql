@@ -7,7 +7,7 @@ abstract class Session () {
 
     abstract fun <T : TableSchema>T.drop()
 
-    abstract fun <T : DocumentSchema<P, V>, P, V> T.insert(v: () -> V)
+    abstract fun <T : DocumentSchema<P, V>, P, V> T.insert(v: () -> V): P
 
     abstract fun <T : AbstractSchema> insert(columns: Array<Pair<AbstractColumn<*, T, *>, *>>)
 
@@ -33,19 +33,19 @@ abstract class Session () {
     abstract fun <T : TableSchema, A, B> Query2<T, A, B>.iterator(): Iterator<Pair<A, B>>
 
     fun <T : TableSchema, A, B> Template2<T, A, B>.filter(op: T.() -> Op): Query2<T, A, B> {
-        return Query2<T, A, B>(a, b).where(table.op())
+        return Query2<T, A, B>(a, b).where(AbstractSchema.current<T>().op())
     }
 
     fun <T : PKTableSchema<P>, P, A, B> Template2<T, A, B>.find(id: () -> P): Query2<T, A, B> {
-        return Query2<T, A, B>(a, b).where(table.pk eq id())
+        return Query2<T, A, B>(a, b).where(AbstractSchema.current<T>().pk eq id())
     }
 
     fun <T : TableSchema, A> AbstractColumn<A, T, *>.filter(op: T.() -> Op): Query1<T, A> {
-        return Query1<T, A>(this).where(table.op())
+        return Query1<T, A>(this).where(AbstractSchema.current<T>().op())
     }
 
     fun <T : PKTableSchema<P>, A, P> AbstractColumn<A, T, *>.find(id: () -> P): Query1<T, A> {
-        return Query1<T, A>(this).where(table.pk eq (id() as P))
+        return Query1<T, A>(this).where(AbstractSchema.current<T>().pk eq (id() as P))
     }
 
     fun <T : TableSchema, A> Query1<T, List<A>>.range1(range: () -> IntRange): RangeQuery<T, A> {
@@ -85,7 +85,7 @@ abstract class Session () {
     class object {
         val threadLocale = ThreadLocal<Session>()
 
-        fun get(): Session {
+        fun current(): Session {
             return threadLocale.get()!!
         }
     }

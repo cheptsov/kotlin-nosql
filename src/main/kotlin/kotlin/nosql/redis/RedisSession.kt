@@ -25,7 +25,7 @@ import java.util.ArrayList
 import java.util.Arrays
 
 class RedisSession(val jedis: Jedis) : Session() {
-    override fun <T : DocumentSchema<P, V>, P, V> T.insert(v: () -> V) {
+    override fun <T : DocumentSchema<P, V>, P, V> T.insert(v: () -> V): P {
         throw UnsupportedOperationException()
     }
 
@@ -71,9 +71,10 @@ class RedisSession(val jedis: Jedis) : Session() {
 
     override fun <T : KeyValueSchema> T.next(c: T.() -> AbstractColumn<Int, T, *>): Int {
         val c = c()
-        return jedis.incr(c.table.name + ":" + c.name)!!.toInt()
+        return jedis.incr(this.name + ":" + c.name)!!.toInt()
     }
     override fun <T : TableSchema> AbstractColumn<Int, T, *>.add(c: () -> Int): Int {
+        val table = AbstractSchema.current<T>()
         return jedis.incrBy(table.name + ":" + name, c().toLong())!!.toInt()
     }
 
@@ -86,7 +87,7 @@ class RedisSession(val jedis: Jedis) : Session() {
 
     override fun <T : KeyValueSchema, C> T.get(c: T.() -> AbstractColumn<C, T, *>): C {
         val c = c()
-        val v = jedis.get(c.table.name + ":" + c.name)
+        val v = jedis.get(this.name + ":" + c.name)
         if (v != null) {
             return when (c.columnType) {
                 ColumnType.INTEGER -> Integer.parseInt(v) as C
@@ -94,16 +95,17 @@ class RedisSession(val jedis: Jedis) : Session() {
                 else -> throw UnsupportedOperationException()
             }
         } else {
-            throw NotFoundException(c.table.name + ":" + c.name)
+            throw NotFoundException(this.name + ":" + c.name)
         }
     }
 
     override fun <T : KeyValueSchema, C> T.set(c: () -> AbstractColumn<C, T, *>, v: C) {
         val c = c()
-        val v = jedis.set(c.table.name + ":" + c.name, c.toString())
+        val v = jedis.set(this.name + ":" + c.name, c.toString())
     }
 
     override fun <T : AbstractSchema> insert(columns: Array<Pair<AbstractColumn<*, T, *>, *>>) {
+        val table = AbstractSchema.current<T>()
         if (columns.isNotEmpty()) {
             var key: String? = null
             for (column in columns) {
@@ -122,26 +124,27 @@ class RedisSession(val jedis: Jedis) : Session() {
                         hash.put(column.component1().name, column.component2().toString())
                     } else if (column.component2() is Set<*>) {
                         for (v in column.component2() as Set<*>) {
-                            jedis.sadd(column.component1().table.name + ":" + key + ":" + column.component1().name, v.toString())
+                            jedis.sadd(table.name + ":" + key + ":" + column.component1().name, v.toString())
                         }
                     } else if (column.component2() is List<*>) {
                         for (v in column.component2() as List<*>) {
-                            jedis.rpush(column.component1().table.name + ":" + key + ":" + column.component1().name, v.toString())
+                            jedis.rpush(table.name + ":" + key + ":" + column.component1().name, v.toString())
                         }
                     }
                 }
             }
             if (key != null) {
-                jedis.hmset(columns[0].component1().table.name + ":" + key, hash)
+                jedis.hmset(table.name + ":" + key, hash)
             }
         }
     }
 
     override fun <T : TableSchema, C> RangeQuery<T, C>.forEach(st: (c: C) -> Unit) {
+        val table = AbstractSchema.current<T>()
         val op1 = this.query.op
         if (op1 is EqualsOp && op1.expr1 is PKColumn<*, *>
         && op1.expr2 is LiteralOp) {
-            val values = jedis.lrange(op1.expr1.table.name + ":" + op1.expr2.value.toString() + ":" + query.a.name, range.start.toLong(), range.end.toLong())
+            val values = jedis.lrange(table.name + ":" + op1.expr2.value.toString() + ":" + query.a.name, range.start.toLong(), range.end.toLong())
             if (values != null) {
                 for (s in values) {
                     st(when (query.a.columnType) {
@@ -164,24 +167,26 @@ class RedisSession(val jedis: Jedis) : Session() {
     }
 
     override fun <T : TableSchema> Query1<T, Int>.add(c: () -> Int): Int {
+        val table = AbstractSchema.current<T>()
         val op1 = op!!
         if (op1 is EqualsOp && op1.expr1 is PKColumn<*, *>
         && op1.expr2 is LiteralOp) {
-            return jedis.hincrBy(op1.expr1.table.name + ":" + op1.expr2.value.toString(), a.name, c().toLong())!!.toInt()
+            return jedis.hincrBy(table.name + ":" + op1.expr2.value.toString(), a.name, c().toLong())!!.toInt()
         } else {
             throw UnsupportedOperationException()
         }
     }
 
     override fun <T : TableSchema, C, CC : Collection<*>> Query1<T, CC>.add(c: () -> C) {
+        val table = AbstractSchema.current<T>()
         val op1 = op!!
         if (op1 is EqualsOp && op1.expr1 is PKColumn<*, *>
         && op1.expr2 is LiteralOp) {
             if (a.columnType == ColumnType.INTEGER_LIST
             || a.columnType == ColumnType.STRING_LIST) {
-                jedis.rpush(op1.expr1.table.name + ":" + op1.expr2.value.toString() + ":" + a.name, c().toString())
+                jedis.rpush(table.name + ":" + op1.expr2.value.toString() + ":" + a.name, c().toString())
             } else {
-                jedis.sadd(op1.expr1.table.name + ":" + op1.expr2.value.toString() + ":" + a.name, c().toString())
+                jedis.sadd(table.name + ":" + op1.expr2.value.toString() + ":" + a.name, c().toString())
             }
         }
     }
@@ -198,16 +203,18 @@ class RedisSession(val jedis: Jedis) : Session() {
     }
 
     override fun <T : PKTableSchema<P>, P, C> AbstractColumn<C, T, *>.get(id: () -> P): C {
+        val table = AbstractSchema.current<T>()
         return get(table.pk eq id())
     }
 
     private fun <T : TableSchema, C> AbstractColumn<C, T, *>.get(where: Op): C {
+        val table = AbstractSchema.current<T>()
         if (where is EqualsOp && where.expr1 is PKColumn<*, *> && where.expr2 is LiteralOp) {
             if (this is PKColumn<*, *>) {
                 return where.expr2.value as C
             }
             if (columnType == ColumnType.INTEGER || columnType == ColumnType.STRING) {
-                val v = jedis.hget(where.expr1.table.name + ":" + where.expr2.value.toString(), name)
+                val v = jedis.hget(table.name + ":" + where.expr2.value.toString(), name)
                 if (v != null) {
                     when (columnType) {
                         ColumnType.INTEGER -> {
@@ -220,11 +227,11 @@ class RedisSession(val jedis: Jedis) : Session() {
                     if (this is NullableColumn<*, *>) {
                         return null as C
                     } else {
-                        throw NotFoundException(where.expr1.table.name + ":" + where.expr2.value.toString() + " " + name)
+                        throw NotFoundException(table.name + ":" + where.expr2.value.toString() + " " + name)
                     }
                 }
             } else if (columnType == ColumnType.INTEGER_SET || columnType == ColumnType.STRING_SET) {
-                val v = jedis.smembers(where.expr1.table.name + ":" + where.expr2.value.toString() + ":" + name)
+                val v = jedis.smembers(table.name + ":" + where.expr2.value.toString() + ":" + name)
                 if (v != null) {
                     return v.map {
                         when (columnType) {
@@ -281,17 +288,18 @@ class RedisSession(val jedis: Jedis) : Session() {
         }
     }
     override fun <T : TableSchema, A, B> Query2<T, A, B>.get(statement: (A, B) -> Unit) {
+        val table = AbstractSchema.current<T>()
         val op = op!!
         if (op is EqualsOp && op.expr1 is PKColumn<*, *> && op.expr2 is LiteralOp) {
             var av: String?
             var bv: String?
             if (a.columnType == ColumnType.INTEGER || a.columnType == ColumnType.STRING) {
-                av = jedis.hget(a.table.name + ":" + op.expr2.value.toString(), a.name)
+                av = jedis.hget(table.name + ":" + op.expr2.value.toString(), a.name)
             } else {
                 throw UnsupportedOperationException()
             }
             if (b.columnType == ColumnType.INTEGER || b.columnType == ColumnType.STRING) {
-                bv = jedis.hget(a.table.name + ":" + op.expr2.value.toString(), b.name)
+                bv = jedis.hget(table.name + ":" + op.expr2.value.toString(), b.name)
             } else {
                 throw UnsupportedOperationException()
             }

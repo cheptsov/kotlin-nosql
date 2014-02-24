@@ -3,7 +3,21 @@ package kotlin.nosql
 import java.util.ArrayList
 
 abstract class AbstractSchema(val name: String) {
-    val columns = ArrayList<AbstractColumn<*, *, *>>()
+    // TODO TODO TODO
+    // val columns = ArrayList<AbstractColumn<*, *, *>>()
+
+    // TODO TODO TODO
+    class object {
+        val threadLocale = ThreadLocal<AbstractSchema>()
+
+        fun <T: AbstractSchema> current(): T {
+            return threadLocale.get() as T
+        }
+
+        fun set(schema: AbstractSchema) {
+            return threadLocale.set(schema)
+        }
+    }
 }
 
 abstract class KeyValueSchema(name: String): AbstractSchema(name) {
@@ -37,32 +51,36 @@ abstract class AbstractDocumentSchema<V>(name: String, val valueClass: Class<V>)
 }
 */
 
-fun <T: AbstractSchema> T.string(name: String): AbstractColumn<String, T, String> = AbstractColumn(this, name, javaClass<String>(), ColumnType.STRING)
+fun <T: AbstractSchema> string(name: String): AbstractColumn<String, T, String> = AbstractColumn(name, javaClass<String>(), ColumnType.STRING)
 
-fun <T: AbstractSchema> T.integer(name: String): AbstractColumn<Int, T, Int> = AbstractColumn(this, name, javaClass<Int>(), ColumnType.INTEGER)
+fun <T: AbstractSchema> T.string(name: String): AbstractColumn<String, T, String> = AbstractColumn(name, javaClass<String>(), ColumnType.STRING)
 
-fun <T: AbstractSchema> T.nullableString(name: String): NullableColumn<String, T> = NullableColumn(this, name, javaClass<String>(), ColumnType.STRING)
+fun <T: AbstractSchema> integer(name: String): AbstractColumn<Int, T, Int> = AbstractColumn(name, javaClass<Int>(), ColumnType.INTEGER)
+fun <T: AbstractSchema> T.integer(name: String): AbstractColumn<Int, T, Int> = AbstractColumn(name, javaClass<Int>(), ColumnType.INTEGER)
 
-fun <T: AbstractSchema> T.nullableInteger(name: String): NullableColumn<Int, T> = NullableColumn(this, name, javaClass<Int>(), ColumnType.INTEGER)
+fun <T: AbstractSchema> T.nullableString(name: String): NullableColumn<String, T> = NullableColumn(name, javaClass<String>(), ColumnType.STRING)
 
-//fun <T: AbstractSchema, C> T.setColumn(name: String, javaClass: Class<C>): SetColumn<C, T> = SetColumn(this, name, javaClass)
+fun <T: AbstractSchema> T.nullableInteger(name: String): NullableColumn<Int, T> = NullableColumn(name, javaClass<Int>(), ColumnType.INTEGER)
 
-fun <T: AbstractSchema> T.setOfString(name: String): SetColumn<String, T> = SetColumn(this, name, javaClass<String>(), ColumnType.STRING_SET)
+//fun <T: AbstractSchema, C> T.setColumn(name: String, javaClass: Class<C>): SetColumn<C, T> = SetColumn(name, javaClass)
 
-fun <T: AbstractSchema> T.setOfInteger(name: String): SetColumn<Int, T> = SetColumn(this, name, javaClass<Int>(), ColumnType.INTEGER_SET)
+fun <T: AbstractSchema> T.setOfString(name: String): SetColumn<String, T> = SetColumn(name, javaClass<String>(), ColumnType.STRING_SET)
 
-//fun <T: AbstractSchema, C> T.listColumn(name: String, javaClass: Class<C>): ListColumn<C, T> = ListColumn(this, name, javaClass)
+fun <T: AbstractSchema> T.setOfInteger(name: String): SetColumn<Int, T> = SetColumn(name, javaClass<Int>(), ColumnType.INTEGER_SET)
 
-fun <T: AbstractSchema> T.listOfString(name: String): ListColumn<String, T> = ListColumn(this, name, javaClass<String>(), ColumnType.STRING_LIST)
+//fun <T: AbstractSchema, C> T.listColumn(name: String, javaClass: Class<C>): ListColumn<C, T> = ListColumn(name, javaClass)
 
-fun <T: AbstractSchema> T.listOfInteger(name: String): ListColumn<Int, T> = ListColumn(this, name, javaClass<Int>(), ColumnType.INTEGER_LIST)
+fun <T: AbstractSchema> T.listOfString(name: String): ListColumn<String, T> = ListColumn(name, javaClass<String>(), ColumnType.STRING_LIST)
+
+fun <T: AbstractSchema> T.listOfInteger(name: String): ListColumn<Int, T> = ListColumn(name, javaClass<Int>(), ColumnType.INTEGER_LIST)
 
 fun <T: TableSchema> T.delete(body: T.() -> Op) {
     FilterQuery(this, body()) delete { }
 }
 
-
+// TODO TODO TODO
 fun <T: TableSchema, X> T.columns(selector: T.() -> X): X {
+    AbstractSchema.set(this)
     return selector();
 }
 
@@ -94,21 +112,21 @@ class Quintuple<A1, A2, A3, A4, A5>(val a1: A1, val a2: A2, val a3: A3, val a4: 
 }
 
 fun <T: TableSchema, A, B> T.template(a: AbstractColumn<A, T, *>, b: AbstractColumn<B, T, *>): Template2<T, A, B> {
-    return Template2(this, a, b)
+    return Template2(a, b)
 }
 
-class Template2<T: AbstractSchema, A, B>(val table: T, val a: AbstractColumn<A, T, *>, val b: AbstractColumn<B, T, *>) {
+class Template2<T: AbstractSchema, A, B>(val a: AbstractColumn<A, T, *>, val b: AbstractColumn<B, T, *>) {
     /*fun invoke(av: A, bv: B): Array<Pair<Column<*, T>, *>> {
         return array(Pair(a, av), Pair(b, bv))
     }*/
 
     fun <C> plus(c: AbstractColumn<C, T, *>): Template3<T, A, B, C> {
-        return Template3(table, a, b, c)
+        return Template3(a, b, c)
     }
 
     fun put(statement: () -> Pair<A, B>) {
         val tt = statement()
-        Session.get().insert(array(Pair(a, tt.first), Pair(b, tt.second)))
+        Session.current().insert(array(Pair(a, tt.first), Pair(b, tt.second)))
     }
 
     /*fun values(va: A, vb: B) {
@@ -116,7 +134,7 @@ class Template2<T: AbstractSchema, A, B>(val table: T, val a: AbstractColumn<A, 
     }*/
 }
 
-class Template3<T: AbstractSchema, A, B, C>(val table: T, val a: AbstractColumn<A, T, *>, val b: AbstractColumn<B, T, *>, val c: AbstractColumn<C, T, *>) {
+class Template3<T: AbstractSchema, A, B, C>(val a: AbstractColumn<A, T, *>, val b: AbstractColumn<B, T, *>, val c: AbstractColumn<C, T, *>) {
     fun invoke(av: A, bv: B, cv: C): Array<Pair<AbstractColumn<*, T, *>, *>> {
         return array(Pair(a, av), Pair(b, bv), Pair(c, cv))
     }
@@ -128,37 +146,37 @@ class Template3<T: AbstractSchema, A, B, C>(val table: T, val a: AbstractColumn<
     }*/
 
     fun values(va: A, vb: B, vc: C) {
-        Session.get().insert(array(Pair(a, va), Pair(b, vb), Pair(c, vc)))
+        Session.current().insert(array(Pair(a, va), Pair(b, vb), Pair(c, vc)))
     }
 
     fun put(statement: () -> Triple<A, B, C>) {
         val tt = statement()
-        Session.get().insert(array(Pair(a, tt.component1()), Pair(b, tt.component2()), Pair(c, tt.component3())))
+        Session.current().insert(array(Pair(a, tt.component1()), Pair(b, tt.component2()), Pair(c, tt.component3())))
     }
 
     fun <D> plus(d: AbstractColumn<D, T, *>): Template4<T, A, B, C, D> {
-        return Template4(table, a, b, c, d)
+        return Template4(a, b, c, d)
     }
 }
 
 fun <T : PKTableSchema<P>, P, A, B> Template2<T, A, B>.insert(statement: () -> Triple<P, A, B>) {
     val tt = statement()
-    Session.get().insert(array(Pair(a.table.ID, tt.component1()), Pair(a, tt.component2()), Pair(b, tt.component3())))
+    Session.current().insert(array(Pair(AbstractSchema.current<T>().ID, tt.component1()), Pair(a, tt.component2()), Pair(b, tt.component3())))
 }
 
 fun <T : PKTableSchema<P>, P, C> AbstractColumn<C, T, *>.insert(statement: () -> Pair<P, C>) {
     val tt = statement()
-    val id: AbstractColumn<P, T, *> = table.ID // Type inference failure
-    Session.get().insert(array(Pair(id, tt.component1()), Pair(this, tt.component2())))
+    val id: AbstractColumn<P, T, *> = AbstractSchema.current<T>().ID // Type inference failure
+    Session.current().insert(array(Pair(id, tt.component1()), Pair(this, tt.component2())))
 }
 
-class Template4<T: AbstractSchema, A, B, C, D>(val table: T, val a: AbstractColumn<A, T, *>, val b: AbstractColumn<B, T, *>, val c: AbstractColumn<C, T, *>, val d: AbstractColumn<D, T, *>) {
+class Template4<T: AbstractSchema, A, B, C, D>(val a: AbstractColumn<A, T, *>, val b: AbstractColumn<B, T, *>, val c: AbstractColumn<C, T, *>, val d: AbstractColumn<D, T, *>) {
     fun invoke(av: A, bv: B, cv: C, dv: D): Array<Pair<AbstractColumn<*, T, *>, *>> {
         return array(Pair(a, av), Pair(b, bv), Pair(c, cv), Pair(d, dv))
     }
 
     fun insert(statement: () -> Quadruple<A, B, C, D>) {
         val tt = statement()
-        Session.get().insert(array(Pair(a, tt.component1()), Pair(b, tt.component2()), Pair(c, tt.component3()), Pair(d, tt.component4())))
+        Session.current().insert(array(Pair(a, tt.component1()), Pair(b, tt.component2()), Pair(c, tt.component3()), Pair(d, tt.component4())))
     }
 }
