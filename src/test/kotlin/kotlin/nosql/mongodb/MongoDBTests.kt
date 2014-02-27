@@ -64,9 +64,6 @@ class Details(val title: String, artist: String) {
 
 class Album(sku: String, title: String, description: String, asin: String, shipping: Shipping, pricing: Pricing,
             details: Details) : Product(sku, title, description, asin, shipping, pricing, details) {
-    override fun toString(): String {
-        return "[id: $id, sku: $sku, title: $title]"
-    }
 }
 
 class MongoDBTests {
