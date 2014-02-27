@@ -12,7 +12,6 @@ open class ProductSchema<V, T : AbstractSchema>(javaClass: Class<V>, discriminat
 
     val Shipping = ShippingColumn<T>()
     val Pricing = PricingColumn<T>()
-    val Details = DetailsColumn<T>()
 
     class ShippingColumn<T : AbstractSchema>() : Column<Shipping, T>("shipping", javaClass()) {
         val Weight = integer<T>("weight")
@@ -30,6 +29,13 @@ open class ProductSchema<V, T : AbstractSchema>(javaClass: Class<V>, discriminat
         val Savings = integer<T>("savings")
         val PCTSavings = integer<T>("pct_savings")
     }
+}
+
+object Products : ProductSchema<Product, Products>(javaClass(), "") {
+}
+
+object Albums : ProductSchema<Album, Albums>(javaClass(), discriminator = "Audio Album") {
+    val Details = DetailsColumn<Albums>()
 
     class DetailsColumn<T : AbstractSchema>() : Column<Details, T>("details", javaClass()) {
         val Title = string<T>("title")
@@ -39,14 +45,8 @@ open class ProductSchema<V, T : AbstractSchema>(javaClass: Class<V>, discriminat
     }
 }
 
-object Products : ProductSchema<Product, Products>(javaClass(), "") {
-}
-
-object Albums : ProductSchema<Album, Albums>(javaClass(), discriminator = "Audio Album") {
-}
-
 abstract class Product(val sku: String, val title: String, val description: String,
-                       val asin: String, val shipping: Shipping, val pricing: Pricing, val details: Details) {
+                       val asin: String, val shipping: Shipping, val pricing: Pricing) {
     val id: String? = null
 }
 
@@ -59,11 +59,11 @@ class Dimensions(val weight: Int, val height: Int, val depth: Int) {
 class Pricing(val list: Int, val retail: Int, val savings: Int, val pctSavings: Int) {
 }
 
-class Details(val title: String, artist: String) {
+class Album(sku: String, title: String, description: String, asin: String, shipping: Shipping, pricing: Pricing,
+            val details: Details) : Product(sku, title, description, asin, shipping, pricing) {
 }
 
-class Album(sku: String, title: String, description: String, asin: String, shipping: Shipping, pricing: Pricing,
-            details: Details) : Product(sku, title, description, asin, shipping, pricing, details) {
+class Details(val title: String, val artist: String) {
 }
 
 class MongoDBTests {

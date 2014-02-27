@@ -125,7 +125,6 @@ open class ProductSchema<V, T : AbstractSchema>(javaClass: Class<V>, discriminat
 
     val Shipping = ShippingColumn<T>()
     val Pricing = PricingColumn<T>()
-    val Details = DetailsColumn<T>()
 
     class ShippingColumn<T : AbstractSchema>() : Column<Shipping, T>("shipping", javaClass()) {
         val Weight = integer<T>("weight")
@@ -140,13 +139,6 @@ open class ProductSchema<V, T : AbstractSchema>(javaClass: Class<V>, discriminat
     class PricingColumn<T : AbstractSchema>() : Column<Pricing, T>("pricing", javaClass()) {
         val List = integer<T>("list")
         val Retail = integer<T>("retail")
-        val Savings = integer<T>("savings")
-        val PCTSavings = integer<T>("pct_savings")
-    }
-
-    class DetailsColumn<T : AbstractSchema>() : Column<Details, T>("details", javaClass()) {
-        val Title = string<T>("title")
-        val Artist = string<T>("artist")
         val Savings = integer<T>("savings")
         val PCTSavings = integer<T>("pct_savings")
     }
@@ -168,19 +160,27 @@ class Dimensions(val weight: Int, val height: Int, val depth: Int) {
 
 class Pricing(val list: Int, val retail: Int, val savings: Int, val pctSavings: Int) {
 }
-
-class Details(val title: String, artist: String) {
-}
 ```
 
 Define inherited schema:
 
  ```kotlin
 object Albums : ProductSchema<Album, Albums>(javaClass(), discriminator = "Audio Album") {
+    val Details = DetailsColumn<Albums>()
+
+    class DetailsColumn<T : AbstractSchema>() : Column<Details, T>("details", javaClass()) {
+        val Title = string<T>("title")
+        val Artist = string<T>("artist")
+        val Savings = integer<T>("savings")
+        val PCTSavings = integer<T>("pct_savings")
+    }
 }
 
 class Album(sku: String, title: String, description: String, asin: String, shipping: Shipping, pricing: Pricing,
-    details: Details) : Product(sku, title, description, asin, shipping, pricing, details) {
+    val details: Details) : Product(sku, title, description, asin, shipping, pricing, details) {
+}
+
+class Details(val title: String, val artist: String) {
 }
 ```
 

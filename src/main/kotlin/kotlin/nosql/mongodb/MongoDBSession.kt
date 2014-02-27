@@ -58,14 +58,25 @@ class MongoDBSession(val db: DB) : Session() {
         val doc = BasicDBObject()
         val javaClass = o.javaClass
         val fields = getAllFields(javaClass)
-        val schemaClass = schema.javaClass
-        val schemaFields = getAllFieldsMap(schemaClass)
+        var sc: Class<out Any?>? = null
+        var s: AbstractSchema? = null
+        if (schema is PolymorphicSchema<*, *>) {
+            for (entry in PolymorphicSchema.discriminatorClasses.entrySet()) {
+                if (entry.value.equals(o.javaClass)) {
+                    sc = PolymorphicSchema.discriminatorSchemaClasses.get(entry.key)!!
+                    s = PolymorphicSchema.discriminatorSchemas.get(entry.key)!!
+                }
+            }
+        }
+        val schemaClass: Class<out Any?> = if (schema is PolymorphicSchema<*, *>) sc!! else schema.javaClass
+        val objecySchema: Any = if (schema is PolymorphicSchema<*, *>) s!! else schema
+        val schemaFields = getAllFieldsMap(schemaClass as Class<in Any>)
         for (field in fields) {
             val schemaField = schemaFields.get(field.getName()!!.toLowerCase())
             if (schemaField != null && javaClass<AbstractColumn<Any?, AbstractSchema, Any?>>().isAssignableFrom(schemaField.getType()!!)) {
                 field.setAccessible(true)
                 schemaField.setAccessible(true)
-                val column = schemaField.get(schema) as AbstractColumn<out Any, out AbstractSchema, out Any>
+                val column = schemaField.get(objecySchema) as AbstractColumn<out Any, out AbstractSchema, out Any>
                 val value = field.get(o)
                 if (value != null) {
                     // TODO TODO TODO

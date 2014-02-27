@@ -62,12 +62,17 @@ abstract class PolymorphicSchema<P, V>(name: String, valueClass: Class<V>, prima
             discriminators.add(discriminator)
         else
             emptyDiscriminators.add(discriminator)
+        // TODO TODO TODO
         discriminatorClasses.put(discriminator, this.valueClass)
+        discriminatorSchemaClasses.put(discriminator, this.javaClass)
+        discriminatorSchemas.put(discriminator, this)
     }
 
     class object {
         val tableDiscriminators = ConcurrentHashMap<String, MutableList<Discriminator<*, *>>>()
         val discriminatorClasses = ConcurrentHashMap<Discriminator<*, *>, Class<*>>()
+        val discriminatorSchemaClasses = ConcurrentHashMap<Discriminator<*, *>, Class<*>>()
+        val discriminatorSchemas = ConcurrentHashMap<Discriminator<*, *>, AbstractSchema>()
     }
 }
 
