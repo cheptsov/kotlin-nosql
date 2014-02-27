@@ -22,7 +22,8 @@ class DynamoDBTests {
 
     Test
     fun test() {
-        var db = DynamoDB(accessKey = System.getenv("AWS_KEY")!!, secretKey = System.getenv("AWS_SECRET")!!)
+        var db = DynamoDB(accessKey = System.getenv("AWS_KEY")!!, secretKey = System.getenv("AWS_SECRET")!!,
+                schemas = array<AbstractSchema>(Users, Cities)) // Compiler failure
 
         db {
             array(Cities, Users) forEach { it.create() }

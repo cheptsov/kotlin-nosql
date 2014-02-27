@@ -6,7 +6,7 @@ import com.mongodb.MongoClient
 import kotlin.nosql.AbstractSchema
 
 class MongoDB(val host: String = "localhost", val database: String, val userName: String = "",
-              val password: String = "", schemas: Array<AbstractSchema>) : Database<MongoDBSession>() {
+              val password: String = "", schemas: Array<AbstractSchema>) : Database<MongoDBSession>(schemas) {
     override fun invoke(statement: MongoDBSession.() -> Unit) {
         val db = MongoClient(host).getDB(database)!!
         if (userName != "")
