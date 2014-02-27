@@ -9,11 +9,11 @@ open class ProductsBase<V, T : AbstractSchema>(javaClass: Class<V>) : DocumentSc
     val Description = string<T>("description")
     val ASIN = string<T>("asin")
 
-    val Shipping = ShippingColumn<Shipping, T>()
-    val Pricing = PricingColumn<Pricing, T>()
-    val Details = DetailsColumn<Details, T>()
+    val Shipping = ShippingColumn<T>()
+    val Pricing = PricingColumn<T>()
+    val Details = DetailsColumn<T>()
 
-    class ShippingColumn<V, T : AbstractSchema>() : Column<V, T>("shipping", javaClass()) {
+    class ShippingColumn<T : AbstractSchema>() : Column<Shipping, T>("shipping", javaClass()) {
         val Weight = integer<T>("weight")
     }
 
@@ -23,14 +23,14 @@ open class ProductsBase<V, T : AbstractSchema>(javaClass: Class<V>) : DocumentSc
         val Depth = integer<T>("depth")
     }
 
-    class PricingColumn<V, T : AbstractSchema>() : Column<V, T>("pricing", javaClass()) {
+    class PricingColumn<T : AbstractSchema>() : Column<Pricing, T>("pricing", javaClass()) {
         val List = integer<T>("list")
         val Retail = integer<T>("retail")
         val Savings = integer<T>("savings")
         val PCTSavings = integer<T>("pct_savings")
     }
 
-    class DetailsColumn<V, T : AbstractSchema>() : Column<V, T>("details", javaClass()) {
+    class DetailsColumn<T : AbstractSchema>() : Column<Details, T>("details", javaClass()) {
         val Title = string<T>("title")
         val Artist = string<T>("artist")
         val Savings = integer<T>("savings")
@@ -63,6 +63,9 @@ class Details(val title: String, artist: String) {
 
 class Album(sku: String, title: String, description: String, asin: String, shipping: Shipping, pricing: Pricing,
             details: Details) : Product(sku, title, description, asin, shipping, pricing, details) {
+    override fun toString(): String {
+        return "[id: $id, sku: $sku, title: $title]"
+    }
 }
 
 class MongoDBTests {
@@ -83,10 +86,9 @@ class MongoDBTests {
                 println(product)
             }
 
-
-            Albums columns { ID + Title } filter { SKU eq "00e8da9b" } forEach { id, title ->
+            /*Albums columns { ID + Title } filter { SKU eq "00e8da9b" } forEach { id, title ->
                 // ...
-            }
+            }*/
         }
     }
 }
