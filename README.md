@@ -116,7 +116,7 @@ for (user in Users filter { Name eq "antirez" }) {
 Define base schema class:
 
 ```kotlin
-open class ProductsBase<V, T : AbstractSchema>(javaClass: Class<V>, discriminator: String) : PolymorphicSchema<String, V>("products",
+open class ProductSchema<V, T : AbstractSchema>(javaClass: Class<V>, discriminator: String) : PolymorphicSchema<String, V>("products",
         javaClass, primaryKey = string("_id"), discriminator = Discriminator(string("type"), discriminator) ) {
     val SKU = string<T>("sku")
     val Title = string<T>("title")
@@ -152,7 +152,7 @@ open class ProductsBase<V, T : AbstractSchema>(javaClass: Class<V>, discriminato
     }
 }
 
-object Products : ProductsBase<Product, Products>(javaClass(), "") {
+object Products : ProductSchema<Product, Products>(javaClass(), "") {
 }
 
 abstract class Product(val sku: String, val title: String, val description: String,
@@ -176,7 +176,7 @@ class Details(val title: String, artist: String) {
 Define inherited schema:
 
  ```kotlin
-object Albums : ProductsBase<Album, Albums>(javaClass(), discriminator = "Audio Album") {
+object Albums : ProductSchema<Album, Albums>(javaClass(), discriminator = "Audio Album") {
 }
 
 class Album(sku: String, title: String, description: String, asin: String, shipping: Shipping, pricing: Pricing,
