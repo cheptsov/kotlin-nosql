@@ -5,6 +5,7 @@ import com.amazonaws.auth.PropertiesCredentials
 import com.amazonaws.services.dynamodb.AmazonDynamoDBClient
 import com.amazonaws.auth.BasicAWSCredentials
 import kotlin.nosql.Session
+import kotlin.nosql.AbstractSchema
 
 class DynamoDB(val accessKey: String, val secretKey: String) : Database<DynamoDBSession>() {
     override fun invoke(statement: DynamoDBSession.() -> Unit) {

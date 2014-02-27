@@ -3,6 +3,7 @@ package kotlin.nosql.redis
 import kotlin.nosql.Database
 import redis.clients.jedis.Jedis
 import kotlin.nosql.Session
+import kotlin.nosql.AbstractSchema
 
 class Redis(val host: String) : Database<RedisSession>() {
     override fun invoke(statement: RedisSession.() -> Unit) {

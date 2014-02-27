@@ -39,9 +39,17 @@ class MongoDBSession(val db: DB) : Session() {
 
     override fun <T : DocumentSchema<P, V>, P, V> T.insert(v: () -> V): P {
         val collection = db.getCollection(this.name)!!
-        val doc = getDBObject(v(), this)
-        if (this is PolymorphicSchema<*, *>)
-            doc.set(this.discriminator.column.name, this.discriminator.value)
+        val obj = v()
+        val doc = getDBObject(obj, this)
+        if (this is PolymorphicSchema<*, *>) {
+            var dominatorValue: Any? = null
+            for (entry in PolymorphicSchema.discriminatorClasses.entrySet()) {
+                if (entry.value.equals(obj.javaClass)) {
+                    dominatorValue = entry.key.value
+                }
+            }
+            doc.set(this.discriminator.column.name, dominatorValue!!)
+        }
         collection.insert(doc)
         return doc.get("_id").toString() as P
     }
