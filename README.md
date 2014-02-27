@@ -148,7 +148,7 @@ object Products : ProductSchema<Product, Products>(javaClass(), "") {
 }
 
 abstract class Product(val sku: String, val title: String, val description: String,
-                       val asin: String, val shipping: Shipping, val pricing: Pricing, val details: Details) {
+                       val asin: String, val shipping: Shipping, val pricing: Pricing) {
     val id: String? = null
 }
 
@@ -177,7 +177,7 @@ object Albums : ProductSchema<Album, Albums>(javaClass(), discriminator = "Audio
 }
 
 class Album(sku: String, title: String, description: String, asin: String, shipping: Shipping, pricing: Pricing,
-    val details: Details) : Product(sku, title, description, asin, shipping, pricing, details) {
+    val details: Details) : Product(sku, title, description, asin, shipping, pricing) {
 }
 
 class Details(val title: String, val artist: String) {
