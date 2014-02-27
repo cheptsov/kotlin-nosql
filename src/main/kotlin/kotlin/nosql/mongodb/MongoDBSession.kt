@@ -25,6 +25,8 @@ import kotlin.nosql.ColumnType
 import kotlin.nosql.NullableColumn
 import java.util.Arrays
 import kotlin.nosql.Column
+import kotlin.nosql.Discriminator
+import kotlin.nosql.PolymorphicSchema
 
 class MongoDBSession(val db: DB) : Session() {
     override fun <T : TableSchema> T.create() {
@@ -38,7 +40,8 @@ class MongoDBSession(val db: DB) : Session() {
     override fun <T : DocumentSchema<P, V>, P, V> T.insert(v: () -> V): P {
         val collection = db.getCollection(this.name)!!
         val doc = getDBObject(v(), this)
-        doc.set("class", valueClass.getName())
+        if (this is PolymorphicSchema<*, *>)
+            doc.set(this.discriminator.column.name, this.discriminator.value)
         collection.insert(doc)
         return doc.get("_id").toString() as P
     }
@@ -87,7 +90,20 @@ class MongoDBSession(val db: DB) : Session() {
     }
 
     private fun <T: DocumentSchema<P, V>, P, V> getObject(doc: DBObject, schema: T): V {
-        val valueInstance = newInstance(Class.forName(doc.get("class") as String))
+        val valueInstance: Any = when (schema) {
+            is PolymorphicSchema<*, *> -> {
+                var instance: Any? = null
+                val discriminatorValue = doc.get(schema.discriminator.column.name)
+                for (discriminator in PolymorphicSchema.tableDiscriminators.get(schema.name)!!) {
+                    if (discriminator.value.equals(discriminatorValue)) {
+                        instance = newInstance(PolymorphicSchema.discriminatorClasses.get(discriminator)!!)
+                        break
+                    }
+                }
+                instance!!
+            }
+            else -> newInstance(schema.valueClass)
+        }
         val schemaClass = schema.javaClass
         val schemaFields = getAllFields(schemaClass as Class<in Any?>)
         val valueFields = getAllFieldsMap(valueInstance.javaClass as Class<in Any?>)
@@ -97,8 +113,8 @@ class MongoDBSession(val db: DB) : Session() {
                 if (valueField != null) {
                     schemaField.setAccessible(true)
                     valueField.setAccessible(true)
-                    val column = schemaField.get(schema) as AbstractColumn<Any?, T, *>
-                    val columnValue = when (column.columnType) {
+                    val column = schemaField.get(schema) as AbstractColumn<*, *, *>
+                    val columnValue: Any? = when (column.columnType) {
                         ColumnType.INTEGER -> doc.get(column.name)
                         ColumnType.STRING -> doc.get(column.name)?.toString()
                         else -> {

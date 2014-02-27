@@ -1,6 +1,9 @@
 package kotlin.nosql
 
 import java.util.ArrayList
+import java.util.HashMap
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CopyOnWriteArrayList
 
 abstract class AbstractSchema(val name: String) {
     // TODO TODO TODO
@@ -43,13 +46,30 @@ val <C, T : PKTableSchema<C>> T.ID: AbstractColumn<C, T, C>
         return pk as AbstractColumn<C, T, C>
     }
 
-abstract class DocumentSchema<P, V>(name: String, val valueClass: Class<V>, primaryKey: PK<P>) : PKTableSchema<P>(name, primaryKey) {
+class Discriminator<V, T: DocumentSchema<out Any, out Any>>(val column: AbstractColumn<V, T, V>, val value: V) {
 }
 
-/*
-abstract class AbstractDocumentSchema<V>(name: String, val valueClass: Class<V>) : AbstractTableSchema(name) {
+abstract class DocumentSchema<P, V>(name: String, val valueClass: Class<V>, primaryKey: AbstractColumn<P,
+        out DocumentSchema<P, V>, P>) : PKTableSchema<P>(name, PK<P>(primaryKey.name, primaryKey.valueClass, primaryKey.columnType)) {
 }
-*/
+
+abstract class PolymorphicSchema<P, V>(name: String, valueClass: Class<V>, primaryKey: AbstractColumn<P,
+        out DocumentSchema<P, V>, P>, val discriminator: Discriminator<out Any, out DocumentSchema<P, V>>) : DocumentSchema<P, V>(name, valueClass, primaryKey) {
+    {
+        val emptyDiscriminators = CopyOnWriteArrayList<Discriminator<*, *>>()
+        val discriminators = tableDiscriminators.putIfAbsent(name, emptyDiscriminators)
+        if (discriminators != null)
+            discriminators.add(discriminator)
+        else
+            emptyDiscriminators.add(discriminator)
+        discriminatorClasses.put(discriminator, this.valueClass)
+    }
+
+    class object {
+        val tableDiscriminators = ConcurrentHashMap<String, MutableList<Discriminator<*, *>>>()
+        val discriminatorClasses = ConcurrentHashMap<Discriminator<*, *>, Class<*>>()
+    }
+}
 
 fun <T: AbstractSchema> string(name: String): AbstractColumn<String, T, String> = AbstractColumn(name, javaClass<String>(), ColumnType.STRING)
 

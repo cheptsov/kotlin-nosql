@@ -3,7 +3,8 @@ package kotlin.nosql.mongodb
 import org.junit.Test
 import kotlin.nosql.*
 
-open class ProductsBase<V, T : AbstractSchema>(javaClass: Class<V>) : DocumentSchema<String, V>("products", javaClass, PK.string("_id")) {
+open class ProductsBase<V, T : AbstractSchema>(javaClass: Class<V>, discriminator: String) : PolymorphicSchema<String, V>("products",
+        javaClass, primaryKey = string("_id"), discriminator = Discriminator(string("type"), discriminator) ) {
     val SKU = string<T>("sku")
     val Title = string<T>("title")
     val Description = string<T>("description")
@@ -38,10 +39,10 @@ open class ProductsBase<V, T : AbstractSchema>(javaClass: Class<V>) : DocumentSc
     }
 }
 
-object Products : ProductsBase<Product, Products>(javaClass()) {
+object Products : ProductsBase<Product, Products>(javaClass(), "") {
 }
 
-object Albums : ProductsBase<Album, Albums>(javaClass()) {
+object Albums : ProductsBase<Album, Albums>(javaClass(), discriminator = "Audio Album") {
 }
 
 abstract class Product(val sku: String, val title: String, val description: String,
@@ -83,7 +84,9 @@ class MongoDBTests {
             }
 
             for (product in Products filter { SKU eq "00e8da9b" }) {
-                println(product)
+                if (product is Album) {
+                    println("Found music album ${product.title}")
+                }
             }
 
             /*Albums columns { ID + Title } filter { SKU eq "00e8da9b" } forEach { id, title ->
