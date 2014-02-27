@@ -3,7 +3,7 @@ package kotlin.nosql.mongodb
 import org.junit.Test
 import kotlin.nosql.*
 
-open class ProductsBase<V, T : AbstractSchema>(javaClass: Class<V>, discriminator: String) : PolymorphicSchema<String, V>("products",
+open class ProductSchema<V, T : AbstractSchema>(javaClass: Class<V>, discriminator: String) : PolymorphicSchema<String, V>("products",
         javaClass, primaryKey = string("_id"), discriminator = Discriminator(string("type"), discriminator) ) {
     val SKU = string<T>("sku")
     val Title = string<T>("title")
@@ -39,10 +39,10 @@ open class ProductsBase<V, T : AbstractSchema>(javaClass: Class<V>, discriminato
     }
 }
 
-object Products : ProductsBase<Product, Products>(javaClass(), "") {
+object Products : ProductSchema<Product, Products>(javaClass(), "") {
 }
 
-object Albums : ProductsBase<Album, Albums>(javaClass(), discriminator = "Audio Album") {
+object Albums : ProductSchema<Album, Albums>(javaClass(), discriminator = "Audio Album") {
 }
 
 abstract class Product(val sku: String, val title: String, val description: String,
