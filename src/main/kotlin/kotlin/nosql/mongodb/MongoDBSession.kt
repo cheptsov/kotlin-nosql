@@ -40,7 +40,8 @@ class MongoDBSession(val db: DB) : Session() {
     }
 
     override fun <T : TableSchema> T.drop() {
-        throw UnsupportedOperationException()
+        val collection = db.getCollection(this.name)!!
+        collection.remove(BasicDBObject())
     }
 
     override fun <T : DocumentSchema<P, V>, P, V> T.insert(v: () -> V): P {
@@ -250,7 +251,9 @@ class MongoDBSession(val db: DB) : Session() {
         throw UnsupportedOperationException()
     }
     override fun <T : AbstractSchema> delete(table: T, op: Op) {
-        throw UnsupportedOperationException()
+        val collection = db.getCollection(table.name)!!
+        val query = getQuery(op)
+        collection.remove(query)
     }
     override fun <T : TableSchema, C> Query1<T, C>.set(c: () -> C) {
         throw UnsupportedOperationException()
