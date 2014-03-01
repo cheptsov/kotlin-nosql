@@ -196,12 +196,18 @@ Products insert {
 }
 ```
 
-Receive a collection of documents by a filter condition:
+Receive a collection of documents by a filter expression:
 
 ```kotlin
 for (product in Products filter { SKU eq "00e8da9b" }) {
     if (product is Album) {
         println("Found music album ${product.title}")
     }
+}
+```
+
+```kotlin
+Albums filter { Details.Artist eq "John Coltrane" } forEach { album ->
+    println("Found music album ${album.title} by John Coltrane")
 }
 ```
