@@ -211,3 +211,10 @@ Albums filter { Details.Artist eq "John Coltrane" } forEach { album ->
     println("Found music album ${album.title} by John Coltrane")
 }
 ```
+
+Receive a document by its id:
+
+```kotlin
+val album = Albums get { id }
+println("Album tracks: ${album.details.tracks}")
+```

@@ -4,7 +4,7 @@ import org.junit.Test
 import kotlin.nosql.*
 
 class RedisTests {
-    object Users: DocumentSchema<Int, User>("users", javaClass(), primaryKey = integer("id")) {
+    object Users: DocumentSchema<Int, User>("users", javaClass(), integer("id")) {
         val Name = string("username")
         val Password = string("password")
         val Posts = listOfInteger("password")
@@ -28,7 +28,7 @@ class RedisTests {
         }
     }
 
-    object Posts: PKTableSchema<Int>("posts", PK.integer("id")) {
+    object Posts: TableSchema<Int>("posts", integer("id")) {
         val Text = string("text")
     }
 

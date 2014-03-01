@@ -71,8 +71,6 @@ class MongoDBTests {
     fun test() {
         val db = MongoDB(database = "test", schemas = array<AbstractSchema>(Products, Albums)) // Compiler failure
 
-        println(Albums.Details.Artist.fullName)
-
         db {
             val id = Products insert {
                 Album(sku = "00e8da9b", title = "A Love Supreme", description = "by John Coltrane",

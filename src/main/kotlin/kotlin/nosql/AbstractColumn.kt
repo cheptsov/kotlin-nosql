@@ -47,5 +47,5 @@ fun AbstractColumn<*, *, *>.eq(other: Expression): Op {
     return EqualsOp(this, other)
 }
 
-open class PKColumn<C, T : AbstractSchema>(table: T, name: String, valueClass: Class<C>, columnType: ColumnType) : AbstractColumn<C, T, C>(name, valueClass, columnType) {
+open class PrimaryKeyColumn<C, T : AbstractSchema>(table: T, name: String, valueClass: Class<C>, columnType: ColumnType) : AbstractColumn<C, T, C>(name, valueClass, columnType) {
 }

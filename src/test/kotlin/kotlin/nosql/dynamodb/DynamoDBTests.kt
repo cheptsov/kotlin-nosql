@@ -5,7 +5,7 @@ import kotlin.nosql.dynamodb.*
 import org.junit.Test
 
 class DynamoDBTests {
-    object Users : PKTableSchema<String>("users", PK.string("id")) {
+    object Users : TableSchema<String>("users", string("id")) {
         val Name = string("name")
         val FavoriteCityId = nullableInteger("favorite_city_id")
 
@@ -14,7 +14,7 @@ class DynamoDBTests {
         val All = ID + Name + FavoriteCityId + FriendUserIds
     }
 
-    object Cities : PKTableSchema<Int>("cities", PK.integer("id")) {
+    object Cities : TableSchema<Int>("cities", integer("id")) {
         val Name = string("name")
 
         val All = ID + Name

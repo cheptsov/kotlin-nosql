@@ -2,13 +2,13 @@ package kotlin.nosql.mongodb
 
 import kotlin.nosql.Session
 import com.mongodb.DB
-import kotlin.nosql.TableSchema
+import kotlin.nosql.AbstractTableSchema
 import kotlin.nosql.DocumentSchema
 import kotlin.nosql.AbstractSchema
 import kotlin.nosql.AbstractColumn
 import kotlin.nosql.Op
 import kotlin.nosql.Query1
-import kotlin.nosql.PKTableSchema
+import kotlin.nosql.TableSchema
 import kotlin.nosql.Template2
 import kotlin.nosql.Query2
 import kotlin.nosql.RangeQuery
@@ -17,7 +17,7 @@ import com.mongodb.BasicDBObject
 import java.lang.reflect.Field
 import java.util.ArrayList
 import java.util.HashMap
-import kotlin.nosql.PKColumn
+import kotlin.nosql.PrimaryKeyColumn
 import kotlin.nosql.util.*
 import com.mongodb.DBObject
 import kotlin.nosql.ColumnType
@@ -35,11 +35,11 @@ import org.bson.types.ObjectId
 import com.mongodb.BasicDBList
 
 class MongoDBSession(val db: DB) : Session() {
-    override fun <T : TableSchema> T.create() {
+    override fun <T : AbstractTableSchema> T.create() {
         throw UnsupportedOperationException()
     }
 
-    override fun <T : TableSchema> T.drop() {
+    override fun <T : AbstractTableSchema> T.drop() {
         val collection = db.getCollection(this.name)!!
         collection.remove(BasicDBObject())
     }
@@ -124,7 +124,7 @@ class MongoDBSession(val db: DB) : Session() {
                 if (op.expr1 is AbstractColumn<*, *, *>) {
                     if (op.expr2 is LiteralOp) {
                         if (op.expr2.value is String || op.expr2.value is Int) {
-                            if (op.expr1 is PKColumn<*, *>) {
+                            if (op.expr1 is PrimaryKeyColumn<*, *>) {
                                 query.append(op.expr1.fullName, ObjectId(op.expr2.value.toString()))
                             } else {
                                 query.append(op.expr1.fullName, op.expr2.value)
@@ -255,46 +255,46 @@ class MongoDBSession(val db: DB) : Session() {
         val query = getQuery(op)
         collection.remove(query)
     }
-    override fun <T : TableSchema, C> Query1<T, C>.set(c: () -> C) {
+    override fun <T : AbstractTableSchema, C> Query1<T, C>.set(c: () -> C) {
         throw UnsupportedOperationException()
     }
-    override fun <T : TableSchema, C> AbstractColumn<C, T, out Any?>.forEach(statement: (C) -> Unit) {
+    override fun <T : AbstractTableSchema, C> AbstractColumn<C, T, out Any?>.forEach(statement: (C) -> Unit) {
         throw UnsupportedOperationException()
     }
-    override fun <T : TableSchema, C> AbstractColumn<C, T, out Any?>.iterator(): Iterator<C> {
+    override fun <T : AbstractTableSchema, C> AbstractColumn<C, T, out Any?>.iterator(): Iterator<C> {
         throw UnsupportedOperationException()
     }
-    override fun <T : TableSchema, C, M> AbstractColumn<C, T, out Any?>.map(statement: (C) -> M): List<M> {
+    override fun <T : AbstractTableSchema, C, M> AbstractColumn<C, T, out Any?>.map(statement: (C) -> M): List<M> {
         throw UnsupportedOperationException()
     }
-    override fun <T : PKTableSchema<P>, P, C> AbstractColumn<C, T, out Any?>.get(id: () -> P): C {
+    override fun <T : TableSchema<P>, P, C> AbstractColumn<C, T, out Any?>.get(id: () -> P): C {
         throw UnsupportedOperationException()
     }
-    override fun <T : PKTableSchema<P>, P, A, B> Template2<T, A, B>.get(id: () -> P): Pair<A, B> {
+    override fun <T : TableSchema<P>, P, A, B> Template2<T, A, B>.get(id: () -> P): Pair<A, B> {
         throw UnsupportedOperationException()
     }
-    override fun <T : TableSchema, A, B> Template2<T, A, B>.forEach(statement: (A, B) -> Unit) {
+    override fun <T : AbstractTableSchema, A, B> Template2<T, A, B>.forEach(statement: (A, B) -> Unit) {
         throw UnsupportedOperationException()
     }
-    override fun <T : TableSchema, A, B> Template2<T, A, B>.iterator(): Iterator<Pair<A, B>> {
+    override fun <T : AbstractTableSchema, A, B> Template2<T, A, B>.iterator(): Iterator<Pair<A, B>> {
         throw UnsupportedOperationException()
     }
-    override fun <T : TableSchema, A, B, M> Template2<T, A, B>.map(statement: (A, B) -> M): List<M> {
+    override fun <T : AbstractTableSchema, A, B, M> Template2<T, A, B>.map(statement: (A, B) -> M): List<M> {
         throw UnsupportedOperationException()
     }
-    override fun <T : TableSchema, A, B> Query2<T, A, B>.forEach(statement: (A, B) -> Unit) {
+    override fun <T : AbstractTableSchema, A, B> Query2<T, A, B>.forEach(statement: (A, B) -> Unit) {
         throw UnsupportedOperationException()
     }
-    override fun <T : TableSchema, A, B> Query2<T, A, B>.iterator(): Iterator<Pair<A, B>> {
+    override fun <T : AbstractTableSchema, A, B> Query2<T, A, B>.iterator(): Iterator<Pair<A, B>> {
         throw UnsupportedOperationException()
     }
-    override fun <T : TableSchema, C> RangeQuery<T, C>.forEach(st: (C) -> Unit) {
+    override fun <T : AbstractTableSchema, C> RangeQuery<T, C>.forEach(st: (C) -> Unit) {
         throw UnsupportedOperationException()
     }
-    override fun <T : TableSchema, C, CC : Collection<Any?>> Query1<T, CC>.add(c: () -> C) {
+    override fun <T : AbstractTableSchema, C, CC : Collection<Any?>> Query1<T, CC>.add(c: () -> C) {
         throw UnsupportedOperationException()
     }
-    override fun <T : TableSchema> Query1<T, Int>.add(c: () -> Int): Int {
+    override fun <T : AbstractTableSchema> Query1<T, Int>.add(c: () -> Int): Int {
         throw UnsupportedOperationException()
     }
     override fun <T : KeyValueSchema, C> T.get(c: T.() -> AbstractColumn<C, T, out Any?>): C {
@@ -306,10 +306,10 @@ class MongoDBSession(val db: DB) : Session() {
     override fun <T : KeyValueSchema, C> T.set(c: () -> AbstractColumn<C, T, out Any?>, v: C) {
         throw UnsupportedOperationException()
     }
-    override fun <T : TableSchema> AbstractColumn<Int, T, out Any?>.add(c: () -> Int): Int {
+    override fun <T : AbstractTableSchema> AbstractColumn<Int, T, out Any?>.add(c: () -> Int): Int {
         throw UnsupportedOperationException()
     }
-    override fun <T : TableSchema, A, B> Query2<T, A, B>.get(statement: (A, B) -> Unit) {
+    override fun <T : AbstractTableSchema, A, B> Query2<T, A, B>.get(statement: (A, B) -> Unit) {
         throw UnsupportedOperationException()
     }
 
