@@ -18,8 +18,7 @@ import java.lang.reflect.Field
 import java.util.ArrayList
 import java.util.HashMap
 import kotlin.nosql.PKColumn
-import kotlin.nosql.util.getAllFields
-import kotlin.nosql.util.getAllFieldsMap
+import kotlin.nosql.util.*
 import com.mongodb.DBObject
 import kotlin.nosql.ColumnType
 import kotlin.nosql.NullableColumn
@@ -27,6 +26,12 @@ import java.util.Arrays
 import kotlin.nosql.Column
 import kotlin.nosql.Discriminator
 import kotlin.nosql.PolymorphicSchema
+import kotlin.nosql.util.asColumn
+import kotlin.nosql.EqualsOp
+import kotlin.nosql.LiteralOp
+import kotlin.nosql.AndOp
+import kotlin.nosql.OrOp
+import org.bson.types.ObjectId
 
 class MongoDBSession(val db: DB) : Session() {
     override fun <T : TableSchema> T.create() {
@@ -69,14 +74,14 @@ class MongoDBSession(val db: DB) : Session() {
             }
         }
         val schemaClass: Class<out Any?> = if (schema is PolymorphicSchema<*, *>) sc!! else schema.javaClass
-        val objecySchema: Any = if (schema is PolymorphicSchema<*, *>) s!! else schema
+        val objectSchema: Any = if (schema is PolymorphicSchema<*, *>) s!! else schema
         val schemaFields = getAllFieldsMap(schemaClass as Class<in Any>)
         for (field in fields) {
             val schemaField = schemaFields.get(field.getName()!!.toLowerCase())
-            if (schemaField != null && javaClass<AbstractColumn<Any?, AbstractSchema, Any?>>().isAssignableFrom(schemaField.getType()!!)) {
+            if (schemaField != null && schemaField.isColumn) {
                 field.setAccessible(true)
                 schemaField.setAccessible(true)
-                val column = schemaField.get(objecySchema) as AbstractColumn<out Any, out AbstractSchema, out Any>
+                val column = schemaField.asColumn(objectSchema)
                 val value = field.get(o)
                 if (value != null) {
                     // TODO TODO TODO
@@ -93,7 +98,7 @@ class MongoDBSession(val db: DB) : Session() {
 
     override fun <T : DocumentSchema<P, C>, P, C> T.filter(op: T.() -> Op): Iterator<C> {
         val collection = db.getCollection(this.name)!!
-        val query = BasicDBObject()
+        val query = getQuery(op())
         val cursor = collection.find(query)!!
         val docs = ArrayList<C>()
         try {
@@ -106,6 +111,47 @@ class MongoDBSession(val db: DB) : Session() {
         } finally {
             cursor.close();
         }
+    }
+
+    private fun getQuery(op: Op): BasicDBObject {
+        val query = BasicDBObject()
+        when (op) {
+            is EqualsOp -> {
+                if (op.expr1 is AbstractColumn<*, *, *>) {
+                    if (op.expr2 is LiteralOp) {
+                        if (op.expr2.value is String || op.expr2.value is Int) {
+                            if (op.expr1 is PKColumn<*, *>) {
+                                query.append(op.expr1.fullName, ObjectId(op.expr2.value.toString()))
+                            } else {
+                                query.append(op.expr1.fullName, op.expr2.value)
+                            }
+                        } else {
+                            throw UnsupportedOperationException()
+                        }
+                    }
+                } else {
+                    throw UnsupportedOperationException()
+                }
+            }
+            is AndOp -> {
+                val query1 = getQuery(op.expr1)
+                val query2 = getQuery(op.expr2)
+                for (entry in query1.entrySet()) {
+                    query.append(entry.key, entry.value)
+                }
+                for (entry in query2.entrySet()) {
+                    query.append(entry.key, entry.value)
+                }
+                return query
+            }
+            is OrOp -> {
+                query.append("\$or", Arrays.asList(getQuery(op.expr1), getQuery(op.expr2)))
+            }
+            else -> {
+                throw UnsupportedOperationException()
+            }
+        }
+        return query
     }
 
     private fun <T: DocumentSchema<P, V>, P, V> getObject(doc: DBObject, schema: T): V {
@@ -132,7 +178,7 @@ class MongoDBSession(val db: DB) : Session() {
                 if (valueField != null) {
                     schemaField.setAccessible(true)
                     valueField.setAccessible(true)
-                    val column = schemaField.get(schema) as AbstractColumn<*, *, *>
+                    val column = schemaField.asColumn(schema)
                     val columnValue: Any? = when (column.columnType) {
                         ColumnType.INTEGER -> doc.get(column.name)
                         ColumnType.STRING -> doc.get(column.name)?.toString()
@@ -172,12 +218,12 @@ class MongoDBSession(val db: DB) : Session() {
         val columnFields = schemaClass.getDeclaredFields()
         val valueFields = getAllFieldsMap(valueInstance.javaClass as Class<in Any?>)
         for (columnField in columnFields) {
-            if (javaClass<AbstractColumn<out Any?, out AbstractSchema, out Any?>>().isAssignableFrom(columnField.getType()!!)) {
+            if (columnField.isColumn) {
                 val valueField = valueFields.get(columnField.getName()!!.toLowerCase())
                 if (valueField != null) {
                     columnField.setAccessible(true)
                     valueField.setAccessible(true)
-                    val column = columnField.get(column) as AbstractColumn<Any?, *, *>
+                    val column = columnField.asColumn(column)
                     val columnValue = when (column.columnType) {
                         ColumnType.INTEGER, ColumnType.STRING -> doc.get(column.name)
                         else -> {

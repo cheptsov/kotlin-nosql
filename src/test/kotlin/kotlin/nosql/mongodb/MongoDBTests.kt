@@ -71,8 +71,10 @@ class MongoDBTests {
     fun test() {
         val db = MongoDB(database = "test", schemas = array<AbstractSchema>(Products, Albums)) // Compiler failure
 
+        println(Albums.Details.Artist.fullName)
+
         db {
-            Products insert {
+            val id = Products insert {
                 Album(sku = "00e8da9b", title = "A Love Supreme", description = "by John Coltrane",
                         asin = "B0000A118M", shipping = Shipping(weight = 6, dimensions = Dimensions(10, 10, 1)),
                         pricing = Pricing(list = 1200, retail = 1100, savings = 100, pctSavings = 8),
@@ -80,11 +82,25 @@ class MongoDBTests {
                                 artist = "John Coltrane"))
             }
 
-            for (product in Products filter { SKU eq "00e8da9b" }) {
+            println("Getting products by a filter expression:")
+
+            for (product in Products filter { (SKU eq "00e8da9b") or (Shipping.Weight eq 6) }) {
                 if (product is Album) {
                     println("Found music album ${product.title}")
                 }
             }
+
+            println("Getting albums by John Coltrane:")
+
+            Albums filter { Details.Artist eq "John Coltrane" } forEach { album ->
+                println("Found music album ${album.title}")
+            }
+
+            println("Getting an album by its id:")
+
+            val album = Albums get { id }
+            println("Found music album ${album.title}")
+
 
             /*Albums columns { ID + Title } filter { SKU eq "00e8da9b" } forEach { id, title ->
                 // ...

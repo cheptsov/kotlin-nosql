@@ -58,7 +58,7 @@ class LikeOp(val expr1: Expression, val expr2: Expression): Op() {
     }*/
 }
 
-class AndOp(val expr1: Expression, val expr2: Expression): Op() {
+class AndOp(val expr1: Op, val expr2: Op): Op() {
     /*override fun toSQL():String {
         val sb = StringBuilder()
         if (expr1 is OrOp) {
@@ -76,7 +76,7 @@ class AndOp(val expr1: Expression, val expr2: Expression): Op() {
     }*/
 }
 
-class OrOp(val expr1: Expression, val expr2: Expression): Op() {
+class OrOp(val expr1: Op, val expr2: Op): Op() {
     /*override fun toSQL():String {
         return expr1.toSQL() + " or " + expr2.toSQL()
     }*/
