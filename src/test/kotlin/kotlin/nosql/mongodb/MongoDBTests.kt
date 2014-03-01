@@ -40,8 +40,8 @@ object Albums : ProductSchema<Album, Albums>(javaClass(), discriminator = "Audio
     class DetailsColumn<T : AbstractSchema>() : Column<Details, T>("details", javaClass()) {
         val Title = string<T>("title")
         val Artist = string<T>("artist")
-        val Savings = integer<T>("savings")
-        val PCTSavings = integer<T>("pct_savings")
+        val Genre = setOfString<T>("genre")
+        val Tracks = listOfString<T>("tracks")
     }
 }
 
@@ -63,7 +63,7 @@ class Album(sku: String, title: String, description: String, asin: String, shipp
             val details: Details) : Product(sku, title, description, asin, shipping, pricing) {
 }
 
-class Details(val title: String, val artist: String) {
+class Details(val title: String, val artist: String, val genre: Set<String>, val tracks: List<String>) {
 }
 
 class MongoDBTests {
@@ -79,7 +79,11 @@ class MongoDBTests {
                         asin = "B0000A118M", shipping = Shipping(weight = 6, dimensions = Dimensions(10, 10, 1)),
                         pricing = Pricing(list = 1200, retail = 1100, savings = 100, pctSavings = 8),
                         details = Details(title = "A Love Supreme [Original Recording Reissued]",
-                                artist = "John Coltrane"))
+                                artist = "John Coltrane", genre = setOf("Jazz", "General"),
+                                tracks = listOf("A Love Supreme Part I: Acknowledgement",
+                                        "A Love Supreme Part II - Resolution",
+                                        "A Love Supreme, Part III: Pursuance",
+                                        "A Love Supreme, Part IV-Psalm")))
             }
 
             println("Getting products by a filter expression:")
@@ -99,7 +103,7 @@ class MongoDBTests {
             println("Getting an album by its id:")
 
             val album = Albums get { id }
-            println("Found music album ${album.title}")
+            println("Album tracks: ${album.details.tracks}")
 
 
             /*Albums columns { ID + Title } filter { SKU eq "00e8da9b" } forEach { id, title ->

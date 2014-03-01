@@ -32,6 +32,7 @@ import kotlin.nosql.LiteralOp
 import kotlin.nosql.AndOp
 import kotlin.nosql.OrOp
 import org.bson.types.ObjectId
+import com.mongodb.BasicDBList
 
 class MongoDBSession(val db: DB) : Session() {
     override fun <T : TableSchema> T.create() {
@@ -88,6 +89,8 @@ class MongoDBSession(val db: DB) : Session() {
                     when (value) {
                         is Int -> doc.append(column.name, value)
                         is String -> doc.append(column.name, value)
+                        is Set<*> -> doc.append(column.name, value)
+                        is List<*> -> doc.append(column.name, value)
                         else -> doc.append(column.name, getDBObject(value, column))
                     }
                 }
@@ -226,6 +229,8 @@ class MongoDBSession(val db: DB) : Session() {
                     val column = columnField.asColumn(column)
                     val columnValue = when (column.columnType) {
                         ColumnType.INTEGER, ColumnType.STRING -> doc.get(column.name)
+                        ColumnType.INTEGER_LIST, ColumnType.STRING_LIST -> (doc.get(column.name) as BasicDBList).toList()
+                        ColumnType.INTEGER_SET, ColumnType.STRING_SET -> (doc.get(column.name) as BasicDBList).toSet()
                         else -> {
                             getObject(doc.get(column.name) as DBObject, column as Column<Any?, out AbstractSchema>)
                         }

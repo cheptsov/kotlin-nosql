@@ -89,11 +89,15 @@ fun <T: AbstractSchema> T.nullableInteger(name: String): NullableColumn<Int, T> 
 
 //fun <T: AbstractSchema, C> T.setColumn(name: String, javaClass: Class<C>): SetColumn<C, T> = SetColumn(name, javaClass)
 
+fun <T: AbstractSchema> setOfString(name: String): SetColumn<String, T> = SetColumn(name, javaClass<String>(), ColumnType.STRING_SET)
+
 fun <T: AbstractSchema> T.setOfString(name: String): SetColumn<String, T> = SetColumn(name, javaClass<String>(), ColumnType.STRING_SET)
 
 fun <T: AbstractSchema> T.setOfInteger(name: String): SetColumn<Int, T> = SetColumn(name, javaClass<Int>(), ColumnType.INTEGER_SET)
 
 //fun <T: AbstractSchema, C> T.listColumn(name: String, javaClass: Class<C>): ListColumn<C, T> = ListColumn(name, javaClass)
+
+fun <T: AbstractSchema> listOfString(name: String): ListColumn<String, T> = ListColumn(name, javaClass<String>(), ColumnType.STRING_LIST)
 
 fun <T: AbstractSchema> T.listOfString(name: String): ListColumn<String, T> = ListColumn(name, javaClass<String>(), ColumnType.STRING_LIST)
 
