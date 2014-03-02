@@ -201,14 +201,14 @@ Receive a collection of documents by a filter expression:
 ```kotlin
 for (product in Products filter { SKU eq "00e8da9b" }) {
     if (product is Album) {
-        println("Found music album ${product.title}")
+        println("Found music album ${product.details.title}")
     }
 }
 ```
 
 ```kotlin
 Albums filter { Details.Artist eq "John Coltrane" } forEach { album ->
-    println("Found music album ${album.title} by John Coltrane")
+    println("Found music album ${album.details.title} by John Coltrane")
 }
 ```
 

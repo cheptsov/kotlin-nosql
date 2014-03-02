@@ -88,14 +88,14 @@ class MongoDBTests {
 
             for (product in Products filter { (SKU eq "00e8da9b") or (Shipping.Weight eq 6) }) {
                 if (product is Album) {
-                    println("Found music album ${product.title}")
+                    println("Found music album ${product.details.title}")
                 }
             }
 
             println("Getting albums by John Coltrane:")
 
             Albums filter { Details.Artist eq "John Coltrane" } forEach { album ->
-                println("Found music album ${album.title}")
+                println("Found music album ${album.details.title}")
             }
 
             println("Getting an album by its id:")
