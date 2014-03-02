@@ -41,7 +41,13 @@ object Albums : ProductSchema<Album, Albums>(javaClass(), discriminator = "Audio
         val Title = string<T>("title")
         val Artist = string<T>("artist")
         val Genre = setOfString<T>("genre")
-        val Tracks = listOfString<T>("tracks")
+
+        val Tracks = TracksColumn<T>()
+    }
+
+    class TracksColumn<T: AbstractSchema>() : ListColumn<Track, T>("tracks", javaClass()) {
+        val Title = string<T>("title")
+        val Duration = integer<T>("duration")
     }
 }
 
@@ -63,7 +69,11 @@ class Album(sku: String, title: String, description: String, asin: String, shipp
             val details: Details) : Product(sku, title, description, asin, shipping, pricing) {
 }
 
-class Details(val title: String, val artist: String, val genre: Set<String>, val tracks: List<String>) {
+class Details(val title: String, val artist: String, val genre: Set<String>, val tracks: List<Track>) {
+}
+
+class Track(val title: String, val duration: Int) {
+    override fun toString(): String = "$title - $duration"
 }
 
 class MongoDBTests {
@@ -78,10 +88,10 @@ class MongoDBTests {
                         pricing = Pricing(list = 1200, retail = 1100, savings = 100, pctSavings = 8),
                         details = Details(title = "A Love Supreme [Original Recording Reissued]",
                                 artist = "John Coltrane", genre = setOf("Jazz", "General"),
-                                tracks = listOf("A Love Supreme Part I: Acknowledgement",
-                                        "A Love Supreme Part II - Resolution",
-                                        "A Love Supreme, Part III: Pursuance",
-                                        "A Love Supreme, Part IV-Psalm")))
+                                tracks = listOf(Track("A Love Supreme Part I: Acknowledgement", 100),
+                                        Track("A Love Supreme Part II - Resolution", 200),
+                                        Track("A Love Supreme, Part III: Pursuance", 300),
+                                        Track("A Love Supreme, Part IV-Psalm", 400))))
             }
 
             println("Getting products by a filter expression:")

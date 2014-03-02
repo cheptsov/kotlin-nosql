@@ -171,8 +171,14 @@ object Albums : ProductSchema<Album, Albums>(javaClass(), discriminator = "Audio
     class DetailsColumn<T : AbstractSchema>() : Column<Details, T>("details", javaClass()) {
         val Title = string<T>("title")
         val Artist = string<T>("artist")
-        val Savings = integer<T>("savings")
-        val PCTSavings = integer<T>("pct_savings")
+        val Genre = setOfString<T>("genre")
+
+        val Tracks = TracksColumn<T>()
+    }
+
+    class TracksColumn<T: AbstractSchema>() : ListColumn<Track, T>("tracks", javaClass()) {
+        val Title = string<T>("title")
+        val Duration = integer<T>("duration")
     }
 }
 
@@ -180,7 +186,10 @@ class Album(sku: String, title: String, description: String, asin: String, shipp
     val details: Details) : Product(sku, title, description, asin, shipping, pricing) {
 }
 
-class Details(val title: String, val artist: String) {
+class Details(val title: String, val artist: String, val genre: Set<String>, val tracks: List<Track>) {
+}
+
+class Track(val title: String, val duration: Int) {
 }
 ```
 
@@ -192,7 +201,11 @@ Products insert {
             asin = "B0000A118M", shipping = Shipping(weight = 6, dimensions = Dimensions(10, 10, 1)),
             pricing = Pricing(list = 1200, retail = 1100, savings = 100, pctSavings = 8),
             details = Details(title = "A Love Supreme [Original Recording Reissued]",
-                    artist = "John Coltrane"))
+                    artist = "John Coltrane"), genre = setOf("Jazz", "General")
+                    tracks = listOf(Track("A Love Supreme Part I: Acknowledgement", 100),
+                             Track("A Love Supreme Part II - Resolution", 200),
+                             Track("A Love Supreme, Part III: Pursuance", 300),
+                             Track("A Love Supreme, Part IV-Psalm", 400))))
 }
 ```
 

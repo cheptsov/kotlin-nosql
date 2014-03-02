@@ -8,4 +8,6 @@ enum class ColumnType {
     public INTEGER_LIST
     public STRING_LIST
     public CUSTOM_CLASS
+    public CUSTOM_CLASS_LIST
+    public CUSTOM_CLASS_SET
 }

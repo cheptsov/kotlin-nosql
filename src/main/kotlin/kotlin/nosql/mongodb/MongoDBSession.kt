@@ -33,6 +33,8 @@ import kotlin.nosql.AndOp
 import kotlin.nosql.OrOp
 import org.bson.types.ObjectId
 import com.mongodb.BasicDBList
+import kotlin.nosql.ColumnType.INTEGER_LIST
+import kotlin.nosql.ListColumn
 
 class MongoDBSession(val db: DB) : Session() {
     override fun <T : AbstractTableSchema> T.create() {
@@ -90,8 +92,18 @@ class MongoDBSession(val db: DB) : Session() {
                     when (value) {
                         is Int -> doc.append(column.name, value)
                         is String -> doc.append(column.name, value)
-                        is Set<*> -> doc.append(column.name, value)
-                        is List<*> -> doc.append(column.name, value)
+                        is Iterable<*> -> {
+                            val list = BasicDBList()
+                            for (v in value) {
+                                list.add(when (column.columnType ) {
+                                    ColumnType.INTEGER_LIST, ColumnType.STRING_LIST,
+                                    ColumnType.INTEGER_SET, ColumnType.STRING_SET-> v!!
+                                    ColumnType.CUSTOM_CLASS_SET, ColumnType.CUSTOM_CLASS_LIST-> getDBObject(v!!, column)
+                                    else -> throw UnsupportedOperationException()
+                                })
+                            }
+                            doc.append(column.name, list)
+                        }
                         else -> doc.append(column.name, getDBObject(value, column))
                     }
                 }
@@ -216,7 +228,7 @@ class MongoDBSession(val db: DB) : Session() {
         return constructor.newInstance(*constructorParamValues)!!
     }
 
-    private fun <C> getObject(doc: DBObject, column: AbstractColumn<C, *, *>): C {
+    private fun getObject(doc: DBObject, column: AbstractColumn<*, *, *>): Any? {
         val valueInstance = newInstance(column.valueClass)
         val schemaClass = column.javaClass
         val columnFields = schemaClass.getDeclaredFields()
@@ -232,6 +244,14 @@ class MongoDBSession(val db: DB) : Session() {
                         ColumnType.INTEGER, ColumnType.STRING -> doc.get(column.name)
                         ColumnType.INTEGER_LIST, ColumnType.STRING_LIST -> (doc.get(column.name) as BasicDBList).toList()
                         ColumnType.INTEGER_SET, ColumnType.STRING_SET -> (doc.get(column.name) as BasicDBList).toSet()
+                        ColumnType.CUSTOM_CLASS_LIST -> {
+                            val list = doc.get(column.name) as BasicDBList
+                            list.map { getObject(it as DBObject, column as ListColumn<Any?, out AbstractSchema>) }
+                        }
+                        ColumnType.CUSTOM_CLASS_SET -> {
+                            val list = doc.get(column.name) as BasicDBList
+                            list.map { getObject(it as DBObject, column as ListColumn<Any?, out AbstractSchema>) }.toSet()
+                        }
                         else -> {
                             getObject(doc.get(column.name) as DBObject, column as Column<Any?, out AbstractSchema>)
                         }
@@ -244,7 +264,7 @@ class MongoDBSession(val db: DB) : Session() {
                 }
             }
         }
-        return valueInstance as C
+        return valueInstance
     }
 
     override fun <T : AbstractSchema> insert(columns: Array<Pair<AbstractColumn<out Any?, T, out Any?>, Any?>>) {
@@ -275,19 +295,25 @@ class MongoDBSession(val db: DB) : Session() {
         val collection = db.getCollection(table.name)!!
         val query = getQuery(table.pk eq id())
         val doc = collection.findOne(query, BasicDBObject().append(a.fullName, "1")!!.append(b.fullName, "1"))!!
-        return Pair(getColumnObject(doc, a), getColumnObject(doc, b))
+        return Pair(getColumnObject(doc, a) as A, getColumnObject(doc, b) as B)
     }
 
-    private fun <C> getColumnObject(doc: DBObject, column: AbstractColumn<C, *, *>): C {
+    private fun getColumnObject(doc: DBObject, column: AbstractColumn<*, *, *>): Any? {
         val columnObject = parse(doc, column.fullName.split("\\."))
         return when (columnObject) {
-            is String, is Integer -> columnObject as C
+            is String, is Integer -> columnObject
             is BasicDBList -> when (column.columnType) {
-                ColumnType.STRING_SET, ColumnType.INTEGER_SET -> columnObject.toSet() as C
-                ColumnType.STRING_LIST, ColumnType.INTEGER_LIST -> columnObject.toList() as C
+                ColumnType.STRING_SET, ColumnType.INTEGER_SET -> columnObject.toSet()
+                ColumnType.STRING_LIST, ColumnType.INTEGER_LIST -> columnObject.toList()
+                ColumnType.CUSTOM_CLASS_LIST -> {
+                    columnObject.map { getObject(it as DBObject, column as ListColumn<Any?, out AbstractSchema>) }
+                }
+                ColumnType.CUSTOM_CLASS_SET -> {
+                    columnObject.map { getObject(it as DBObject, column as ListColumn<Any?, out AbstractSchema>) }.toSet()
+                }
                 else -> throw UnsupportedOperationException()
             }
-            is DBObject -> getObject<C>(columnObject, column)
+            is DBObject -> getObject(columnObject, column)
             else -> throw UnsupportedOperationException()
         }
     }

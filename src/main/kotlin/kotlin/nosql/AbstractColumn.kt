@@ -31,11 +31,10 @@ open class NullableColumn<C, T : AbstractSchema> (name: String, valueClass: Clas
                                                   columnType: ColumnType) : AbstractColumn<C?, T, C>(name, valueClass, columnType) {
 }
 
-open class SetColumn<C, T : AbstractSchema> (name: String, valueClass: Class<C>,
-                                             columnType: ColumnType) : AbstractColumn<Set<C>, T, C>(name, valueClass, columnType) {
+open class SetColumn<C, T : AbstractSchema> (name: String, valueClass: Class<C>) : AbstractColumn<Set<C>, T, C>(name, valueClass, ColumnType.CUSTOM_CLASS_SET) {
 }
 
-open class ListColumn<C, T : AbstractSchema> (name: String, valueClass: Class<C>, columnType: ColumnType) : AbstractColumn<List<C>, T, C>(name, valueClass, columnType) {
+open class ListColumn<C, T : AbstractSchema> (name: String, valueClass: Class<C>) : AbstractColumn<List<C>, T, C>(name, valueClass, ColumnType.CUSTOM_CLASS_LIST) {
 }
 
 val AbstractColumn<*, *, *>.isNull: Op
