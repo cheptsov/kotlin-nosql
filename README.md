@@ -218,3 +218,10 @@ Receive a document by its id:
 val album = Albums get { id }
 println("Album tracks: ${album.details.tracks}")
 ```
+
+Receive selected columns by id
+
+```kotlin
+val (title, pricing) = Albums columns { Details.Title + Pricing } get { id }
+println("Retail price for the album ${title} is ${pricing.retail}")
+```

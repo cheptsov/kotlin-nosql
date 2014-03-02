@@ -216,7 +216,7 @@ class MongoDBSession(val db: DB) : Session() {
         return constructor.newInstance(*constructorParamValues)!!
     }
 
-    private fun <C> getObject(doc: DBObject, column: Column<C, *>): C {
+    private fun <C> getObject(doc: DBObject, column: AbstractColumn<C, *, *>): C {
         val valueInstance = newInstance(column.valueClass)
         val schemaClass = column.javaClass
         val columnFields = schemaClass.getDeclaredFields()
@@ -271,8 +271,36 @@ class MongoDBSession(val db: DB) : Session() {
         throw UnsupportedOperationException()
     }
     override fun <T : TableSchema<P>, P, A, B> Template2<T, A, B>.get(id: () -> P): Pair<A, B> {
-        throw UnsupportedOperationException()
+        val table = AbstractSchema.current<T>()
+        val collection = db.getCollection(table.name)!!
+        val query = getQuery(table.pk eq id())
+        val doc = collection.findOne(query, BasicDBObject().append(a.fullName, "1")!!.append(b.fullName, "1"))!!
+        return Pair(getColumnObject(doc, a), getColumnObject(doc, b))
     }
+
+    private fun <C> getColumnObject(doc: DBObject, column: AbstractColumn<C, *, *>): C {
+        val columnObject = parse(doc, column.fullName.split("\\."))
+        return when (columnObject) {
+            is String, is Integer -> columnObject as C
+            is BasicDBList -> when (column.columnType) {
+                ColumnType.STRING_SET, ColumnType.INTEGER_SET -> columnObject.toSet() as C
+                ColumnType.STRING_LIST, ColumnType.INTEGER_LIST -> columnObject.toList() as C
+                else -> throw UnsupportedOperationException()
+            }
+            is DBObject -> getObject<C>(columnObject, column)
+            else -> throw UnsupportedOperationException()
+        }
+    }
+
+    private fun parse(doc: DBObject, path: Array<String>, position: Int = 0): Any? {
+        val value = doc.get(path[position])
+        if (position < path.size - 1) {
+            return parse(value as DBObject, path, position + 1)
+        } else {
+            return value
+        }
+    }
+
     override fun <T : AbstractTableSchema, A, B> Template2<T, A, B>.forEach(statement: (A, B) -> Unit) {
         throw UnsupportedOperationException()
     }

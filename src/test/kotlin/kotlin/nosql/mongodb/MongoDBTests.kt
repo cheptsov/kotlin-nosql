@@ -103,11 +103,12 @@ class MongoDBTests {
             val album = Albums get { id }
             println("Album tracks: ${album.details.tracks}")
 
-            Products delete { ID eq id }
+            println("Getting selected columns of a document bt its id:")
 
-            /*Albums columns { ID + Title } filter { SKU eq "00e8da9b" } forEach { id, title ->
-                // ...
-            }*/
+            val (title, pricing) = Albums columns { Details.Title + Pricing } get { id }
+            println("Retail price for the album ${title} is ${pricing.retail}")
+
+            Products delete { ID eq id }
         }
     }
 }
