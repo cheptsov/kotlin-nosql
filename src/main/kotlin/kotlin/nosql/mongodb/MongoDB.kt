@@ -3,13 +3,13 @@ package kotlin.nosql.mongodb
 import kotlin.nosql.Database
 import kotlin.nosql.Session
 import com.mongodb.MongoClient
-import kotlin.nosql.AbstractSchema
+import kotlin.nosql.Schema
 import kotlin.nosql.AbstractColumn
 import kotlin.nosql.util.*
 import java.util.concurrent.ConcurrentHashMap
 
 class MongoDB(val host: String = "localhost", val database: String, val userName: String = "",
-              val password: String = "", schemas: Array<AbstractSchema>) : Database<MongoDBSession>(schemas) {
+              val password: String = "", schemas: Array<Schema>) : Database<MongoDBSession>(schemas) {
     {
         for (schema in schemas) {
             buildFullColumnNames(schema)

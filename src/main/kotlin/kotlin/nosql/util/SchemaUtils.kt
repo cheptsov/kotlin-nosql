@@ -4,7 +4,7 @@ import java.lang.reflect.Field
 import java.util.ArrayList
 import java.util.HashMap
 import kotlin.nosql.AbstractColumn
-import kotlin.nosql.AbstractSchema
+import kotlin.nosql.Schema
 
 fun getAllFields(_type: Class<in Any>, fields: MutableList<Field> = ArrayList()): MutableList<Field> {
     for (field in _type.getDeclaredFields()) {
@@ -28,7 +28,7 @@ fun getAllFieldsMap(_type: Class<in Any>, fields: MutableMap<String, Field> = Ha
 
 val Field.isColumn: Boolean
     get() {
-        return javaClass<AbstractColumn<Any?, AbstractSchema, Any?>>().isAssignableFrom(this.getType()!!)
+        return javaClass<AbstractColumn<Any?, Schema, Any?>>().isAssignableFrom(this.getType()!!)
     }
 
 fun Field.asColumn(schema: Any): AbstractColumn<*, *, *> {

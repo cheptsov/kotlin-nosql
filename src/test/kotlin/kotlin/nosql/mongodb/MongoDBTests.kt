@@ -3,7 +3,7 @@ package kotlin.nosql.mongodb
 import org.junit.Test
 import kotlin.nosql.*
 
-open class ProductSchema<V, T : AbstractSchema>(javaClass: Class<V>, discriminator: String) : PolymorphicSchema<String, V>("products",
+open class ProductSchema<V, T : Schema>(javaClass: Class<V>, discriminator: String) : PolymorphicSchema<String, V>("products",
         javaClass, primaryKey = string("_id"), discriminator = Discriminator(string("type"), discriminator) ) {
     val SKU = string<T>("sku")
     val Title = string<T>("title")
@@ -13,17 +13,17 @@ open class ProductSchema<V, T : AbstractSchema>(javaClass: Class<V>, discriminat
     val Shipping = ShippingColumn<T>()
     val Pricing = PricingColumn<T>()
 
-    class ShippingColumn<T : AbstractSchema>() : Column<Shipping, T>("shipping", javaClass()) {
+    class ShippingColumn<T : Schema>() : Column<Shipping, T>("shipping", javaClass()) {
         val Weight = integer<T>("weight")
     }
 
-    class DimensionsColumn<V, T : AbstractSchema>() : Column<V, T>("dimensions", javaClass()) {
+    class DimensionsColumn<V, T : Schema>() : Column<V, T>("dimensions", javaClass()) {
         val Width = integer<T>("width")
         val Height = integer<T>("height")
         val Depth = integer<T>("depth")
     }
 
-    class PricingColumn<T : AbstractSchema>() : Column<Pricing, T>("pricing", javaClass()) {
+    class PricingColumn<T : Schema>() : Column<Pricing, T>("pricing", javaClass()) {
         val List = integer<T>("list")
         val Retail = integer<T>("retail")
         val Savings = integer<T>("savings")
@@ -37,7 +37,7 @@ object Products : ProductSchema<Product, Products>(javaClass(), "") {
 object Albums : ProductSchema<Album, Albums>(javaClass(), discriminator = "Audio Album") {
     val Details = DetailsColumn<Albums>()
 
-    class DetailsColumn<T : AbstractSchema>() : Column<Details, T>("details", javaClass()) {
+    class DetailsColumn<T : Schema>() : Column<Details, T>("details", javaClass()) {
         val Title = string<T>("title")
         val Artist = string<T>("artist")
         val Genre = setOfString<T>("genre")
@@ -45,7 +45,7 @@ object Albums : ProductSchema<Album, Albums>(javaClass(), discriminator = "Audio
         val Tracks = TracksColumn<T>()
     }
 
-    class TracksColumn<T: AbstractSchema>() : ListColumn<Track, T>("tracks", javaClass()) {
+    class TracksColumn<T: Schema>() : ListColumn<Track, T>("tracks", javaClass()) {
         val Title = string<T>("title")
         val Duration = integer<T>("duration")
     }
@@ -79,7 +79,7 @@ class Track(val title: String, val duration: Int) {
 class MongoDBTests {
     Test
     fun test() {
-        val db = MongoDB(database = "test", schemas = array<AbstractSchema>(Products, Albums)) // Compiler failure
+        val db = MongoDB(database = "test", schemas = array<Schema>(Products, Albums)) // Compiler failure
 
         db {
             val id = Products insert {

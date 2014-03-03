@@ -26,7 +26,7 @@ val aUserId = Global get { UserId }
 Define schema:
 
 ```kotlin
-object Users: PKTableSchema<Int>("users", primaryKey = integer("id")) {
+object Users: TableSchema<Int>("users", primaryKey = integer("id")) {
     val Name = string("username")
     val Password = string("password")
     val Posts = listOfInteger("password")
@@ -116,7 +116,7 @@ for (user in Users filter { Name eq "antirez" }) {
 Define base schema class:
 
 ```kotlin
-open class ProductSchema<V, T : AbstractSchema>(javaClass: Class<V>, discriminator: String) : PolymorphicSchema<String, V>("products",
+open class ProductSchema<V, T : Schema>(javaClass: Class<V>, discriminator: String) : PolymorphicSchema<String, V>("products",
         javaClass, primaryKey = string("_id"), discriminator = Discriminator(string("type"), discriminator) ) {
     val SKU = string<T>("sku")
     val Title = string<T>("title")
@@ -126,17 +126,17 @@ open class ProductSchema<V, T : AbstractSchema>(javaClass: Class<V>, discriminat
     val Shipping = ShippingColumn<T>()
     val Pricing = PricingColumn<T>()
 
-    class ShippingColumn<T : AbstractSchema>() : Column<Shipping, T>("shipping", javaClass()) {
+    class ShippingColumn<T : Schema>() : Column<Shipping, T>("shipping", javaClass()) {
         val Weight = integer<T>("weight")
     }
 
-    class DimensionsColumn<V, T : AbstractSchema>() : Column<V, T>("dimensions", javaClass()) {
+    class DimensionsColumn<V, T : Schema>() : Column<V, T>("dimensions", javaClass()) {
         val Width = integer<T>("width")
         val Height = integer<T>("height")
         val Depth = integer<T>("depth")
     }
 
-    class PricingColumn<T : AbstractSchema>() : Column<Pricing, T>("pricing", javaClass()) {
+    class PricingColumn<T : Schema>() : Column<Pricing, T>("pricing", javaClass()) {
         val List = integer<T>("list")
         val Retail = integer<T>("retail")
         val Savings = integer<T>("savings")
@@ -168,7 +168,7 @@ Define inherited schema:
 object Albums : ProductSchema<Album, Albums>(javaClass(), discriminator = "Audio Album") {
     val Details = DetailsColumn<Albums>()
 
-    class DetailsColumn<T : AbstractSchema>() : Column<Details, T>("details", javaClass()) {
+    class DetailsColumn<T : Schema>() : Column<Details, T>("details", javaClass()) {
         val Title = string<T>("title")
         val Artist = string<T>("artist")
         val Genre = setOfString<T>("genre")
@@ -176,7 +176,7 @@ object Albums : ProductSchema<Album, Albums>(javaClass(), discriminator = "Audio
         val Tracks = TracksColumn<T>()
     }
 
-    class TracksColumn<T: AbstractSchema>() : ListColumn<Track, T>("tracks", javaClass()) {
+    class TracksColumn<T: Schema>() : ListColumn<Track, T>("tracks", javaClass()) {
         val Title = string<T>("title")
         val Duration = integer<T>("duration")
     }
@@ -204,8 +204,7 @@ Products insert {
                     artist = "John Coltrane"), genre = setOf("Jazz", "General")
                     tracks = listOf(Track("A Love Supreme Part I: Acknowledgement", 100),
                              Track("A Love Supreme Part II - Resolution", 200),
-                             Track("A Love Supreme, Part III: Pursuance", 300),
-                             Track("A Love Supreme, Part IV-Psalm", 400))))
+                             Track("A Love Supreme, Part III: Pursuance", 300))))
 }
 ```
 
@@ -237,4 +236,18 @@ Receive selected columns by id
 ```kotlin
 val (title, pricing) = Albums columns { Details.Title + Pricing } get { id }
 println("Retail price for the album ${title} is ${pricing.retail}")
+```
+
+Update selected columns by id
+
+```kotlin
+Albums columns { Details.Title } find { id } set { "A Love Supreme (Original Recording Reissued)" }
+```
+
+```kotlin
+Products columns { Pricing.Retail + Pricing.Savings } find { id } set { values(1150, 50) }
+```
+
+```kotlin
+Albums columns { Details.Tracks } find { id } add { Track("A Love Supreme, Part IV-Psalm", 400) }
 ```

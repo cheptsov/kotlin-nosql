@@ -39,7 +39,7 @@ class RedisTests {
 
     Test
     fun test() {
-        var db = Redis("localhost", array<AbstractSchema>(Users, Posts)) // Compiler failure
+        var db = Redis("localhost", array<Schema>(Users, Posts)) // Compiler failure
 
         db {
             val aUserId = Global next { UserId }

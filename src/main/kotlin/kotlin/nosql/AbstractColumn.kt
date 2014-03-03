@@ -2,7 +2,7 @@ package kotlin.nosql
 
 import java.util.ArrayList
 
-open class AbstractColumn<C, T : AbstractSchema, S>(val name: String, val valueClass: Class<S>, val columnType: ColumnType) : Field<C, T>() {
+open class AbstractColumn<C, T : Schema, S>(val name: String, val valueClass: Class<S>, val columnType: ColumnType) : Field<C, T>() {
     fun eq(other: Expression): Op {
         return EqualsOp(this, other)
     }
@@ -24,17 +24,17 @@ open class AbstractColumn<C, T : AbstractSchema, S>(val name: String, val valueC
     }
 }
 
-open class Column<C, T : AbstractSchema>(name: String, valueClass: Class<C>, columnType: ColumnType = ColumnType.CUSTOM_CLASS) : AbstractColumn<C, T, C>(name, valueClass, columnType) {
+open class Column<C, T : Schema>(name: String, valueClass: Class<C>, columnType: ColumnType = ColumnType.CUSTOM_CLASS) : AbstractColumn<C, T, C>(name, valueClass, columnType) {
 }
 
-open class NullableColumn<C, T : AbstractSchema> (name: String, valueClass: Class<C>,
+open class NullableColumn<C, T : Schema> (name: String, valueClass: Class<C>,
                                                   columnType: ColumnType) : AbstractColumn<C?, T, C>(name, valueClass, columnType) {
 }
 
-open class SetColumn<C, T : AbstractSchema> (name: String, valueClass: Class<C>) : AbstractColumn<Set<C>, T, C>(name, valueClass, ColumnType.CUSTOM_CLASS_SET) {
+open class SetColumn<C, T : Schema> (name: String, valueClass: Class<C>) : AbstractColumn<Set<C>, T, C>(name, valueClass, ColumnType.CUSTOM_CLASS_SET) {
 }
 
-open class ListColumn<C, T : AbstractSchema> (name: String, valueClass: Class<C>) : AbstractColumn<List<C>, T, C>(name, valueClass, ColumnType.CUSTOM_CLASS_LIST) {
+open class ListColumn<C, T : Schema> (name: String, valueClass: Class<C>) : AbstractColumn<List<C>, T, C>(name, valueClass, ColumnType.CUSTOM_CLASS_LIST) {
 }
 
 val AbstractColumn<*, *, *>.isNull: Op
@@ -46,5 +46,5 @@ fun AbstractColumn<*, *, *>.eq(other: Expression): Op {
     return EqualsOp(this, other)
 }
 
-open class PrimaryKeyColumn<C, T : AbstractSchema>(table: T, name: String, valueClass: Class<C>, columnType: ColumnType) : AbstractColumn<C, T, C>(name, valueClass, columnType) {
+open class PrimaryKeyColumn<C, T : Schema>(table: T, name: String, valueClass: Class<C>, columnType: ColumnType) : AbstractColumn<C, T, C>(name, valueClass, columnType) {
 }

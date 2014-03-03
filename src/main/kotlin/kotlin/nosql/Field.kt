@@ -1,4 +1,4 @@
 package kotlin.nosql
 
-abstract class Field<C, T: AbstractSchema>() : Expression {
+abstract class Field<C, T: Schema>() : Expression {
 }

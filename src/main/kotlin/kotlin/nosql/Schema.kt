@@ -5,28 +5,28 @@ import java.util.HashMap
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 
-abstract class AbstractSchema(val name: String) {
+abstract class Schema(val name: String) {
     // TODO TODO TODO
     // val columns = ArrayList<AbstractColumn<*, *, *>>()
 
     // TODO TODO TODO
     class object {
-        val threadLocale = ThreadLocal<AbstractSchema>()
+        val threadLocale = ThreadLocal<Schema>()
 
-        fun <T: AbstractSchema> current(): T {
+        fun <T: Schema> current(): T {
             return threadLocale.get() as T
         }
 
-        fun set(schema: AbstractSchema) {
+        fun set(schema: Schema) {
             return threadLocale.set(schema)
         }
     }
 }
 
-abstract class KeyValueSchema(name: String): AbstractSchema(name) {
+abstract class KeyValueSchema(name: String): Schema(name) {
 }
 
-abstract class AbstractTableSchema(name: String): AbstractSchema(name) {
+abstract class AbstractTableSchema(name: String): Schema(name) {
 }
 
 abstract class TableSchema<P>(tableName: String, primaryKey: AbstractColumn<P, out TableSchema<P>, P>): AbstractTableSchema(tableName) {
@@ -72,36 +72,36 @@ abstract class PolymorphicSchema<P, V>(name: String, valueClass: Class<V>, prima
         val tableDiscriminators = ConcurrentHashMap<String, MutableList<Discriminator<*, *>>>()
         val discriminatorClasses = ConcurrentHashMap<Discriminator<*, *>, Class<*>>()
         val discriminatorSchemaClasses = ConcurrentHashMap<Discriminator<*, *>, Class<*>>()
-        val discriminatorSchemas = ConcurrentHashMap<Discriminator<*, *>, AbstractSchema>()
+        val discriminatorSchemas = ConcurrentHashMap<Discriminator<*, *>, Schema>()
     }
 }
 
-fun <T: AbstractSchema> string(name: String): AbstractColumn<String, T, String> = AbstractColumn(name, javaClass<String>(), ColumnType.STRING)
+fun <T: Schema> string(name: String): AbstractColumn<String, T, String> = AbstractColumn(name, javaClass<String>(), ColumnType.STRING)
 
-fun <T: AbstractSchema> T.string(name: String): AbstractColumn<String, T, String> = AbstractColumn(name, javaClass<String>(), ColumnType.STRING)
+fun <T: Schema> T.string(name: String): AbstractColumn<String, T, String> = AbstractColumn(name, javaClass<String>(), ColumnType.STRING)
 
-fun <T: AbstractSchema> integer(name: String): AbstractColumn<Int, T, Int> = AbstractColumn(name, javaClass<Int>(), ColumnType.INTEGER)
-fun <T: AbstractSchema> T.integer(name: String): AbstractColumn<Int, T, Int> = AbstractColumn(name, javaClass<Int>(), ColumnType.INTEGER)
+fun <T: Schema> integer(name: String): AbstractColumn<Int, T, Int> = AbstractColumn(name, javaClass<Int>(), ColumnType.INTEGER)
+fun <T: Schema> T.integer(name: String): AbstractColumn<Int, T, Int> = AbstractColumn(name, javaClass<Int>(), ColumnType.INTEGER)
 
-fun <T: AbstractSchema> T.nullableString(name: String): NullableColumn<String, T> = NullableColumn(name, javaClass<String>(), ColumnType.STRING)
+fun <T: Schema> T.nullableString(name: String): NullableColumn<String, T> = NullableColumn(name, javaClass<String>(), ColumnType.STRING)
 
-fun <T: AbstractSchema> T.nullableInteger(name: String): NullableColumn<Int, T> = NullableColumn(name, javaClass<Int>(), ColumnType.INTEGER)
+fun <T: Schema> T.nullableInteger(name: String): NullableColumn<Int, T> = NullableColumn(name, javaClass<Int>(), ColumnType.INTEGER)
 
 //fun <T: AbstractSchema, C> T.setColumn(name: String, javaClass: Class<C>): SetColumn<C, T> = SetColumn(name, javaClass)
 
-fun <T: AbstractSchema> setOfString(name: String): AbstractColumn<Set<String>, T, String> = AbstractColumn<Set<String>, T, String>(name, javaClass(), ColumnType.STRING_SET)
+fun <T: Schema> setOfString(name: String): AbstractColumn<Set<String>, T, String> = AbstractColumn<Set<String>, T, String>(name, javaClass(), ColumnType.STRING_SET)
 
-fun <T: AbstractSchema> T.setOfString(name: String): AbstractColumn<Set<String>, T, String> = AbstractColumn<Set<String>, T, String>(name, javaClass<String>(), ColumnType.STRING_SET)
+fun <T: Schema> T.setOfString(name: String): AbstractColumn<Set<String>, T, String> = AbstractColumn<Set<String>, T, String>(name, javaClass<String>(), ColumnType.STRING_SET)
 
-fun <T: AbstractSchema> T.setOfInteger(name: String): AbstractColumn<Set<Int>, T, Int> = AbstractColumn<Set<Int>, T, Int>(name, javaClass<Int>(), ColumnType.INTEGER_SET)
+fun <T: Schema> T.setOfInteger(name: String): AbstractColumn<Set<Int>, T, Int> = AbstractColumn<Set<Int>, T, Int>(name, javaClass<Int>(), ColumnType.INTEGER_SET)
 
 //fun <T: AbstractSchema, C> T.listColumn(name: String, javaClass: Class<C>): ListColumn<C, T> = ListColumn(name, javaClass)
 
-fun <T: AbstractSchema> listOfString(name: String): AbstractColumn<List<String>, T, String> = AbstractColumn<List<String>, T, String>(name, javaClass<String>(), ColumnType.STRING_LIST)
+fun <T: Schema> listOfString(name: String): AbstractColumn<List<String>, T, String> = AbstractColumn<List<String>, T, String>(name, javaClass<String>(), ColumnType.STRING_LIST)
 
-fun <T: AbstractSchema> T.listOfString(name: String): AbstractColumn<List<String>, T, String> = AbstractColumn<List<String>, T, String>(name, javaClass<String>(), ColumnType.STRING_LIST)
+fun <T: Schema> T.listOfString(name: String): AbstractColumn<List<String>, T, String> = AbstractColumn<List<String>, T, String>(name, javaClass<String>(), ColumnType.STRING_LIST)
 
-fun <T: AbstractSchema> T.listOfInteger(name: String): AbstractColumn<List<Int>, T, Int> = AbstractColumn<List<Int>, T, Int>(name, javaClass<Int>(), ColumnType.INTEGER_LIST)
+fun <T: Schema> T.listOfInteger(name: String): AbstractColumn<List<Int>, T, Int> = AbstractColumn<List<Int>, T, Int>(name, javaClass<Int>(), ColumnType.INTEGER_LIST)
 
 fun <T: AbstractTableSchema> T.delete(body: T.() -> Op) {
     FilterQuery(this, body()) delete { }
@@ -109,7 +109,7 @@ fun <T: AbstractTableSchema> T.delete(body: T.() -> Op) {
 
 // TODO TODO TODO
 fun <T: AbstractTableSchema, X> T.columns(selector: T.() -> X): X {
-    AbstractSchema.set(this)
+    Schema.set(this)
     return selector();
 }
 
@@ -144,7 +144,7 @@ fun <T: AbstractTableSchema, A, B> T.template(a: AbstractColumn<A, T, *>, b: Abs
     return Template2(a, b)
 }
 
-class Template2<T: AbstractSchema, A, B>(val a: AbstractColumn<A, T, *>, val b: AbstractColumn<B, T, *>) {
+class Template2<T: Schema, A, B>(val a: AbstractColumn<A, T, *>, val b: AbstractColumn<B, T, *>) {
     /*fun invoke(av: A, bv: B): Array<Pair<Column<*, T>, *>> {
         return array(Pair(a, av), Pair(b, bv))
     }*/
@@ -163,7 +163,7 @@ class Template2<T: AbstractSchema, A, B>(val a: AbstractColumn<A, T, *>, val b: 
     }*/
 }
 
-class Template3<T: AbstractSchema, A, B, C>(val a: AbstractColumn<A, T, *>, val b: AbstractColumn<B, T, *>, val c: AbstractColumn<C, T, *>) {
+class Template3<T: Schema, A, B, C>(val a: AbstractColumn<A, T, *>, val b: AbstractColumn<B, T, *>, val c: AbstractColumn<C, T, *>) {
     fun invoke(av: A, bv: B, cv: C): Array<Pair<AbstractColumn<*, T, *>, *>> {
         return array(Pair(a, av), Pair(b, bv), Pair(c, cv))
     }
@@ -190,16 +190,16 @@ class Template3<T: AbstractSchema, A, B, C>(val a: AbstractColumn<A, T, *>, val 
 
 fun <T : TableSchema<P>, P, A, B> Template2<T, A, B>.insert(statement: () -> Triple<P, A, B>) {
     val tt = statement()
-    Session.current().insert(array(Pair(AbstractSchema.current<T>().ID, tt.component1()), Pair(a, tt.component2()), Pair(b, tt.component3())))
+    Session.current().insert(array(Pair(Schema.current<T>().ID, tt.component1()), Pair(a, tt.component2()), Pair(b, tt.component3())))
 }
 
 fun <T : TableSchema<P>, P, C> AbstractColumn<C, T, *>.insert(statement: () -> Pair<P, C>) {
     val tt = statement()
-    val id: AbstractColumn<P, T, *> = AbstractSchema.current<T>().ID // Type inference failure
+    val id: AbstractColumn<P, T, *> = Schema.current<T>().ID // Type inference failure
     Session.current().insert(array(Pair(id, tt.component1()), Pair(this, tt.component2())))
 }
 
-class Template4<T: AbstractSchema, A, B, C, D>(val a: AbstractColumn<A, T, *>, val b: AbstractColumn<B, T, *>, val c: AbstractColumn<C, T, *>, val d: AbstractColumn<D, T, *>) {
+class Template4<T: Schema, A, B, C, D>(val a: AbstractColumn<A, T, *>, val b: AbstractColumn<B, T, *>, val c: AbstractColumn<C, T, *>, val d: AbstractColumn<D, T, *>) {
     fun invoke(av: A, bv: B, cv: C, dv: D): Array<Pair<AbstractColumn<*, T, *>, *>> {
         return array(Pair(a, av), Pair(b, bv), Pair(c, cv), Pair(d, dv))
     }

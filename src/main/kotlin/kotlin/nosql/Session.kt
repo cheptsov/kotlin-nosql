@@ -9,9 +9,9 @@ abstract class Session () {
 
     abstract fun <T : DocumentSchema<P, V>, P, V> T.insert(v: () -> V): P
 
-    abstract fun <T : AbstractSchema> insert(columns: Array<Pair<AbstractColumn<*, T, *>, *>>)
+    abstract fun <T : Schema> insert(columns: Array<Pair<AbstractColumn<*, T, *>, *>>)
 
-    abstract fun <T : AbstractSchema> delete(table: T, op: Op)
+    abstract fun <T : Schema> delete(table: T, op: Op)
 
     abstract fun <T : AbstractTableSchema, C> Query1<T, C>.set(c: () -> C)
 
@@ -35,19 +35,19 @@ abstract class Session () {
     abstract fun <T : AbstractTableSchema, A, B> Query2<T, A, B>.iterator(): Iterator<Pair<A, B>>
 
     fun <T : AbstractTableSchema, A, B> Template2<T, A, B>.filter(op: T.() -> Op): Query2<T, A, B> {
-        return Query2<T, A, B>(a, b).where(AbstractSchema.current<T>().op())
+        return Query2<T, A, B>(a, b).where(Schema.current<T>().op())
     }
 
     fun <T : TableSchema<P>, P, A, B> Template2<T, A, B>.find(id: () -> P): Query2<T, A, B> {
-        return Query2<T, A, B>(a, b).where(AbstractSchema.current<T>().pk eq id())
+        return Query2<T, A, B>(a, b).where(Schema.current<T>().pk eq id())
     }
 
     fun <T : AbstractTableSchema, A> AbstractColumn<A, T, *>.filter(op: T.() -> Op): Query1<T, A> {
-        return Query1<T, A>(this).where(AbstractSchema.current<T>().op())
+        return Query1<T, A>(this).where(Schema.current<T>().op())
     }
 
     fun <T : TableSchema<P>, A, P> AbstractColumn<A, T, *>.find(id: () -> P): Query1<T, A> {
-        return Query1<T, A>(this).where(AbstractSchema.current<T>().pk eq (id() as P))
+        return Query1<T, A>(this).where(Schema.current<T>().pk eq (id() as P))
     }
 
     fun <T : AbstractTableSchema, A> Query1<T, List<A>>.range1(range: () -> IntRange): RangeQuery<T, A> {

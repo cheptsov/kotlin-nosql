@@ -4,7 +4,7 @@ import kotlin.nosql.Session
 import com.mongodb.DB
 import kotlin.nosql.AbstractTableSchema
 import kotlin.nosql.DocumentSchema
-import kotlin.nosql.AbstractSchema
+import kotlin.nosql.Schema
 import kotlin.nosql.AbstractColumn
 import kotlin.nosql.Op
 import kotlin.nosql.Query1
@@ -68,7 +68,7 @@ class MongoDBSession(val db: DB) : Session() {
         val javaClass = o.javaClass
         val fields = getAllFields(javaClass)
         var sc: Class<out Any?>? = null
-        var s: AbstractSchema? = null
+        var s: Schema? = null
         if (schema is PolymorphicSchema<*, *>) {
             for (entry in PolymorphicSchema.discriminatorClasses.entrySet()) {
                 if (entry.value.equals(o.javaClass)) {
@@ -246,14 +246,14 @@ class MongoDBSession(val db: DB) : Session() {
                         ColumnType.INTEGER_SET, ColumnType.STRING_SET -> (doc.get(column.name) as BasicDBList).toSet()
                         ColumnType.CUSTOM_CLASS_LIST -> {
                             val list = doc.get(column.name) as BasicDBList
-                            list.map { getObject(it as DBObject, column as ListColumn<Any?, out AbstractSchema>) }
+                            list.map { getObject(it as DBObject, column as ListColumn<Any?, out Schema>) }
                         }
                         ColumnType.CUSTOM_CLASS_SET -> {
                             val list = doc.get(column.name) as BasicDBList
-                            list.map { getObject(it as DBObject, column as ListColumn<Any?, out AbstractSchema>) }.toSet()
+                            list.map { getObject(it as DBObject, column as ListColumn<Any?, out Schema>) }.toSet()
                         }
                         else -> {
-                            getObject(doc.get(column.name) as DBObject, column as Column<Any?, out AbstractSchema>)
+                            getObject(doc.get(column.name) as DBObject, column as Column<Any?, out Schema>)
                         }
                     }
                     if (columnValue != null || column is NullableColumn<*, *>) {
@@ -267,10 +267,10 @@ class MongoDBSession(val db: DB) : Session() {
         return valueInstance
     }
 
-    override fun <T : AbstractSchema> insert(columns: Array<Pair<AbstractColumn<out Any?, T, out Any?>, Any?>>) {
+    override fun <T : Schema> insert(columns: Array<Pair<AbstractColumn<out Any?, T, out Any?>, Any?>>) {
         throw UnsupportedOperationException()
     }
-    override fun <T : AbstractSchema> delete(table: T, op: Op) {
+    override fun <T : Schema> delete(table: T, op: Op) {
         val collection = db.getCollection(table.name)!!
         val query = getQuery(op)
         collection.remove(query)
@@ -284,7 +284,7 @@ class MongoDBSession(val db: DB) : Session() {
     }
 
     private fun update(columnValues: Array<Pair<AbstractColumn<*, *, *>, *>>, op: Op, operator: String) {
-        val collection = db.getCollection(AbstractSchema.current<AbstractSchema>().name)!!
+        val collection = db.getCollection(Schema.current<Schema>().name)!!
         val statement = BasicDBObject()
         val doc = BasicDBObject().append(operator, statement)
         for ((column, value) in columnValues) {
@@ -319,7 +319,7 @@ class MongoDBSession(val db: DB) : Session() {
         throw UnsupportedOperationException()
     }
     override fun <T : TableSchema<P>, P, A, B> Template2<T, A, B>.get(id: () -> P): Pair<A, B> {
-        val table = AbstractSchema.current<T>()
+        val table = Schema.current<T>()
         val collection = db.getCollection(table.name)!!
         val query = getQuery(table.pk eq id())
         val doc = collection.findOne(query, BasicDBObject().append(a.fullName, "1")!!.append(b.fullName, "1"))!!
@@ -334,10 +334,10 @@ class MongoDBSession(val db: DB) : Session() {
                 ColumnType.STRING_SET, ColumnType.INTEGER_SET -> columnObject.toSet()
                 ColumnType.STRING_LIST, ColumnType.INTEGER_LIST -> columnObject.toList()
                 ColumnType.CUSTOM_CLASS_LIST -> {
-                    columnObject.map { getObject(it as DBObject, column as ListColumn<Any?, out AbstractSchema>) }
+                    columnObject.map { getObject(it as DBObject, column as ListColumn<Any?, out Schema>) }
                 }
                 ColumnType.CUSTOM_CLASS_SET -> {
-                    columnObject.map { getObject(it as DBObject, column as ListColumn<Any?, out AbstractSchema>) }.toSet()
+                    columnObject.map { getObject(it as DBObject, column as ListColumn<Any?, out Schema>) }.toSet()
                 }
                 else -> throw UnsupportedOperationException()
             }
