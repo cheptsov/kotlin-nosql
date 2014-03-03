@@ -231,23 +231,25 @@ val album = Albums get { id }
 println("Album tracks: ${album.details.tracks}")
 ```
 
-Receive selected columns by id
+Receive selected columns by a document's id:
 
 ```kotlin
 val (title, pricing) = Albums columns { Details.Title + Pricing } get { id }
 println("Retail price for the album ${title} is ${pricing.retail}")
 ```
 
-Update selected columns by id
+Update selected columns by a document's id:
 
 ```kotlin
 Albums columns { Details.Title } find { id } set { "A Love Supreme (Original Recording Reissued)" }
 ```
 
 ```kotlin
-Products columns { Pricing.Retail + Pricing.Savings } find { id } set { values(1150, 50) }
+Albums columns { Details.Tracks } find { id } add { Track("A Love Supreme, Part IV-Psalm", 400) }
 ```
+Update selected columns by a filter expression:
+
 
 ```kotlin
-Albums columns { Details.Tracks } find { id } add { Track("A Love Supreme, Part IV-Psalm", 400) }
+Products columns { Pricing.Retail + Pricing.Savings } filter { SKU eq "00e8da9b" } set { values(1150, 50) }
 ```
