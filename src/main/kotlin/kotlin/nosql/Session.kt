@@ -15,6 +15,8 @@ abstract class Session () {
 
     abstract fun <T : AbstractTableSchema, C> Query1<T, C>.set(c: () -> C)
 
+    abstract fun <T : AbstractTableSchema, A, B> Query2<T, A, B>.set(c: () -> Pair<A, B>)
+
     abstract fun <T : AbstractTableSchema, C> AbstractColumn<C, T, *>.forEach(statement: (C) -> Unit)
 
     abstract fun <T : AbstractTableSchema, C> AbstractColumn<C, T, *>.iterator(): Iterator<C>

@@ -166,6 +166,10 @@ class RedisSession(val jedis: Jedis) : Session() {
         throw UnsupportedOperationException()
     }
 
+    override fun <T : AbstractTableSchema, A, B> Query2<T, A, B>.set(c: () -> Pair<A, B>) {
+        throw UnsupportedOperationException()
+    }
+
     override fun <T : AbstractTableSchema> Query1<T, Int>.add(c: () -> Int): Int {
         val table = AbstractSchema.current<T>()
         val op1 = op!!

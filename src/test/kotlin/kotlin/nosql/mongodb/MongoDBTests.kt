@@ -90,8 +90,7 @@ class MongoDBTests {
                                 artist = "John Coltrane", genre = setOf("Jazz", "General"),
                                 tracks = listOf(Track("A Love Supreme Part I: Acknowledgement", 100),
                                         Track("A Love Supreme Part II - Resolution", 200),
-                                        Track("A Love Supreme, Part III: Pursuance", 300),
-                                        Track("A Love Supreme, Part IV-Psalm", 400))))
+                                        Track("A Love Supreme, Part III: Pursuance", 300))))
             }
 
             println("Getting products by a filter expression:")
@@ -107,6 +106,12 @@ class MongoDBTests {
             Albums filter { Details.Artist eq "John Coltrane" } forEach { album ->
                 println("Found music album ${album.details.title}")
             }
+
+            Albums columns { Details.Title } find { id } set { "A Love Supreme. Original Recording Reissued" }
+
+            Products columns { Pricing.Retail + Pricing.Savings } find { id } set { values(1150, 50) }
+
+            Albums columns { Details.Tracks } find { id } add { Track("A Love Supreme, Part IV-Psalm", 400) }
 
             println("Getting an album by its id:")
 

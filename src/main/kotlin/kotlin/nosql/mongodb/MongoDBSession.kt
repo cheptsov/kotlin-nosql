@@ -276,8 +276,36 @@ class MongoDBSession(val db: DB) : Session() {
         collection.remove(query)
     }
     override fun <T : AbstractTableSchema, C> Query1<T, C>.set(c: () -> C) {
-        throw UnsupportedOperationException()
+        update(array(Pair(a, c())), op!!, "\$set")
     }
+    override fun <T : AbstractTableSchema, A, B> Query2<T, A, B>.set(c: () -> Pair<A, B>) {
+        val values = c()
+        update(array(Pair(a, values.component1()), Pair(b, values.component2())), op!!, "\$set")
+    }
+
+    private fun update(columnValues: Array<Pair<AbstractColumn<*, *, *>, *>>, op: Op, operator: String) {
+        val collection = db.getCollection(AbstractSchema.current<AbstractSchema>().name)!!
+        val statement = BasicDBObject()
+        val doc = BasicDBObject().append(operator, statement)
+        for ((column, value) in columnValues) {
+            statement.append(column.fullName, getDBValue(value, column))
+        }
+        collection.update(getQuery(op), doc)
+    }
+
+    private fun getDBValue(value: Any?, column: AbstractColumn<*, *, *>): Any? {
+        return when (column.columnType) {
+            ColumnType.INTEGER, ColumnType.STRING -> value
+            ColumnType.INTEGER_LIST, ColumnType.STRING_LIST, ColumnType.INTEGER_SET, ColumnType.STRING_SET -> {
+                value as List<Any>
+            }
+            ColumnType.CUSTOM_CLASS -> if (value != null) getDBObject(value, column) else null
+            ColumnType.CUSTOM_CLASS_LIST, ColumnType.CUSTOM_CLASS_SET -> {
+                (value as List<Any>).map { getDBObject(it, column) }
+            }
+        }
+    }
+
     override fun <T : AbstractTableSchema, C> AbstractColumn<C, T, out Any?>.forEach(statement: (C) -> Unit) {
         throw UnsupportedOperationException()
     }
@@ -346,7 +374,8 @@ class MongoDBSession(val db: DB) : Session() {
         throw UnsupportedOperationException()
     }
     override fun <T : AbstractTableSchema, C, CC : Collection<Any?>> Query1<T, CC>.add(c: () -> C) {
-        throw UnsupportedOperationException()
+        // TODO TODO TODO
+        update(array(Pair(a, listOf(c()))), op!!, "\$pushAll")
     }
     override fun <T : AbstractTableSchema> Query1<T, Int>.add(c: () -> Int): Int {
         throw UnsupportedOperationException()

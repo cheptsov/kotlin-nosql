@@ -138,6 +138,9 @@ class DynamoDBSession(val client: AmazonDynamoDBClient) : Session() {
         update(updateQuery)
     }
 
+    override fun <T : AbstractTableSchema, A, B> Query2<T, A, B>.set(c: () -> Pair<A, B>) {
+        throw UnsupportedOperationException()
+    }
 
     private fun <C> AttributeValue.to(attributeType: ColumnType): C {
         return when (attributeType) {
