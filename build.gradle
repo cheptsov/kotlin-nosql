@@ -12,6 +12,9 @@ apply plugin: "kotlin"
 
 repositories {
     mavenCentral()
+    maven {
+        url "http://repository.jetbrains.com/all"
+    }
 }
 
 apply plugin: "maven"
@@ -24,7 +27,7 @@ dependencies {
     compile 'redis.clients:jedis:2.2.1'
     compile 'org.mongodb:mongo-java-driver:2.10.1'
     compile 'cglib:cglib:3.1'
-    testCompile 'junit:junit:4.11'
+    testCompile 'org.spek:spek:0.1-SNAPSHOT'
 }
 
 /*

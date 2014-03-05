@@ -37,6 +37,16 @@ open class SetColumn<C, T : Schema> (name: String, valueClass: Class<C>) : Abstr
 open class ListColumn<C, T : Schema> (name: String, valueClass: Class<C>) : AbstractColumn<List<C>, T, C>(name, valueClass, ColumnType.CUSTOM_CLASS_LIST) {
 }
 
+/*
+TODO TODO TODO
+class AggregatingFunction<C, T: Schema> (name: String, valueClass: Class<C>, columnType: ColumnType, val function: String) : AbstractColumn<C, T, C>(name, valueClass, columnType) {
+}
+
+fun <T: Schema> Count(column: AbstractColumn<*, T, *>): AggregatingFunction<Int, T> {
+    return AggregatingFunction(column.name, javaClass<Int>(), ColumnType.INTEGER, "count")
+}
+*/
+
 val AbstractColumn<*, *, *>.isNull: Op
     get() {
         return IsNullOp(this)

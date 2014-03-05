@@ -171,6 +171,7 @@ class MongoDBSession(val db: DB) : Session() {
     }
 
     private fun <T: DocumentSchema<P, V>, P, V> getObject(doc: DBObject, schema: T): V {
+        var s: Schema? = null
         val valueInstance: Any = when (schema) {
             is PolymorphicSchema<*, *> -> {
                 var instance: Any? = null
@@ -178,6 +179,7 @@ class MongoDBSession(val db: DB) : Session() {
                 for (discriminator in PolymorphicSchema.tableDiscriminators.get(schema.name)!!) {
                     if (discriminator.value.equals(discriminatorValue)) {
                         instance = newInstance(PolymorphicSchema.discriminatorClasses.get(discriminator)!!)
+                        s = PolymorphicSchema.discriminatorSchemas.get(discriminator)!!
                         break
                     }
                 }
@@ -185,7 +187,7 @@ class MongoDBSession(val db: DB) : Session() {
             }
             else -> newInstance(schema.valueClass)
         }
-        val schemaClass = schema.javaClass
+        val schemaClass = s.javaClass
         val schemaFields = getAllFields(schemaClass as Class<in Any?>)
         val valueFields = getAllFieldsMap(valueInstance.javaClass as Class<in Any?>)
         for (schemaField in schemaFields) {
@@ -194,7 +196,7 @@ class MongoDBSession(val db: DB) : Session() {
                 if (valueField != null) {
                     schemaField.setAccessible(true)
                     valueField.setAccessible(true)
-                    val column = schemaField.asColumn(schema)
+                    val column = schemaField.asColumn(s!!)
                     val columnValue: Any? = when (column.columnType) {
                         ColumnType.INTEGER -> doc.get(column.name)
                         ColumnType.STRING -> doc.get(column.name)?.toString()
@@ -316,7 +318,11 @@ class MongoDBSession(val db: DB) : Session() {
         throw UnsupportedOperationException()
     }
     override fun <T : TableSchema<P>, P, C> AbstractColumn<C, T, out Any?>.get(id: () -> P): C {
-        throw UnsupportedOperationException()
+        val table = Schema.current<T>()
+        val collection = db.getCollection(table.name)!!
+        val query = getQuery(table.pk eq id())
+        val doc = collection.findOne(query, BasicDBObject().append(this.fullName, "1"))!!
+        return getColumnObject(doc, this) as C
     }
     override fun <T : TableSchema<P>, P, A, B> Template2<T, A, B>.get(id: () -> P): Pair<A, B> {
         val table = Schema.current<T>()
@@ -396,4 +402,28 @@ class MongoDBSession(val db: DB) : Session() {
         throw UnsupportedOperationException()
     }
 
+    // TODO TODO TODO
+    /*fun <T: PolymorphicSchema<P, V>, P, V> T.aggregate (body: AggregateBody<T>.() -> Unit) {
+
+    }
+
+    class AggregateBody<T: PolymorphicSchema<*, *>>(val t: T) {
+        fun <A> group (a: T.() -> A): Group1<A> {
+            return Group1()
+        }
+    }
+
+    fun <T: PolymorphicSchema<*, *>> AggregateBody<T>.avg(column: AbstractColumn<*, T, Int>): AbstractColumn<*, T, Int> {
+        return null as AbstractColumn<*, T, Int>
+    }
+
+    class Group1<A> {
+        fun <B> group (b: A.() -> B): Group2<B> {
+            return Group2()
+        }
+    }
+
+    class Group2<A> {
+
+    }*/
 }
