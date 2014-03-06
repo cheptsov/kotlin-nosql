@@ -1,4 +1,4 @@
 package kotlin.nosql
 
-trait Expression {
+trait Expression<T> {
 }

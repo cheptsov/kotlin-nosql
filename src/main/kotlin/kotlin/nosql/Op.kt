@@ -1,6 +1,6 @@
 package kotlin.nosql
 
-abstract class Op() : Expression {
+abstract class Op() {
     fun and(op: Op): Op {
         return AndOp(this, op)
     }
@@ -10,74 +10,44 @@ abstract class Op() : Expression {
     }
 }
 
-class IsNullOp(val column: AbstractColumn<*, *, *>): Op() {
-    /*override fun toSQL():String {
-        return "${Session.get().fullIdentity(column)} IS NULL"
-    }*/
+class NullOp(val column: AbstractColumn<*, *, *>): Op() {
 }
 
-class LiteralOp(val value: Any): Op() {
-    /*override fun toSQL():String {
-        return if (value is String) "'" + value + "'" else value.toString()
-    }*/
+class NotNullOp(val column: AbstractColumn<*, *, *>): Op() {
 }
 
-class EqualsOp(val expr1: Expression, val expr2: Expression): Op() {
-    /*override fun toSQL():String {
-        val sb = StringBuilder()
-        if (expr1 is OrOp) {
-            sb.append("(").append(expr1.toSQL()).append(")")
-        } else {
-            sb.append(expr1.toSQL())
-        }
-        sb.append(" = ")
-        if (expr2 is OrOp) {
-            sb.append("(").append(expr2.toSQL()).append(")")
-        } else {
-            sb.append(expr2.toSQL())
-        }
-        return sb.toString()
-    }*/
+class LiteralOp(val value: Any): Expression<Any> {
 }
 
-class LikeOp(val expr1: Expression, val expr2: Expression): Op() {
-    /*override fun toSQL():String {
-        val sb = StringBuilder()
-        if (expr1 is OrOp) {
-            sb.append("(").append(expr1.toSQL()).append(")")
-        } else {
-            sb.append(expr1.toSQL())
-        }
-        sb.append(" LIKE ")
-        if (expr2 is OrOp) {
-            sb.append("(").append(expr2.toSQL()).append(")")
-        } else {
-            sb.append(expr2.toSQL())
-        }
-        return sb.toString()
-    }*/
+class EqualsOp(val expr1: Expression<*>, val expr2: Expression<*>): Op() {
+}
+
+class NotEqualsOp(val expr1: Expression<*>, val expr2: Expression<*>): Op() {
+}
+
+class GreaterOp(val expr1: Expression<*>, val expr2: Expression<*>): Op() {
+}
+
+class GreaterEqualsOp(val expr1: Expression<*>, val expr2: Expression<*>): Op() {
+}
+
+class LessOp(val expr1: Expression<*>, val expr2: Expression<*>): Op() {
+}
+
+class LessEqualsOp(val expr1: Expression<*>, val expr2: Expression<*>): Op() {
+}
+
+class InOp(val expr1: Expression<*>, val expr2: Expression<*>): Op() {
+}
+
+class NotInOp(val expr1: Expression<*>, val expr2: Expression<*>): Op() {
+}
+
+class MatchesOp(val expr1: Expression<*>, val expr2: Expression<*>): Op() {
 }
 
 class AndOp(val expr1: Op, val expr2: Op): Op() {
-    /*override fun toSQL():String {
-        val sb = StringBuilder()
-        if (expr1 is OrOp) {
-            sb.append("(").append(expr1.toSQL()).append(")")
-        } else {
-            sb.append(expr1.toSQL())
-        }
-        sb.append(" and ")
-        if (expr2 is OrOp) {
-            sb.append("(").append(expr2.toSQL()).append(")")
-        } else {
-            sb.append(expr2.toSQL())
-        }
-        return sb.toString()
-    }*/
 }
 
 class OrOp(val expr1: Op, val expr2: Op): Op() {
-    /*override fun toSQL():String {
-        return expr1.toSQL() + " or " + expr2.toSQL()
-    }*/
 }

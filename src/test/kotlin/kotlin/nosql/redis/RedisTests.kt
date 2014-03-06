@@ -54,15 +54,15 @@ class RedisTests {
             Posts columns { Text } insert { values(aPostId, "A post") }
             Posts columns { Text } insert { values(anotherPostId, "Another post") }
 
-            Users columns { Posts } find { aUserId } add { aPostId }
-            Users columns { Posts } find { aUserId } add { anotherPostId }
+            Users columns { Posts } at { aUserId } add { aPostId }
+            Users columns { Posts } at { aUserId } add { anotherPostId }
 
-            Users columns { Followers } find { aUserId } add { anotherUserId }
+            Users columns { Followers } at { aUserId } add { anotherUserId }
 
             val (name, password) = Users columns { Name + Password } get { aUserId }
 
             println("User '$name' has password '$password'")
-            val posts = Users columns { Posts } find { aUserId } get { 0..20 } map { postId ->
+            val posts = Users columns { Posts } at { aUserId } get { 0..20 } map { postId ->
                 Posts columns { Text } get { postId }
             }
             println("User '$name' has following posts: $posts")
@@ -85,7 +85,7 @@ class RedisTests {
             }
             println("User '${oneMoreUser.name}' has followers $oneMoreUserFollowers")
 
-            for (user in Users filter { ID eq oneMoreUserId }) {
+            for (user in Users filter { ID equal oneMoreUserId }) {
                 println(user)
             }
         }
