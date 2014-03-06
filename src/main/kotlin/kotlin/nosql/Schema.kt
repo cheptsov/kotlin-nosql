@@ -140,49 +140,72 @@ class Quintuple<A1, A2, A3, A4, A5>(val a1: A1, val a2: A2, val a3: A3, val a4: 
     public fun component5(): A5 = a5
 }
 
+class Sextuple<A1, A2, A3, A4, A5, A6>(val a1: A1, val a2: A2, val a3: A3, val a4: A4, val a5: A5, val a6: A6) {
+    public fun component1(): A1 = a1
+    public fun component2(): A2 = a2
+    public fun component3(): A3 = a3
+    public fun component4(): A4 = a4
+    public fun component5(): A5 = a5
+    public fun component6(): A6 = a6
+}
+
+class Septuple<A1, A2, A3, A4, A5, A6, A7>(val a1: A1, val a2: A2, val a3: A3, val a4: A4, val a5: A5, val a6: A6, val a7: A7) {
+    public fun component1(): A1 = a1
+    public fun component2(): A2 = a2
+    public fun component3(): A3 = a3
+    public fun component4(): A4 = a4
+    public fun component5(): A5 = a5
+    public fun component6(): A6 = a6
+    public fun component7(): A7 = a7
+}
+
+class Octuple<A1, A2, A3, A4, A5, A6, A7, A8>(val a1: A1, val a2: A2, val a3: A3, val a4: A4, val a5: A5, val a6: A6, val a7: A7, val a8: A8) {
+    public fun component1(): A1 = a1
+    public fun component2(): A2 = a2
+    public fun component3(): A3 = a3
+    public fun component4(): A4 = a4
+    public fun component5(): A5 = a5
+    public fun component6(): A6 = a6
+    public fun component7(): A7 = a7
+    public fun component8(): A8 = a8
+}
+
+class Nonuple<A1, A2, A3, A4, A5, A6, A7, A8, A9>(val a1: A1, val a2: A2, val a3: A3, val a4: A4, val a5: A5, val a6: A6, val a7: A7, val a8: A8, val a9: A9) {
+    public fun component1(): A1 = a1
+    public fun component2(): A2 = a2
+    public fun component3(): A3 = a3
+    public fun component4(): A4 = a4
+    public fun component5(): A5 = a5
+    public fun component6(): A6 = a6
+    public fun component7(): A7 = a7
+    public fun component8(): A8 = a8
+    public fun component9(): A9 = a9
+}
+
+class Decuple<A1, A2, A3, A4, A5, A6, A7, A8, A9, A10>(val a1: A1, val a2: A2, val a3: A3, val a4: A4, val a5: A5, val a6: A6, val a7: A7, val a8: A8, val a9: A9, val a10: A10) {
+    public fun component1(): A1 = a1
+    public fun component2(): A2 = a2
+    public fun component3(): A3 = a3
+    public fun component4(): A4 = a4
+    public fun component5(): A5 = a5
+    public fun component6(): A6 = a6
+    public fun component7(): A7 = a7
+    public fun component8(): A8 = a8
+    public fun component9(): A9 = a9
+    public fun component10(): A10 = a10
+}
+
 fun <T: AbstractTableSchema, A, B> T.template(a: AbstractColumn<A, T, *>, b: AbstractColumn<B, T, *>): Template2<T, A, B> {
     return Template2(a, b)
 }
 
 class Template2<T: Schema, A, B>(val a: AbstractColumn<A, T, *>, val b: AbstractColumn<B, T, *>) {
-    /*fun invoke(av: A, bv: B): Array<Pair<Column<*, T>, *>> {
-        return array(Pair(a, av), Pair(b, bv))
-    }*/
-
     fun <C> plus(c: AbstractColumn<C, T, *>): Template3<T, A, B, C> {
         return Template3(a, b, c)
     }
-
-    fun put(statement: () -> Pair<A, B>) {
-        val tt = statement()
-        Session.current().insert(array(Pair(a, tt.first), Pair(b, tt.second)))
-    }
-
-    /*fun values(va: A, vb: B) {
-        Session.get().insert(array(Pair(a, va), Pair(b, vb)))
-    }*/
 }
 
 class Template3<T: Schema, A, B, C>(val a: AbstractColumn<A, T, *>, val b: AbstractColumn<B, T, *>, val c: AbstractColumn<C, T, *>) {
-    fun invoke(av: A, bv: B, cv: C): Array<Pair<AbstractColumn<*, T, *>, *>> {
-        return array(Pair(a, av), Pair(b, bv), Pair(c, cv))
-    }
-
-    /*fun invoke(): List<Quad<A, B, C, D>> {
-        val results = ArrayList<Quad<A, B, C, D>>()
-        Query<Quad<A, B, C, D>>(Session.get(), array(a, b, c, d)).forEach{ results.add(it) }
-        return results
-    }*/
-
-    fun values(va: A, vb: B, vc: C) {
-        Session.current().insert(array(Pair(a, va), Pair(b, vb), Pair(c, vc)))
-    }
-
-    fun put(statement: () -> Triple<A, B, C>) {
-        val tt = statement()
-        Session.current().insert(array(Pair(a, tt.component1()), Pair(b, tt.component2()), Pair(c, tt.component3())))
-    }
-
     fun <D> plus(d: AbstractColumn<D, T, *>): Template4<T, A, B, C, D> {
         return Template4(a, b, c, d)
     }
@@ -200,12 +223,64 @@ fun <T : TableSchema<P>, P, C> AbstractColumn<C, T, *>.insert(statement: () -> P
 }
 
 class Template4<T: Schema, A, B, C, D>(val a: AbstractColumn<A, T, *>, val b: AbstractColumn<B, T, *>, val c: AbstractColumn<C, T, *>, val d: AbstractColumn<D, T, *>) {
-    fun invoke(av: A, bv: B, cv: C, dv: D): Array<Pair<AbstractColumn<*, T, *>, *>> {
-        return array(Pair(a, av), Pair(b, bv), Pair(c, cv), Pair(d, dv))
+    fun <E> plus(e: AbstractColumn<E, T, *>): Template5<T, A, B, C, D, E> {
+        return Template5(a, b, c, d, e)
     }
 
     fun insert(statement: () -> Quadruple<A, B, C, D>) {
         val tt = statement()
         Session.current().insert(array(Pair(a, tt.component1()), Pair(b, tt.component2()), Pair(c, tt.component3()), Pair(d, tt.component4())))
     }
+}
+
+class Template5<T: Schema, A, B, C, D, E>(val a: AbstractColumn<A, T, *>, val b: AbstractColumn<B, T, *>,
+                                          val c: AbstractColumn<C, T, *>, val d: AbstractColumn<D, T, *>,
+                                          val e: AbstractColumn<E, T, *>) {
+    fun <F> plus(f: AbstractColumn<F, T, *>): Template6<T, A, B, C, D, E, F> {
+        return Template6(a, b, c, d, e, f)
+    }
+}
+
+class Template6<T: Schema, A, B, C, D, E, F>(val a: AbstractColumn<A, T, *>, val b: AbstractColumn<B, T, *>,
+                                          val c: AbstractColumn<C, T, *>, val d: AbstractColumn<D, T, *>,
+                                          val e: AbstractColumn<E, T, *>, val f: AbstractColumn<F, T, *>) {
+    fun <G> plus(g: AbstractColumn<G, T, *>): Template7<T, A, B, C, D, E, F, G> {
+        return Template7(a, b, c, d, e, f, g)
+    }
+}
+
+class Template7<T: Schema, A, B, C, D, E, F, G>(val a: AbstractColumn<A, T, *>, val b: AbstractColumn<B, T, *>,
+                                             val c: AbstractColumn<C, T, *>, val d: AbstractColumn<D, T, *>,
+                                             val e: AbstractColumn<E, T, *>, val f: AbstractColumn<F, T, *>,
+                                             val g: AbstractColumn<G, T, *>) {
+    fun <H> plus(h: AbstractColumn<H, T, *>): Template8<T, A, B, C, D, E, F, G, H> {
+        return Template8(a, b, c, d, e, f, g, h)
+    }
+}
+
+class Template8<T: Schema, A, B, C, D, E, F, G, H>(val a: AbstractColumn<A, T, *>, val b: AbstractColumn<B, T, *>,
+                                                val c: AbstractColumn<C, T, *>, val d: AbstractColumn<D, T, *>,
+                                                val e: AbstractColumn<E, T, *>, val f: AbstractColumn<F, T, *>,
+                                                val g: AbstractColumn<G, T, *>, val h: AbstractColumn<H, T, *>) {
+    fun <J> plus(j: AbstractColumn<J, T, *>): Template9<T, A, B, C, D, E, F, G, H, J> {
+        return Template9(a, b, c, d, e, f, g, h, j)
+    }
+}
+
+class Template9<T: Schema, A, B, C, D, E, F, G, H, J>(val a: AbstractColumn<A, T, *>, val b: AbstractColumn<B, T, *>,
+                                                   val c: AbstractColumn<C, T, *>, val d: AbstractColumn<D, T, *>,
+                                                   val e: AbstractColumn<E, T, *>, val f: AbstractColumn<F, T, *>,
+                                                   val g: AbstractColumn<G, T, *>, val h: AbstractColumn<H, T, *>,
+                                                   val j: AbstractColumn<J, T, *>) {
+    fun <K> plus(k: AbstractColumn<K, T, *>): Template10<T, A, B, C, D, E, F, G, H, J, K> {
+        return Template10(a, b, c, d, e, f, g, h, j, k)
+    }
+}
+
+class Template10<T: Schema, A, B, C, D, E, F, G, H, J, K>(val a: AbstractColumn<A, T, *>, val b: AbstractColumn<B, T, *>,
+                                                      val c: AbstractColumn<C, T, *>, val d: AbstractColumn<D, T, *>,
+                                                      val e: AbstractColumn<E, T, *>, val f: AbstractColumn<F, T, *>,
+                                                      val g: AbstractColumn<G, T, *>, val h: AbstractColumn<H, T, *>,
+                                                      val j: AbstractColumn<J, T, *>, val k: AbstractColumn<K, T, *>) {
+
 }

@@ -1,40 +1,16 @@
 package kotlin.nosql.mongodb
 
-import kotlin.nosql.Session
 import com.mongodb.DB
-import kotlin.nosql.AbstractTableSchema
-import kotlin.nosql.DocumentSchema
-import kotlin.nosql.Schema
-import kotlin.nosql.AbstractColumn
-import kotlin.nosql.Op
-import kotlin.nosql.Query1
-import kotlin.nosql.TableSchema
-import kotlin.nosql.Template2
-import kotlin.nosql.Query2
-import kotlin.nosql.RangeQuery
-import kotlin.nosql.KeyValueSchema
 import com.mongodb.BasicDBObject
 import java.lang.reflect.Field
 import java.util.ArrayList
 import java.util.HashMap
-import kotlin.nosql.PrimaryKeyColumn
-import kotlin.nosql.util.*
 import com.mongodb.DBObject
-import kotlin.nosql.ColumnType
-import kotlin.nosql.NullableColumn
 import java.util.Arrays
-import kotlin.nosql.Column
-import kotlin.nosql.Discriminator
-import kotlin.nosql.PolymorphicSchema
-import kotlin.nosql.util.asColumn
-import kotlin.nosql.EqualsOp
-import kotlin.nosql.LiteralOp
-import kotlin.nosql.AndOp
-import kotlin.nosql.OrOp
 import org.bson.types.ObjectId
 import com.mongodb.BasicDBList
-import kotlin.nosql.ColumnType.INTEGER_LIST
-import kotlin.nosql.ListColumn
+import kotlin.nosql.*
+import kotlin.nosql.util.*
 
 class MongoDBSession(val db: DB) : Session() {
     override fun <T : AbstractTableSchema> T.create() {
@@ -308,6 +284,7 @@ class MongoDBSession(val db: DB) : Session() {
         }
     }
 
+/*
     override fun <T : AbstractTableSchema, C> AbstractColumn<C, T, out Any?>.forEach(statement: (C) -> Unit) {
         throw UnsupportedOperationException()
     }
@@ -317,6 +294,7 @@ class MongoDBSession(val db: DB) : Session() {
     override fun <T : AbstractTableSchema, C, M> AbstractColumn<C, T, out Any?>.map(statement: (C) -> M): List<M> {
         throw UnsupportedOperationException()
     }
+*/
     override fun <T : TableSchema<P>, P, C> AbstractColumn<C, T, out Any?>.get(id: () -> P): C {
         val table = Schema.current<T>()
         val collection = db.getCollection(table.name)!!
@@ -324,12 +302,139 @@ class MongoDBSession(val db: DB) : Session() {
         val doc = collection.findOne(query, BasicDBObject().append(this.fullName, "1"))!!
         return getColumnObject(doc, this) as C
     }
+    override fun <T : AbstractTableSchema, C> iterator(q: Query<C, T>): Iterator<C> {
+        val table = Schema.current<T>()
+        val collection = db.getCollection(table.name)!!
+        val query = getQuery(q.op)
+        val fields = BasicDBObject()
+        for (field in q.fields) {
+            fields.append(field.fullName, "1")
+        }
+        val cursor = collection.find(query, fields)!!
+        val results = ArrayList<C>()
+        try {
+            while(cursor.hasNext()) {
+                val doc = cursor.next()
+                results.add(when (q.fields.size) {
+                    1 -> getColumnObject(doc, q.fields[0]) as C
+                    2 -> Pair(getColumnObject(doc, q.fields[0]), getColumnObject(doc, q.fields[1])) as C
+                    3 -> Triple(getColumnObject(doc, q.fields[0]), getColumnObject(doc, q.fields[1]), getColumnObject(doc, q.fields[2])) as C
+                    4 -> Quadruple(getColumnObject(doc, q.fields[0]), getColumnObject(doc, q.fields[1]),
+                            getColumnObject(doc, q.fields[2]), getColumnObject(doc, q.fields[3])) as C
+                    5 -> Quintuple(getColumnObject(doc, q.fields[0]), getColumnObject(doc, q.fields[1]),
+                            getColumnObject(doc, q.fields[2]), getColumnObject(doc, q.fields[3]),
+                            getColumnObject(doc, q.fields[4])) as C
+                    6 -> Sextuple(getColumnObject(doc, q.fields[0]), getColumnObject(doc, q.fields[1]),
+                            getColumnObject(doc, q.fields[2]), getColumnObject(doc, q.fields[3]),
+                            getColumnObject(doc, q.fields[4]), getColumnObject(doc, q.fields[5])) as C
+                    7 -> Septuple(getColumnObject(doc, q.fields[0]), getColumnObject(doc, q.fields[1]),
+                            getColumnObject(doc, q.fields[2]), getColumnObject(doc, q.fields[3]),
+                            getColumnObject(doc, q.fields[4]), getColumnObject(doc, q.fields[5]),
+                            getColumnObject(doc, q.fields[6])) as C
+                    8 -> Octuple(getColumnObject(doc, q.fields[0]), getColumnObject(doc, q.fields[1]),
+                            getColumnObject(doc, q.fields[2]), getColumnObject(doc, q.fields[3]),
+                            getColumnObject(doc, q.fields[4]), getColumnObject(doc, q.fields[5]),
+                            getColumnObject(doc, q.fields[6]), getColumnObject(doc, q.fields[7])) as C
+                    9 -> Nonuple(getColumnObject(doc, q.fields[0]), getColumnObject(doc, q.fields[1]),
+                            getColumnObject(doc, q.fields[2]), getColumnObject(doc, q.fields[3]),
+                            getColumnObject(doc, q.fields[4]), getColumnObject(doc, q.fields[5]),
+                            getColumnObject(doc, q.fields[6]), getColumnObject(doc, q.fields[7]),
+                            getColumnObject(doc, q.fields[8])) as C
+                    10 -> Decuple(getColumnObject(doc, q.fields[0]), getColumnObject(doc, q.fields[1]),
+                            getColumnObject(doc, q.fields[2]), getColumnObject(doc, q.fields[3]),
+                            getColumnObject(doc, q.fields[4]), getColumnObject(doc, q.fields[5]),
+                            getColumnObject(doc, q.fields[6]), getColumnObject(doc, q.fields[7]),
+                            getColumnObject(doc, q.fields[8]), getColumnObject(doc, q.fields[9])) as C
+                    else -> throw UnsupportedOperationException()
+                } )
+            }
+        } finally {
+            cursor.close();
+        }
+        return results.iterator()
+    }
     override fun <T : TableSchema<P>, P, A, B> Template2<T, A, B>.get(id: () -> P): Pair<A, B> {
         val table = Schema.current<T>()
         val collection = db.getCollection(table.name)!!
         val query = getQuery(table.pk eq id())
         val doc = collection.findOne(query, BasicDBObject().append(a.fullName, "1")!!.append(b.fullName, "1"))!!
         return Pair(getColumnObject(doc, a) as A, getColumnObject(doc, b) as B)
+    }
+    override fun <T : TableSchema<P>, P, A, B, C> Template3<T, A, B, C>.get(id: () -> P): Triple<A, B, C> {
+        val table = Schema.current<T>()
+        val collection = db.getCollection(table.name)!!
+        val query = getQuery(table.pk eq id())
+        val doc = collection.findOne(query, BasicDBObject().append(a.fullName, "1")!!.append(b.fullName, "1")!!.append(c.fullName, "1"))!!
+        return Triple(getColumnObject(doc, a) as A, getColumnObject(doc, b) as B, getColumnObject(doc, c) as C)
+    }
+    override fun <T : TableSchema<P>, P, A, B, C, D> Template4<T, A, B, C, D>.get(id: () -> P): Quadruple<A, B, C, D> {
+        val table = Schema.current<T>()
+        val collection = db.getCollection(table.name)!!
+        val query = getQuery(table.pk eq id())
+        val doc = collection.findOne(query, BasicDBObject().append(a.fullName, "1")!!.append(b.fullName, "1")!!
+                .append(c.fullName, "1")!!.append(d.fullName, "1"))!!
+        return Quadruple(getColumnObject(doc, a) as A, getColumnObject(doc, b) as B, getColumnObject(doc, c) as C, getColumnObject(doc, d) as D)
+    }
+    override fun <T : TableSchema<P>, P, A, B, C, D, E> Template5<T, A, B, C, D, E>.get(id: () -> P): Quintuple<A, B, C, D, E> {
+        val table = Schema.current<T>()
+        val collection = db.getCollection(table.name)!!
+        val query = getQuery(table.pk eq id())
+        val doc = collection.findOne(query, BasicDBObject().append(a.fullName, "1")!!.append(b.fullName, "1")!!
+                .append(c.fullName, "1")!!.append(d.fullName, "1")!!.append(e.fullName, "1"))!!
+        return Quintuple(getColumnObject(doc, a) as A, getColumnObject(doc, b) as B, getColumnObject(doc, c) as C,
+                getColumnObject(doc, d) as D, getColumnObject(doc, e) as E)
+    }
+    override fun <T : TableSchema<P>, P, A, B, C, D, E, F> Template6<T, A, B, C, D, E, F>.get(id: () -> P): Sextuple<A, B, C, D, E, F> {
+        val table = Schema.current<T>()
+        val collection = db.getCollection(table.name)!!
+        val query = getQuery(table.pk eq id())
+        val doc = collection.findOne(query, BasicDBObject().append(a.fullName, "1")!!.append(b.fullName, "1")!!
+                .append(c.fullName, "1")!!.append(d.fullName, "1")!!.append(e.fullName, "1")!!.append(f.fullName, "1"))!!
+        return Sextuple(getColumnObject(doc, a) as A, getColumnObject(doc, b) as B, getColumnObject(doc, c) as C,
+                getColumnObject(doc, d) as D, getColumnObject(doc, e) as E, getColumnObject(doc, f) as F)
+    }
+    override fun <T : TableSchema<P>, P, A, B, C, D, E, F, G> Template7<T, A, B, C, D, E, F, G>.get(id: () -> P): Septuple<A, B, C, D, E, F, G> {
+        val table = Schema.current<T>()
+        val collection = db.getCollection(table.name)!!
+        val query = getQuery(table.pk eq id())
+        val doc = collection.findOne(query, BasicDBObject().append(a.fullName, "1")!!.append(b.fullName, "1")!!
+                .append(c.fullName, "1")!!.append(d.fullName, "1")!!.append(e.fullName, "1")!!.append(f.fullName, "1")!!
+                .append(g.fullName, "1"))!!
+        return Septuple(getColumnObject(doc, a) as A, getColumnObject(doc, b) as B, getColumnObject(doc, c) as C,
+                getColumnObject(doc, d) as D, getColumnObject(doc, e) as E, getColumnObject(doc, f) as F, getColumnObject(doc, g) as G)
+    }
+    override fun <T : TableSchema<P>, P, A, B, C, D, E, F, G, H> Template8<T, A, B, C, D, E, F, G, H>.get(id: () -> P): Octuple<A, B, C, D, E, F, G, H> {
+        val table = Schema.current<T>()
+        val collection = db.getCollection(table.name)!!
+        val query = getQuery(table.pk eq id())
+        val doc = collection.findOne(query, BasicDBObject().append(a.fullName, "1")!!.append(b.fullName, "1")!!
+                .append(c.fullName, "1")!!.append(d.fullName, "1")!!.append(e.fullName, "1")!!.append(f.fullName, "1")!!
+                .append(g.fullName, "1")!!.append(h.fullName, "1"))!!
+        return Octuple(getColumnObject(doc, a) as A, getColumnObject(doc, b) as B, getColumnObject(doc, c) as C,
+                getColumnObject(doc, d) as D, getColumnObject(doc, e) as E, getColumnObject(doc, f) as F,
+                getColumnObject(doc, g) as G, getColumnObject(doc, h) as H)
+    }
+    override fun <T : TableSchema<P>, P, A, B, C, D, E, F, G, H, J> Template9<T, A, B, C, D, E, F, G, H, J>.get(id: () -> P): Nonuple<A, B, C, D, E, F, G, H, J> {
+        val table = Schema.current<T>()
+        val collection = db.getCollection(table.name)!!
+        val query = getQuery(table.pk eq id())
+        val doc = collection.findOne(query, BasicDBObject().append(a.fullName, "1")!!.append(b.fullName, "1")!!
+                .append(c.fullName, "1")!!.append(d.fullName, "1")!!.append(e.fullName, "1")!!.append(f.fullName, "1")!!
+                .append(g.fullName, "1")!!.append(h.fullName, "1")!!.append(j.fullName, "1"))!!
+        return Nonuple(getColumnObject(doc, a) as A, getColumnObject(doc, b) as B, getColumnObject(doc, c) as C,
+                getColumnObject(doc, d) as D, getColumnObject(doc, e) as E, getColumnObject(doc, f) as F,
+                getColumnObject(doc, g) as G, getColumnObject(doc, h) as H, getColumnObject(doc, j) as J)
+    }
+    override fun <T : TableSchema<P>, P, A, B, C, D, E, F, G, H, J, K> Template10<T, A, B, C, D, E, F, G, H, J, K>.get(id: () -> P): Decuple<A, B, C, D, E, F, G, H, J, K> {
+        val table = Schema.current<T>()
+        val collection = db.getCollection(table.name)!!
+        val query = getQuery(table.pk eq id())
+        val doc = collection.findOne(query, BasicDBObject().append(a.fullName, "1")!!.append(b.fullName, "1")!!
+                .append(c.fullName, "1")!!.append(d.fullName, "1")!!.append(e.fullName, "1")!!.append(f.fullName, "1")!!
+                .append(g.fullName, "1")!!.append(h.fullName, "1")!!.append(j.fullName, "1")!!.append(k.fullName, "1"))!!
+        return Decuple(getColumnObject(doc, a) as A, getColumnObject(doc, b) as B, getColumnObject(doc, c) as C,
+                getColumnObject(doc, d) as D, getColumnObject(doc, e) as E, getColumnObject(doc, f) as F,
+                getColumnObject(doc, g) as G, getColumnObject(doc, h) as H, getColumnObject(doc, j) as J, getColumnObject(doc, k) as K)
     }
 
     private fun getColumnObject(doc: DBObject, column: AbstractColumn<*, *, *>): Any? {
@@ -361,6 +466,7 @@ class MongoDBSession(val db: DB) : Session() {
         }
     }
 
+/*
     override fun <T : AbstractTableSchema, A, B> Template2<T, A, B>.forEach(statement: (A, B) -> Unit) {
         throw UnsupportedOperationException()
     }
@@ -376,6 +482,7 @@ class MongoDBSession(val db: DB) : Session() {
     override fun <T : AbstractTableSchema, A, B> Query2<T, A, B>.iterator(): Iterator<Pair<A, B>> {
         throw UnsupportedOperationException()
     }
+*/
     override fun <T : AbstractTableSchema, C> RangeQuery<T, C>.forEach(st: (C) -> Unit) {
         throw UnsupportedOperationException()
     }

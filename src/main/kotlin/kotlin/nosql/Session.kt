@@ -17,41 +17,80 @@ abstract class Session () {
 
     abstract fun <T : AbstractTableSchema, A, B> Query2<T, A, B>.set(c: () -> Pair<A, B>)
 
-    abstract fun <T : AbstractTableSchema, C> AbstractColumn<C, T, *>.forEach(statement: (C) -> Unit)
+    //abstract fun <T : AbstractTableSchema, C> AbstractColumn<C, T, *>.forEach(statement: (C) -> Unit)
 
-    abstract fun <T : AbstractTableSchema, C> AbstractColumn<C, T, *>.iterator(): Iterator<C>
+    //abstract fun <T : AbstractTableSchema, C> AbstractColumn<C, T, *>.iterator(): Iterator<C>
 
-    abstract fun <T : AbstractTableSchema, C, M> AbstractColumn<C, T, *>.map(statement: (C) -> M): List<M>
+    //abstract fun <T : AbstractTableSchema, C, M> AbstractColumn<C, T, *>.map(statement: (C) -> M): List<M>
 
     abstract fun <T : TableSchema<P>, P, C> AbstractColumn<C, T, *>.get(id: () -> P): C
 
     abstract fun <T : TableSchema<P>, P, A, B> Template2<T, A, B>.get(id: () -> P): Pair<A, B>
+    abstract fun <T : TableSchema<P>, P, A, B, C> Template3<T, A, B, C>.get(id: () -> P): Triple<A, B, C>
+    abstract fun <T : TableSchema<P>, P, A, B, C, D> Template4<T, A, B, C, D>.get(id: () -> P): Quadruple<A, B, C, D>
+    abstract fun <T : TableSchema<P>, P, A, B, C, D, E> Template5<T, A, B, C, D, E>.get(id: () -> P): Quintuple<A, B, C, D, E>
+    abstract fun <T : TableSchema<P>, P, A, B, C, D, E, F> Template6<T, A, B, C, D, E, F>.get(id: () -> P): Sextuple<A, B, C, D, E, F>
+    abstract fun <T : TableSchema<P>, P, A, B, C, D, E, F, G> Template7<T, A, B, C, D, E, F, G>.get(id: () -> P): Septuple<A, B, C, D, E, F, G>
+    abstract fun <T : TableSchema<P>, P, A, B, C, D, E, F, G, H> Template8<T, A, B, C, D, E, F, G, H>.get(id: () -> P): Octuple<A, B, C, D, E, F, G, H>
+    abstract fun <T : TableSchema<P>, P, A, B, C, D, E, F, G, H, J> Template9<T, A, B, C, D, E, F, G, H, J>.get(id: () -> P): Nonuple<A, B, C, D, E, F, G, H, J>
+    abstract fun <T : TableSchema<P>, P, A, B, C, D, E, F, G, H, J, K> Template10<T, A, B, C, D, E, F, G, H, J, K>.get(id: () -> P): Decuple<A, B, C, D, E, F, G, H, J, K>
 
-    abstract fun <T : AbstractTableSchema, A, B> Template2<T, A, B>.forEach(statement: (A, B) -> Unit)
-    abstract fun <T : AbstractTableSchema, A, B> Template2<T, A, B>.iterator(): Iterator<Pair<A, B>>
-    abstract fun <T : AbstractTableSchema, A, B, M> Template2<T, A, B>.map(statement: (A, B) -> M): List<M>
+    //abstract fun <T : AbstractTableSchema, A, B> Template2<T, A, B>.forEach(statement: (A, B) -> Unit)
+    //abstract fun <T : AbstractTableSchema, A, B> Template2<T, A, B>.iterator(): Iterator<Pair<A, B>>
+    //abstract fun <T : AbstractTableSchema, A, B, M> Template2<T, A, B>.map(statement: (A, B) -> M): List<M>
 
-    abstract fun <T : AbstractTableSchema, A, B> Query2<T, A, B>.forEach(statement: (A, B) -> Unit)
-    abstract fun <T : AbstractTableSchema, A, B> Query2<T, A, B>.iterator(): Iterator<Pair<A, B>>
+
+    //abstract fun <T : AbstractTableSchema, A, B> Query2<T, A, B>.forEach(statement: (A, B) -> Unit)
+    //abstract fun <T : AbstractTableSchema, A, B> Query2<T, A, B>.iterator(): Iterator<Pair<A, B>>
+
+    abstract fun <T : AbstractTableSchema, C> iterator(query: Query<C, T>): Iterator<C>
 
     fun <T : AbstractTableSchema, A, B> Template2<T, A, B>.filter(op: T.() -> Op): Query2<T, A, B> {
-        return Query2<T, A, B>(a, b).where(Schema.current<T>().op())
+        return Query2<T, A, B>(a, b, Schema.current<T>().op())
+    }
+
+    fun <T : AbstractTableSchema, A, B, C> Template3<T, A, B, C>.filter(op: T.() -> Op): Query3<T, A, B, C> {
+        return Query3<T, A, B, C>(a, b, c, Schema.current<T>().op())
+    }
+
+    fun <T : AbstractTableSchema, A, B, C, D> Template4<T, A, B, C, D>.filter(op: T.() -> Op): Query4<T, A, B, C, D> {
+        return Query4<T, A, B, C, D>(a, b, c, d, Schema.current<T>().op())
+    }
+
+    fun <T : AbstractTableSchema, A, B, C, D, E> Template5<T, A, B, C, D, E>.filter(op: T.() -> Op): Query5<T, A, B, C, D, E> {
+        return Query5<T, A, B, C, D, E>(a, b, c, d, e, Schema.current<T>().op())
+    }
+
+    fun <T : AbstractTableSchema, A, B, C, D, E, F> Template6<T, A, B, C, D, E, F>.filter(op: T.() -> Op): Query6<T, A, B, C, D, E, F> {
+        return Query6<T, A, B, C, D, E, F>(a, b, c, d, e, f, Schema.current<T>().op())
+    }
+
+    fun <T : AbstractTableSchema, A, B, C, D, E, F, G> Template7<T, A, B, C, D, E, F, G>.filter(op: T.() -> Op): Query7<T, A, B, C, D, E, F, G> {
+        return Query7<T, A, B, C, D, E, F, G>(a, b, c, d, e, f, g, Schema.current<T>().op())
+    }
+
+    fun <T : AbstractTableSchema, A, B, C, D, E, F, G, H> Template8<T, A, B, C, D, E, F, G, H>.filter(op: T.() -> Op): Query8<T, A, B, C, D, E, F, G, H> {
+        return Query8<T, A, B, C, D, E, F, G, H>(a, b, c, d, e, f, g, h, Schema.current<T>().op())
+    }
+
+    fun <T : AbstractTableSchema, A, B, C, D, E, F, G, H, J> Template9<T, A, B, C, D, E, F, G, H, J>.filter(op: T.() -> Op): Query9<T, A, B, C, D, E, F, G, H, J> {
+        return Query9<T, A, B, C, D, E, F, G, H, J>(a, b, c, d, e, f, g, h, j, Schema.current<T>().op())
+    }
+
+    fun <T : AbstractTableSchema, A, B, C, D, E, F, G, H, J, K> Template10<T, A, B, C, D, E, F, G, H, J, K>.filter(op: T.() -> Op): Query10<T, A, B, C, D, E, F, G, H, J, K> {
+        return Query10<T, A, B, C, D, E, F, G, H, J, K>(a, b, c, d, e, f, g, h, j, k, Schema.current<T>().op())
     }
 
     fun <T : TableSchema<P>, P, A, B> Template2<T, A, B>.find(id: () -> P): Query2<T, A, B> {
-        return Query2<T, A, B>(a, b).where(Schema.current<T>().pk eq id())
+        return Query2<T, A, B>(a, b, Schema.current<T>().pk eq id())
     }
 
     fun <T : AbstractTableSchema, A> AbstractColumn<A, T, *>.filter(op: T.() -> Op): Query1<T, A> {
-        return Query1<T, A>(this).where(Schema.current<T>().op())
+        return Query1<T, A>(this, Schema.current<T>().op())
     }
 
     fun <T : TableSchema<P>, A, P> AbstractColumn<A, T, *>.find(id: () -> P): Query1<T, A> {
-        return Query1<T, A>(this).where(Schema.current<T>().pk eq (id() as P))
-    }
-
-    fun <T : AbstractTableSchema, A> Query1<T, List<A>>.range1(range: () -> IntRange): RangeQuery<T, A> {
-        return RangeQuery<T, A>(this, range())
+        return Query1<T, A>(this, Schema.current<T>().pk eq (id() as P))
     }
 
     fun <T : AbstractTableSchema, A> Query1<T, List<A>>.get(range: () -> IntRange): List<A> {

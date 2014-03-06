@@ -5,7 +5,7 @@ import kotlin.nosql.dynamodb.*
 import org.junit.Test
 
 class DynamoDBTests {
-    object Users : TableSchema<String>("users", string("id")) {
+    /*object Users : TableSchema<String>("users", string("id")) {
         val Name = string("name")
         val FavoriteCityId = nullableInteger("favorite_city_id")
 
@@ -82,5 +82,5 @@ class DynamoDBTests {
 
             array(Users, Cities) forEach { it.drop() }
         }
-    }
+    }*/
 }

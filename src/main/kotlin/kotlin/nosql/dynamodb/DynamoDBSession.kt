@@ -40,8 +40,51 @@ import kotlin.nosql.KeyValueSchema
 import kotlin.nosql.Schema
 import kotlin.nosql.DocumentSchema
 import kotlin.nosql.TableSchema
+import kotlin.nosql.Template3
+import kotlin.nosql.Template4
+import kotlin.nosql.Quadruple
+import kotlin.nosql.Template5
+import kotlin.nosql.Quintuple
+import kotlin.nosql.Template6
+import kotlin.nosql.Sextuple
+import kotlin.nosql.Template7
+import kotlin.nosql.Septuple
+import kotlin.nosql.Template8
+import kotlin.nosql.Octuple
+import kotlin.nosql.Template9
+import kotlin.nosql.Nonuple
+import kotlin.nosql.Template10
+import kotlin.nosql.Decuple
+import kotlin.nosql.Query
 
 class DynamoDBSession(val client: AmazonDynamoDBClient) : Session() {
+    override fun <T : AbstractTableSchema, C> iterator(query: Query<C, T>): Iterator<C> {
+        throw UnsupportedOperationException()
+    }
+    override fun <T : TableSchema<P>, P, A, B, C> Template3<T, A, B, C>.get(id: () -> P): Triple<A, B, C> {
+        throw UnsupportedOperationException()
+    }
+    override fun <T : TableSchema<P>, P, A, B, C, D> Template4<T, A, B, C, D>.get(id: () -> P): Quadruple<A, B, C, D> {
+        throw UnsupportedOperationException()
+    }
+    override fun <T : TableSchema<P>, P, A, B, C, D, E> Template5<T, A, B, C, D, E>.get(id: () -> P): Quintuple<A, B, C, D, E> {
+        throw UnsupportedOperationException()
+    }
+    override fun <T : TableSchema<P>, P, A, B, C, D, E, F> Template6<T, A, B, C, D, E, F>.get(id: () -> P): Sextuple<A, B, C, D, E, F> {
+        throw UnsupportedOperationException()
+    }
+    override fun <T : TableSchema<P>, P, A, B, C, D, E, F, G> Template7<T, A, B, C, D, E, F, G>.get(id: () -> P): Septuple<A, B, C, D, E, F, G> {
+        throw UnsupportedOperationException()
+    }
+    override fun <T : TableSchema<P>, P, A, B, C, D, E, F, G, H> Template8<T, A, B, C, D, E, F, G, H>.get(id: () -> P): Octuple<A, B, C, D, E, F, G, H> {
+        throw UnsupportedOperationException()
+    }
+    override fun <T : TableSchema<P>, P, A, B, C, D, E, F, G, H, J> Template9<T, A, B, C, D, E, F, G, H, J>.get(id: () -> P): Nonuple<A, B, C, D, E, F, G, H, J> {
+        throw UnsupportedOperationException()
+    }
+    override fun <T : TableSchema<P>, P, A, B, C, D, E, F, G, H, J, K> Template10<T, A, B, C, D, E, F, G, H, J, K>.get(id: () -> P): Decuple<A, B, C, D, E, F, G, H, J, K> {
+        throw UnsupportedOperationException()
+    }
     override fun <T : DocumentSchema<P, V>, P, V> T.insert(v: () -> V): P {
         throw UnsupportedOperationException()
     }
@@ -171,7 +214,7 @@ class DynamoDBSession(val client: AmazonDynamoDBClient) : Session() {
         }
     }
 
-    override fun <T : AbstractTableSchema, C> AbstractColumn<C, T, *>.forEach(statement: (C) -> Unit) {
+    /*override fun <T : AbstractTableSchema, C> AbstractColumn<C, T, *>.forEach(statement: (C) -> Unit) {
         val table = Schema.current<T>()
         val scanRequest = ScanRequest(table.name)
                 .withAttributesToGet(name)
@@ -231,7 +274,7 @@ class DynamoDBSession(val client: AmazonDynamoDBClient) : Session() {
             results.add(Pair(item.get(a.name)!! to a.columnType, item.get(b.name)!! to b.columnType))
         }
         return results.iterator()
-    }
+    }*/
 
     private fun getScanFilter(op: Op): HashMap<String, Condition> {
         val scanFilter = HashMap<String, Condition>()
@@ -245,7 +288,7 @@ class DynamoDBSession(val client: AmazonDynamoDBClient) : Session() {
         return scanFilter
     }
 
-    override fun <T : AbstractTableSchema, A, B> Query2<T, A, B>.forEach(statement: (A, B) -> Unit) {
+    /*override fun <T : AbstractTableSchema, A, B> Query2<T, A, B>.forEach(statement: (A, B) -> Unit) {
         val table = Schema.current<T>()
         val scanRequest = ScanRequest(table.name).withScanFilter(getScanFilter(op!!))!!
                 .withAttributesToGet(a.name, b.name)
@@ -264,7 +307,7 @@ class DynamoDBSession(val client: AmazonDynamoDBClient) : Session() {
             results.add(Pair(item.get(a.name)!! to a.columnType, item.get(b.name)!! to b.columnType))
         }
         return results.iterator()
-    }
+    }*/
 
     override fun <T : Schema> insert(columns: Array<Pair<AbstractColumn<*, T, *>, *>>) {
         val table = Schema.current<T>()

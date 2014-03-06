@@ -163,7 +163,16 @@ class MongoDBSpek : Spek() {
                 }
             }
 
-            on("getting a few columns by id") {
+            on("getting one column by id") {
+                db {
+                    val title = Albums columns { Details.Title } get { albumId!! }
+                    it("returns correct values") {
+                        assertEquals("A Love Supreme [Original Recording Reissued]", title)
+                    }
+                }
+            }
+
+            on("getting two columns by id") {
                 db {
                     val (title, pricing) = Albums columns { Details.Title + Pricing } get { albumId!! }
                     it("returns correct values") {
@@ -172,6 +181,320 @@ class MongoDBSpek : Spek() {
                         assertEquals(1100, pricing.retail)
                         assertEquals(100, pricing.savings)
                         assertEquals(8, pricing.pctSavings)
+                    }
+                }
+            }
+
+            on("getting three columns by id") {
+                db {
+                    val (sku, title, pricing) = Albums columns { SKU + Details.Title + Pricing } get { albumId!! }
+                    it("returns correct values") {
+                        assertEquals("00e8da9b", sku)
+                        assertEquals("A Love Supreme [Original Recording Reissued]", title)
+                        assertEquals(1200, pricing.list)
+                        assertEquals(1100, pricing.retail)
+                        assertEquals(100, pricing.savings)
+                        assertEquals(8, pricing.pctSavings)
+                    }
+                }
+            }
+
+            on("getting four columns by id") {
+                db {
+                    val (sku, title, description, pricing) = Products columns { SKU + Title + Description + Pricing } get { albumId!! }
+                    it("returns correct values") {
+                        assertEquals("00e8da9b", sku)
+                        assertEquals("A Love Supreme", title)
+                        assertEquals("by John Coltrane", description)
+                        assertEquals(1200, pricing.list)
+                        assertEquals(1100, pricing.retail)
+                        assertEquals(100, pricing.savings)
+                        assertEquals(8, pricing.pctSavings)
+                    }
+                }
+            }
+
+            on("getting five columns by id") {
+                db {
+                    val (sku, title, description, asin, pricing) = Products columns { SKU + Title + Description + ASIN + Pricing } get { albumId!! }
+                    it("returns correct values") {
+                        assertEquals("00e8da9b", sku)
+                        assertEquals("A Love Supreme", title)
+                        assertEquals("by John Coltrane", description)
+                        assertEquals("B0000A118M", asin)
+                        assertEquals(1200, pricing.list)
+                        assertEquals(1100, pricing.retail)
+                        assertEquals(100, pricing.savings)
+                        assertEquals(8, pricing.pctSavings)
+                    }
+                }
+            }
+
+            on("getting six columns by id") {
+                db {
+                    val (sku, title, description, asin, list, retail) = Products columns { SKU + Title +
+                        Description + ASIN + Pricing.List + Pricing.Retail } get { albumId!! }
+                    it("returns correct values") {
+                        assertEquals("00e8da9b", sku)
+                        assertEquals("A Love Supreme", title)
+                        assertEquals("by John Coltrane", description)
+                        assertEquals("B0000A118M", asin)
+                        assertEquals(1200, list)
+                        assertEquals(1100, retail)
+                    }
+                }
+            }
+
+            on("getting seven columns by id") {
+                db {
+                    val (sku, title, description, asin, list, retail, savings) = Products columns { SKU + Title +
+                        Description + ASIN + Pricing.List + Pricing.Retail + Pricing.Savings } get { albumId!! }
+                    it("returns correct values") {
+                        assertEquals("00e8da9b", sku)
+                        assertEquals("A Love Supreme", title)
+                        assertEquals("by John Coltrane", description)
+                        assertEquals("B0000A118M", asin)
+                        assertEquals(1200, list)
+                        assertEquals(1100, retail)
+                        assertEquals(100, savings)
+                    }
+                }
+            }
+
+            on("getting eight columns by id") {
+                db {
+                    val (sku, title, description, asin, list, retail, savings, pctSavings) = Products columns {
+                        SKU + Title + Description + ASIN + Pricing.List + Pricing.Retail + Pricing.Savings +
+                        Pricing.PCTSavings
+                    } get { albumId!! }
+                    it("returns correct values") {
+                        assertEquals("00e8da9b", sku)
+                        assertEquals("A Love Supreme", title)
+                        assertEquals("by John Coltrane", description)
+                        assertEquals("B0000A118M", asin)
+                        assertEquals(1200, list)
+                        assertEquals(1100, retail)
+                        assertEquals(100, savings)
+                        assertEquals(8, pctSavings)
+                    }
+                }
+            }
+
+            on("getting nine columns by id") {
+                db {
+                    val (sku, title, description, asin, list, retail, savings, pctSavings, shipping) = Products columns {
+                        SKU + Title + Description + ASIN + Pricing.List + Pricing.Retail + Pricing.Savings +
+                        Pricing.PCTSavings + Shipping
+                    } get { albumId!! }
+                    it("returns correct values") {
+                        assertEquals("00e8da9b", sku)
+                        assertEquals("A Love Supreme", title)
+                        assertEquals("by John Coltrane", description)
+                        assertEquals("B0000A118M", asin)
+                        assertEquals(1200, list)
+                        assertEquals(1100, retail)
+                        assertEquals(100, savings)
+                        assertEquals(8, pctSavings)
+                        assertEquals(6, shipping.weight)
+                        assertEquals(10, shipping.dimensions.width)
+                        assertEquals(10, shipping.dimensions.height)
+                        assertEquals(1, shipping.dimensions.depth)
+                    }
+                }
+            }
+
+            on("getting ten columns by id") {
+                db {
+                    val (sku, title, description, asin, list, retail, savings, pctSavings, weight, dimensions) = Products columns {
+                        SKU + Title + Description + ASIN + Pricing.List + Pricing.Retail + Pricing.Savings +
+                        Pricing.PCTSavings + Shipping.Weight + Shipping.Dimensions
+                    } get { albumId!! }
+                    it("returns correct values") {
+                        assertEquals("00e8da9b", sku)
+                        assertEquals("A Love Supreme", title)
+                        assertEquals("by John Coltrane", description)
+                        assertEquals("B0000A118M", asin)
+                        assertEquals(1200, list)
+                        assertEquals(1100, retail)
+                        assertEquals(100, savings)
+                        assertEquals(8, pctSavings)
+                        assertEquals(6, weight)
+                        assertEquals(10, dimensions.width)
+                        assertEquals(10, dimensions.height)
+                        assertEquals(1, dimensions.depth)
+                    }
+                }
+            }
+
+            on("getting one column by filter expression") {
+                db {
+                    val title = (Albums columns { Details.Title } filter { SKU eq "00e8da9b" }).first()
+                    it("returns correct values") {
+                        assertEquals("A Love Supreme [Original Recording Reissued]", title)
+                    }
+                }
+            }
+
+            on("getting two columns by a filter expression") {
+                db {
+                    val (title, pricing) = (Albums columns { Details.Title + Pricing } filter { SKU eq "00e8da9b" }).first()
+                    it("returns correct values") {
+                        assertEquals("A Love Supreme [Original Recording Reissued]", title)
+                        assertEquals(1200, pricing.list)
+                        assertEquals(1100, pricing.retail)
+                        assertEquals(100, pricing.savings)
+                        assertEquals(8, pricing.pctSavings)
+                    }
+                }
+            }
+
+            on("getting three columns by a filter expression") {
+                db {
+                    val (sku, title, pricing) = (Albums columns { SKU + Details.Title + Pricing } filter { SKU eq "00e8da9b" }).first()
+                    it("returns correct values") {
+                        assertEquals("00e8da9b", sku)
+                        assertEquals("A Love Supreme [Original Recording Reissued]", title)
+                        assertEquals(1200, pricing.list)
+                        assertEquals(1100, pricing.retail)
+                        assertEquals(100, pricing.savings)
+                        assertEquals(8, pricing.pctSavings)
+                    }
+                }
+            }
+
+            on("getting four columns by a filter expression") {
+                db {
+                    val (sku, title, description, pricing) = (Products columns { SKU + Title + Description + Pricing } filter { SKU eq "00e8da9b" }).first()
+                    it("returns correct values") {
+                        assertEquals("00e8da9b", sku)
+                        assertEquals("A Love Supreme", title)
+                        assertEquals("by John Coltrane", description)
+                        assertEquals(1200, pricing.list)
+                        assertEquals(1100, pricing.retail)
+                        assertEquals(100, pricing.savings)
+                        assertEquals(8, pricing.pctSavings)
+                    }
+                }
+            }
+
+            on("getting five columns by a filter expression") {
+                db {
+                    val (sku, title, description, asin, pricing) = (Products columns { SKU + Title + Description + ASIN + Pricing } filter { SKU eq "00e8da9b" }).first()
+                    it("returns correct values") {
+                        assertEquals("00e8da9b", sku)
+                        assertEquals("A Love Supreme", title)
+                        assertEquals("by John Coltrane", description)
+                        assertEquals("B0000A118M", asin)
+                        assertEquals(1200, pricing.list)
+                        assertEquals(1100, pricing.retail)
+                        assertEquals(100, pricing.savings)
+                        assertEquals(8, pricing.pctSavings)
+                    }
+                }
+            }
+
+            on("getting six columns by a filter expression") {
+                db {
+                    val (sku, title, description, asin, list, retail) = (Products columns { SKU + Title +
+                        Description + ASIN + Pricing.List + Pricing.Retail } filter { SKU eq "00e8da9b" }).first()
+                    it("returns correct values") {
+                        assertEquals("00e8da9b", sku)
+                        assertEquals("A Love Supreme", title)
+                        assertEquals("by John Coltrane", description)
+                        assertEquals("B0000A118M", asin)
+                        assertEquals(1200, list)
+                        assertEquals(1100, retail)
+                    }
+                }
+            }
+
+            on("getting seven columns by a filter expression") {
+                db {
+                    val (sku, title, description, asin, list, retail, savings) = (Products columns { SKU + Title +
+                        Description + ASIN + Pricing.List + Pricing.Retail + Pricing.Savings } filter { SKU eq "00e8da9b" }).first()
+                    it("returns correct values") {
+                        assertEquals("00e8da9b", sku)
+                        assertEquals("A Love Supreme", title)
+                        assertEquals("by John Coltrane", description)
+                        assertEquals("B0000A118M", asin)
+                        assertEquals(1200, list)
+                        assertEquals(1100, retail)
+                        assertEquals(100, savings)
+                    }
+                }
+            }
+
+            on("getting eight columns by a filter expression") {
+                db {
+                    val (sku, title, description, asin, list, retail, savings, pctSavings) = (Products columns {
+                        SKU + Title + Description + ASIN + Pricing.List + Pricing.Retail + Pricing.Savings +
+                        Pricing.PCTSavings
+                    } filter { SKU eq "00e8da9b" }).first()
+                    it("returns correct values") {
+                        assertEquals("00e8da9b", sku)
+                        assertEquals("A Love Supreme", title)
+                        assertEquals("by John Coltrane", description)
+                        assertEquals("B0000A118M", asin)
+                        assertEquals(1200, list)
+                        assertEquals(1100, retail)
+                        assertEquals(100, savings)
+                        assertEquals(8, pctSavings)
+                    }
+                }
+            }
+
+            on("getting nine columns by a filter expression") {
+                db {
+                    val (sku, title, description, asin, list, retail, savings, pctSavings, shipping) = (Products columns {
+                        SKU + Title + Description + ASIN + Pricing.List + Pricing.Retail + Pricing.Savings +
+                        Pricing.PCTSavings + Shipping
+                    } filter { SKU eq "00e8da9b" }).first()
+                    it("returns correct values") {
+                        assertEquals("00e8da9b", sku)
+                        assertEquals("A Love Supreme", title)
+                        assertEquals("by John Coltrane", description)
+                        assertEquals("B0000A118M", asin)
+                        assertEquals(1200, list)
+                        assertEquals(1100, retail)
+                        assertEquals(100, savings)
+                        assertEquals(8, pctSavings)
+                        assertEquals(6, shipping.weight)
+                        assertEquals(10, shipping.dimensions.width)
+                        assertEquals(10, shipping.dimensions.height)
+                        assertEquals(1, shipping.dimensions.depth)
+                    }
+                }
+            }
+
+            on("getting ten columns by a filter expression") {
+                db {
+                    val (sku, title, description, asin, list, retail, savings, pctSavings, weight, dimensions) = (Products columns {
+                        SKU + Title + Description + ASIN + Pricing.List + Pricing.Retail + Pricing.Savings +
+                        Pricing.PCTSavings + Shipping.Weight + Shipping.Dimensions
+                    } filter { SKU eq "00e8da9b" }).first()
+                    it("returns correct values") {
+                        assertEquals("00e8da9b", sku)
+                        assertEquals("A Love Supreme", title)
+                        assertEquals("by John Coltrane", description)
+                        assertEquals("B0000A118M", asin)
+                        assertEquals(1200, list)
+                        assertEquals(1100, retail)
+                        assertEquals(100, savings)
+                        assertEquals(8, pctSavings)
+                        assertEquals(6, weight)
+                        assertEquals(10, dimensions.width)
+                        assertEquals(10, dimensions.height)
+                        assertEquals(1, dimensions.depth)
+                    }
+                }
+            }
+
+            on("setting a new value to a string column on a non-abstract schema by id") {
+                db {
+                    Albums columns { Details.Title } find { albumId!! } set { "A Love Supreme. Original Recording Reissued" }
+                    val title = Albums columns { Details.Title } get { albumId!! }
+                    it("takes effect") {
+                        assertEquals("A Love Supreme. Original Recording Reissued", title)
                     }
                 }
             }
