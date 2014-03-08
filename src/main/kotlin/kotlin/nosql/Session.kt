@@ -82,39 +82,39 @@ abstract class Session () {
     }
 
     fun <T : TableSchema<P>, P, A, B> Template2<T, A, B>.at(id: () -> P): Query2<T, A, B> {
-        return Query2<T, A, B>(a, b, Schema.current<T>().pk equal id())
+        return Query2<T, A, B>(a, b, Schema.current<T>().pk eq id())
     }
 
     fun <T : TableSchema<P>, P, A, B, C> Template3<T, A, B, C>.at(id: () -> P): Query3<T, A, B, C> {
-        return Query3<T, A, B, C>(a, b, c, Schema.current<T>().pk equal id())
+        return Query3<T, A, B, C>(a, b, c, Schema.current<T>().pk eq id())
     }
 
     fun <T : TableSchema<P>, P, A, B, C, D> Template4<T, A, B, C, D>.at(id: () -> P): Query4<T, A, B, C, D> {
-        return Query4<T, A, B, C, D>(a, b, c, d, Schema.current<T>().pk equal id())
+        return Query4<T, A, B, C, D>(a, b, c, d, Schema.current<T>().pk eq id())
     }
 
     fun <T : TableSchema<P>, P, A, B, C, D, E> Template5<T, A, B, C, D, E>.at(id: () -> P): Query5<T, A, B, C, D, E> {
-        return Query5<T, A, B, C, D, E>(a, b, c, d, e, Schema.current<T>().pk equal id())
+        return Query5<T, A, B, C, D, E>(a, b, c, d, e, Schema.current<T>().pk eq id())
     }
 
     fun <T : TableSchema<P>, P, A, B, C, D, E, F> Template6<T, A, B, C, D, E, F>.at(id: () -> P): Query6<T, A, B, C, D, E, F> {
-        return Query6<T, A, B, C, D, E, F>(a, b, c, d, e, f, Schema.current<T>().pk equal id())
+        return Query6<T, A, B, C, D, E, F>(a, b, c, d, e, f, Schema.current<T>().pk eq id())
     }
 
     fun <T : TableSchema<P>, P, A, B, C, D, E, F, G> Template7<T, A, B, C, D, E, F, G>.at(id: () -> P): Query7<T, A, B, C, D, E, F, G> {
-        return Query7<T, A, B, C, D, E, F, G>(a, b, c, d, e, f, g, Schema.current<T>().pk equal id())
+        return Query7<T, A, B, C, D, E, F, G>(a, b, c, d, e, f, g, Schema.current<T>().pk eq id())
     }
 
     fun <T : TableSchema<P>, P, A, B, C, D, E, F, G, H> Template8<T, A, B, C, D, E, F, G, H>.at(id: () -> P): Query8<T, A, B, C, D, E, F, G, H> {
-        return Query8<T, A, B, C, D, E, F, G, H>(a, b, c, d, e, f, g, h, Schema.current<T>().pk equal id())
+        return Query8<T, A, B, C, D, E, F, G, H>(a, b, c, d, e, f, g, h, Schema.current<T>().pk eq id())
     }
 
     fun <T : TableSchema<P>, P, A, B, C, D, E, F, G, H, J> Template9<T, A, B, C, D, E, F, G, H, J>.at(id: () -> P): Query9<T, A, B, C, D, E, F, G, H, J> {
-        return Query9<T, A, B, C, D, E, F, G, H, J>(a, b, c, d, e, f, g, h, j, Schema.current<T>().pk equal id())
+        return Query9<T, A, B, C, D, E, F, G, H, J>(a, b, c, d, e, f, g, h, j, Schema.current<T>().pk eq id())
     }
 
     fun <T : TableSchema<P>, P, A, B, C, D, E, F, G, H, J, K> Template10<T, A, B, C, D, E, F, G, H, J, K>.at(id: () -> P): Query10<T, A, B, C, D, E, F, G, H, J, K> {
-        return Query10<T, A, B, C, D, E, F, G, H, J, K>(a, b, c, d, e, f, g, h, j, k, Schema.current<T>().pk equal id())
+        return Query10<T, A, B, C, D, E, F, G, H, J, K>(a, b, c, d, e, f, g, h, j, k, Schema.current<T>().pk eq id())
     }
 
     fun <T : AbstractTableSchema, A> AbstractColumn<A, T, *>.filter(op: T.() -> Op): Query1<T, A> {
@@ -122,7 +122,7 @@ abstract class Session () {
     }
 
     fun <T : TableSchema<P>, A, P> AbstractColumn<A, T, *>.at(id: () -> P): Query1<T, A> {
-        return Query1<T, A>(this, Schema.current<T>().pk equal (id() as P))
+        return Query1<T, A>(this, Schema.current<T>().pk eq (id() as P))
     }
 
     fun <T : AbstractTableSchema, A> Query1<T, List<A>>.get(range: () -> IntRange): List<A> {
@@ -164,7 +164,7 @@ abstract class Session () {
     }
 
     fun <T: DocumentSchema<P, C>, C, P> T.get(id: () -> P): C {
-        return this.filter({ pk equal id() }).next()
+        return this.filter({ pk eq id() }).next()
     }
 
     abstract fun <T: DocumentSchema<P, C>, P, C> T.filter(op: T.() -> Op): Iterator<C>

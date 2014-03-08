@@ -55,7 +55,8 @@ import kotlin.nosql.Nonuple
 import kotlin.nosql.Template10
 import kotlin.nosql.Decuple
 import kotlin.nosql.Query
-import kotlin.nosql.equal
+import kotlin.nosql.eq
+import kotlin.nosql.eq
 
 class DynamoDBSession(val client: AmazonDynamoDBClient) : Session() {
     override fun <T : AbstractTableSchema, C> iterator(query: Query<C, T>): Iterator<C> {
@@ -133,7 +134,7 @@ class DynamoDBSession(val client: AmazonDynamoDBClient) : Session() {
     override fun <T : TableSchema<P>, P, C> AbstractColumn<C, T, *>.get(id: () -> P): C {
         val table = Schema.current<T>()
         val scanRequest = ScanRequest(table.name)
-                .withAttributesToGet(name)!!.withScanFilter(getScanFilter(table.pk equal id()))!!
+                .withAttributesToGet(name)!!.withScanFilter(getScanFilter(table.pk eq id()))!!
         val scanResult = client.scan(scanRequest)!!
         for (item in scanResult.getItems()!!) {
             return item.get(name)!! to columnType
@@ -144,7 +145,7 @@ class DynamoDBSession(val client: AmazonDynamoDBClient) : Session() {
     override fun <T : TableSchema<P>, P, A, B> Template2<T, A, B>.get(id: () -> P): Pair<A, B> {
         val table = Schema.current<T>()
         val scanRequest = ScanRequest(table.name)
-                .withAttributesToGet(a.name, b.name)!!.withScanFilter(getScanFilter(table.pk equal id()))!!
+                .withAttributesToGet(a.name, b.name)!!.withScanFilter(getScanFilter(table.pk eq id()))!!
         val scanResult = client.scan(scanRequest)!!
         for (item in scanResult.getItems()!!) {
             return Pair(item.get(a.name)!! to a.columnType, item.get(b.name)!! to b.columnType)

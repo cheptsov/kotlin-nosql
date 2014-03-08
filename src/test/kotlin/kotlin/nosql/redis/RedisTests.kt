@@ -85,7 +85,7 @@ class RedisTests {
             }
             println("User '${oneMoreUser.name}' has followers $oneMoreUserFollowers")
 
-            for (user in Users filter { ID equal oneMoreUserId }) {
+            for (user in Users filter { ID eq oneMoreUserId }) {
                 println(user)
             }
         }

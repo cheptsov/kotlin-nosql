@@ -120,11 +120,135 @@ class MongoDBSession(val db: DB) : Session() {
                         } else {
                             throw UnsupportedOperationException()
                         }
+                    } else if (op.expr2 is AbstractColumn<*, *, *>) {
+                        query.append("\$where", "this.${op.expr1.fullName} == this.${op.expr2.fullName}")
+                    } else {
+                        throw UnsupportedOperationException()
                     }
                 } else {
                     throw UnsupportedOperationException()
                 }
             }
+            is NotEqualsOp -> {
+                if (op.expr1 is AbstractColumn<*, *, *>) {
+                    if (op.expr2 is LiteralOp) {
+                        if (op.expr2.value is String || op.expr2.value is Int) {
+                            if (op.expr1 is PrimaryKeyColumn<*, *>) {
+                                query.append(op.expr1.fullName, BasicDBObject().append("\$ne", ObjectId(op.expr2.value.toString())))
+                            } else {
+                                query.append(op.expr1.fullName, BasicDBObject().append("\$ne", op.expr2.value))
+                            }
+                        } else {
+                            throw UnsupportedOperationException()
+                        }
+                    } else if (op.expr2 is AbstractColumn<*, *, *>) {
+                        query.append("\$where", "this.${op.expr1.fullName} != this.${op.expr2.fullName}")
+                    } else {
+                        throw UnsupportedOperationException()
+                    }
+                } else {
+                    throw UnsupportedOperationException()
+                }
+            }
+            is GreaterOp -> {
+                if (op.expr1 is AbstractColumn<*, *, *>) {
+                    if (op.expr2 is LiteralOp) {
+                        if (op.expr2.value is String || op.expr2.value is Int) {
+                            query.append(op.expr1.fullName, BasicDBObject().append("\$gt", op.expr2.value))
+                        } else {
+                            throw UnsupportedOperationException()
+                        }
+                    } else if (op.expr2 is AbstractColumn<*, *, *>) {
+                        query.append("\$where", "this.${op.expr1.fullName} > this.${op.expr2.fullName}")
+                    } else {
+                        throw UnsupportedOperationException()
+                    }
+                } else {
+                    throw UnsupportedOperationException()
+                }
+            }
+            is LessOp -> {
+                if (op.expr1 is AbstractColumn<*, *, *>) {
+                    if (op.expr2 is LiteralOp) {
+                        if (op.expr2.value is String || op.expr2.value is Int) {
+                            query.append(op.expr1.fullName, BasicDBObject().append("\$lt", op.expr2.value))
+                        } else {
+                            throw UnsupportedOperationException()
+                        }
+                    } else if (op.expr2 is AbstractColumn<*, *, *>) {
+                        query.append("\$where", "this.${op.expr1.fullName} < this.${op.expr2.fullName}")
+                    } else {
+                        throw UnsupportedOperationException()
+                    }
+                } else {
+                    throw UnsupportedOperationException()
+                }
+            }
+            is GreaterEqualsOp -> {
+                if (op.expr1 is AbstractColumn<*, *, *>) {
+                    if (op.expr2 is LiteralOp) {
+                        if (op.expr2.value is String || op.expr2.value is Int) {
+                            query.append(op.expr1.fullName, BasicDBObject().append("\$gte", op.expr2.value))
+                        } else {
+                            throw UnsupportedOperationException()
+                        }
+                    } else if (op.expr2 is AbstractColumn<*, *, *>) {
+                        query.append("\$where", "this.${op.expr1.fullName} >= this.${op.expr2.fullName}")
+                    } else {
+                        throw UnsupportedOperationException()
+                    }
+                } else {
+                    throw UnsupportedOperationException()
+                }
+            }
+            is LessEqualsOp -> {
+                if (op.expr1 is AbstractColumn<*, *, *>) {
+                    if (op.expr2 is LiteralOp) {
+                        if (op.expr2.value is String || op.expr2.value is Int) {
+                            query.append(op.expr1.fullName, BasicDBObject().append("\$lte", op.expr2.value))
+                        } else {
+                            throw UnsupportedOperationException()
+                        }
+                    } else if (op.expr2 is AbstractColumn<*, *, *>) {
+                        query.append("\$where", "this.${op.expr1.fullName} <= this.${op.expr2.fullName}")
+                    } else {
+                        throw UnsupportedOperationException()
+                    }
+                } else {
+                    throw UnsupportedOperationException()
+                }
+            }
+            is InOp -> {
+                if (op.expr1 is AbstractColumn<*, *, *>) {
+                    if (op.expr2 is LiteralOp) {
+                        if (op.expr2.value is List<*> || op.expr2.value is Array<*>) {
+                            query.append(op.expr1.fullName, BasicDBObject().append("\$in", op.expr2.value))
+                        } else {
+                            throw UnsupportedOperationException()
+                        }
+                    } else {
+                        throw UnsupportedOperationException()
+                    }
+                } else {
+                    throw UnsupportedOperationException()
+                }
+            }
+            is NotInOp -> {
+                if (op.expr1 is AbstractColumn<*, *, *>) {
+                    if (op.expr2 is LiteralOp) {
+                        if (op.expr2.value is List<*> || op.expr2.value is Array<*>) {
+                            query.append(op.expr1.fullName, BasicDBObject().append("\$nin", op.expr2.value))
+                        } else {
+                            throw UnsupportedOperationException()
+                        }
+                    } else {
+                        throw UnsupportedOperationException()
+                    }
+                } else {
+                    throw UnsupportedOperationException()
+                }
+            }
+            // TODO TODO TODO eq expression and eq expression
             is AndOp -> {
                 val query1 = getQuery(op.expr1)
                 val query2 = getQuery(op.expr2)
@@ -298,7 +422,7 @@ class MongoDBSession(val db: DB) : Session() {
     override fun <T : TableSchema<P>, P, C> AbstractColumn<C, T, out Any?>.get(id: () -> P): C {
         val table = Schema.current<T>()
         val collection = db.getCollection(table.name)!!
-        val query = getQuery(table.pk equal id())
+        val query = getQuery(table.pk eq id())
         val doc = collection.findOne(query, BasicDBObject().append(this.fullName, "1"))!!
         return getColumnObject(doc, this) as C
     }
@@ -356,21 +480,21 @@ class MongoDBSession(val db: DB) : Session() {
     override fun <T : TableSchema<P>, P, A, B> Template2<T, A, B>.get(id: () -> P): Pair<A, B> {
         val table = Schema.current<T>()
         val collection = db.getCollection(table.name)!!
-        val query = getQuery(table.pk equal id())
+        val query = getQuery(table.pk eq id())
         val doc = collection.findOne(query, BasicDBObject().append(a.fullName, "1")!!.append(b.fullName, "1"))!!
         return Pair(getColumnObject(doc, a) as A, getColumnObject(doc, b) as B)
     }
     override fun <T : TableSchema<P>, P, A, B, C> Template3<T, A, B, C>.get(id: () -> P): Triple<A, B, C> {
         val table = Schema.current<T>()
         val collection = db.getCollection(table.name)!!
-        val query = getQuery(table.pk equal id())
+        val query = getQuery(table.pk eq id())
         val doc = collection.findOne(query, BasicDBObject().append(a.fullName, "1")!!.append(b.fullName, "1")!!.append(c.fullName, "1"))!!
         return Triple(getColumnObject(doc, a) as A, getColumnObject(doc, b) as B, getColumnObject(doc, c) as C)
     }
     override fun <T : TableSchema<P>, P, A, B, C, D> Template4<T, A, B, C, D>.get(id: () -> P): Quadruple<A, B, C, D> {
         val table = Schema.current<T>()
         val collection = db.getCollection(table.name)!!
-        val query = getQuery(table.pk equal id())
+        val query = getQuery(table.pk eq id())
         val doc = collection.findOne(query, BasicDBObject().append(a.fullName, "1")!!.append(b.fullName, "1")!!
                 .append(c.fullName, "1")!!.append(d.fullName, "1"))!!
         return Quadruple(getColumnObject(doc, a) as A, getColumnObject(doc, b) as B, getColumnObject(doc, c) as C, getColumnObject(doc, d) as D)
@@ -378,7 +502,7 @@ class MongoDBSession(val db: DB) : Session() {
     override fun <T : TableSchema<P>, P, A, B, C, D, E> Template5<T, A, B, C, D, E>.get(id: () -> P): Quintuple<A, B, C, D, E> {
         val table = Schema.current<T>()
         val collection = db.getCollection(table.name)!!
-        val query = getQuery(table.pk equal id())
+        val query = getQuery(table.pk eq id())
         val doc = collection.findOne(query, BasicDBObject().append(a.fullName, "1")!!.append(b.fullName, "1")!!
                 .append(c.fullName, "1")!!.append(d.fullName, "1")!!.append(e.fullName, "1"))!!
         return Quintuple(getColumnObject(doc, a) as A, getColumnObject(doc, b) as B, getColumnObject(doc, c) as C,
@@ -387,7 +511,7 @@ class MongoDBSession(val db: DB) : Session() {
     override fun <T : TableSchema<P>, P, A, B, C, D, E, F> Template6<T, A, B, C, D, E, F>.get(id: () -> P): Sextuple<A, B, C, D, E, F> {
         val table = Schema.current<T>()
         val collection = db.getCollection(table.name)!!
-        val query = getQuery(table.pk equal id())
+        val query = getQuery(table.pk eq id())
         val doc = collection.findOne(query, BasicDBObject().append(a.fullName, "1")!!.append(b.fullName, "1")!!
                 .append(c.fullName, "1")!!.append(d.fullName, "1")!!.append(e.fullName, "1")!!.append(f.fullName, "1"))!!
         return Sextuple(getColumnObject(doc, a) as A, getColumnObject(doc, b) as B, getColumnObject(doc, c) as C,
@@ -396,7 +520,7 @@ class MongoDBSession(val db: DB) : Session() {
     override fun <T : TableSchema<P>, P, A, B, C, D, E, F, G> Template7<T, A, B, C, D, E, F, G>.get(id: () -> P): Septuple<A, B, C, D, E, F, G> {
         val table = Schema.current<T>()
         val collection = db.getCollection(table.name)!!
-        val query = getQuery(table.pk equal id())
+        val query = getQuery(table.pk eq id())
         val doc = collection.findOne(query, BasicDBObject().append(a.fullName, "1")!!.append(b.fullName, "1")!!
                 .append(c.fullName, "1")!!.append(d.fullName, "1")!!.append(e.fullName, "1")!!.append(f.fullName, "1")!!
                 .append(g.fullName, "1"))!!
@@ -406,7 +530,7 @@ class MongoDBSession(val db: DB) : Session() {
     override fun <T : TableSchema<P>, P, A, B, C, D, E, F, G, H> Template8<T, A, B, C, D, E, F, G, H>.get(id: () -> P): Octuple<A, B, C, D, E, F, G, H> {
         val table = Schema.current<T>()
         val collection = db.getCollection(table.name)!!
-        val query = getQuery(table.pk equal id())
+        val query = getQuery(table.pk eq id())
         val doc = collection.findOne(query, BasicDBObject().append(a.fullName, "1")!!.append(b.fullName, "1")!!
                 .append(c.fullName, "1")!!.append(d.fullName, "1")!!.append(e.fullName, "1")!!.append(f.fullName, "1")!!
                 .append(g.fullName, "1")!!.append(h.fullName, "1"))!!
@@ -417,7 +541,7 @@ class MongoDBSession(val db: DB) : Session() {
     override fun <T : TableSchema<P>, P, A, B, C, D, E, F, G, H, J> Template9<T, A, B, C, D, E, F, G, H, J>.get(id: () -> P): Nonuple<A, B, C, D, E, F, G, H, J> {
         val table = Schema.current<T>()
         val collection = db.getCollection(table.name)!!
-        val query = getQuery(table.pk equal id())
+        val query = getQuery(table.pk eq id())
         val doc = collection.findOne(query, BasicDBObject().append(a.fullName, "1")!!.append(b.fullName, "1")!!
                 .append(c.fullName, "1")!!.append(d.fullName, "1")!!.append(e.fullName, "1")!!.append(f.fullName, "1")!!
                 .append(g.fullName, "1")!!.append(h.fullName, "1")!!.append(j.fullName, "1"))!!
@@ -428,7 +552,7 @@ class MongoDBSession(val db: DB) : Session() {
     override fun <T : TableSchema<P>, P, A, B, C, D, E, F, G, H, J, K> Template10<T, A, B, C, D, E, F, G, H, J, K>.get(id: () -> P): Decuple<A, B, C, D, E, F, G, H, J, K> {
         val table = Schema.current<T>()
         val collection = db.getCollection(table.name)!!
-        val query = getQuery(table.pk equal id())
+        val query = getQuery(table.pk eq id())
         val doc = collection.findOne(query, BasicDBObject().append(a.fullName, "1")!!.append(b.fullName, "1")!!
                 .append(c.fullName, "1")!!.append(d.fullName, "1")!!.append(e.fullName, "1")!!.append(f.fullName, "1")!!
                 .append(g.fullName, "1")!!.append(h.fullName, "1")!!.append(j.fullName, "1")!!.append(k.fullName, "1"))!!

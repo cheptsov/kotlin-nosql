@@ -76,7 +76,6 @@ class MongoDBSpek : Spek() {
     }
 
     class Track(val title: String, val duration: Int) {
-        override fun toString(): String = "$title - $duration"
     }
 
     {
@@ -138,7 +137,7 @@ class MongoDBSpek : Spek() {
 
             on("filtering an abstract schema") {
                 db {
-                    val results = (Products filter { (SKU equal "00e8da9b") or (Shipping.Weight equal 6) }).toList()
+                    val results = (Products filter { (SKU eq "00e8da9b") or (Shipping.Weight eq 6) }).toList()
                     it("should return a correct object") {
                         validate(results)
                     }
@@ -147,7 +146,7 @@ class MongoDBSpek : Spek() {
 
             on("filtering a non-abstract schema") {
                 db {
-                    val results: List<Album> = (Albums filter { Details.Artist equal "John Coltrane" }).toList()
+                    val results: List<Album> = (Albums filter { Details.Artist eq "John Coltrane" }).toList()
                     it("should return a correct object") {
                         validate(results)
                     }
@@ -328,7 +327,7 @@ class MongoDBSpek : Spek() {
 
             on("getting one column by filter expression") {
                 db {
-                    val title = (Albums columns { Details.Title } filter { SKU equal "00e8da9b" }).first()
+                    val title = (Albums columns { Details.Title } filter { SKU eq "00e8da9b" }).first()
                     it("returns correct values") {
                         assertEquals("A Love Supreme [Original Recording Reissued]", title)
                     }
@@ -337,7 +336,7 @@ class MongoDBSpek : Spek() {
 
             on("getting two columns by a filter expression") {
                 db {
-                    val (title, pricing) = (Albums columns { Details.Title + Pricing } filter { SKU equal "00e8da9b" }).first()
+                    val (title, pricing) = (Albums columns { Details.Title + Pricing } filter { SKU eq "00e8da9b" }).first()
                     it("returns correct values") {
                         assertEquals("A Love Supreme [Original Recording Reissued]", title)
                         assertEquals(1200, pricing.list)
@@ -350,7 +349,7 @@ class MongoDBSpek : Spek() {
 
             on("getting three columns by a filter expression") {
                 db {
-                    val (sku, title, pricing) = (Albums columns { SKU + Details.Title + Pricing } filter { SKU equal "00e8da9b" }).first()
+                    val (sku, title, pricing) = (Albums columns { SKU + Details.Title + Pricing } filter { SKU eq "00e8da9b" }).first()
                     it("returns correct values") {
                         assertEquals("00e8da9b", sku)
                         assertEquals("A Love Supreme [Original Recording Reissued]", title)
@@ -364,7 +363,7 @@ class MongoDBSpek : Spek() {
 
             on("getting four columns by a filter expression") {
                 db {
-                    val (sku, title, description, pricing) = (Products columns { SKU + Title + Description + Pricing } filter { SKU equal "00e8da9b" }).first()
+                    val (sku, title, description, pricing) = (Products columns { SKU + Title + Description + Pricing } filter { SKU eq "00e8da9b" }).first()
                     it("returns correct values") {
                         assertEquals("00e8da9b", sku)
                         assertEquals("A Love Supreme", title)
@@ -379,7 +378,7 @@ class MongoDBSpek : Spek() {
 
             on("getting five columns by a filter expression") {
                 db {
-                    val (sku, title, description, asin, pricing) = (Products columns { SKU + Title + Description + ASIN + Pricing } filter { SKU equal "00e8da9b" }).first()
+                    val (sku, title, description, asin, pricing) = (Products columns { SKU + Title + Description + ASIN + Pricing } filter { SKU eq "00e8da9b" }).first()
                     it("returns correct values") {
                         assertEquals("00e8da9b", sku)
                         assertEquals("A Love Supreme", title)
@@ -396,7 +395,7 @@ class MongoDBSpek : Spek() {
             on("getting six columns by a filter expression") {
                 db {
                     val (sku, title, description, asin, list, retail) = (Products columns { SKU + Title +
-                        Description + ASIN + Pricing.List + Pricing.Retail } filter { SKU equal "00e8da9b" }).first()
+                        Description + ASIN + Pricing.List + Pricing.Retail } filter { SKU eq "00e8da9b" }).first()
                     it("returns correct values") {
                         assertEquals("00e8da9b", sku)
                         assertEquals("A Love Supreme", title)
@@ -411,7 +410,7 @@ class MongoDBSpek : Spek() {
             on("getting seven columns by a filter expression") {
                 db {
                     val (sku, title, description, asin, list, retail, savings) = (Products columns { SKU + Title +
-                        Description + ASIN + Pricing.List + Pricing.Retail + Pricing.Savings } filter { SKU equal "00e8da9b" }).first()
+                        Description + ASIN + Pricing.List + Pricing.Retail + Pricing.Savings } filter { SKU eq "00e8da9b" }).first()
                     it("returns correct values") {
                         assertEquals("00e8da9b", sku)
                         assertEquals("A Love Supreme", title)
@@ -429,7 +428,7 @@ class MongoDBSpek : Spek() {
                     val (sku, title, description, asin, list, retail, savings, pctSavings) = (Products columns {
                         SKU + Title + Description + ASIN + Pricing.List + Pricing.Retail + Pricing.Savings +
                         Pricing.PCTSavings
-                    } filter { SKU equal "00e8da9b" }).first()
+                    } filter { SKU eq "00e8da9b" }).first()
                     it("returns correct values") {
                         assertEquals("00e8da9b", sku)
                         assertEquals("A Love Supreme", title)
@@ -448,7 +447,7 @@ class MongoDBSpek : Spek() {
                     val (sku, title, description, asin, list, retail, savings, pctSavings, shipping) = (Products columns {
                         SKU + Title + Description + ASIN + Pricing.List + Pricing.Retail + Pricing.Savings +
                         Pricing.PCTSavings + Shipping
-                    } filter { SKU equal "00e8da9b" }).first()
+                    } filter { SKU eq "00e8da9b" }).first()
                     it("returns correct values") {
                         assertEquals("00e8da9b", sku)
                         assertEquals("A Love Supreme", title)
@@ -471,7 +470,7 @@ class MongoDBSpek : Spek() {
                     val (sku, title, description, asin, list, retail, savings, pctSavings, weight, dimensions) = (Products columns {
                         SKU + Title + Description + ASIN + Pricing.List + Pricing.Retail + Pricing.Savings +
                         Pricing.PCTSavings + Shipping.Weight + Shipping.Dimensions
-                    } filter { SKU equal "00e8da9b" }).first()
+                    } filter { SKU eq "00e8da9b" }).first()
                     it("returns correct values") {
                         assertEquals("00e8da9b", sku)
                         assertEquals("A Love Supreme", title)
@@ -485,6 +484,296 @@ class MongoDBSpek : Spek() {
                         assertEquals(10, dimensions.width)
                         assertEquals(10, dimensions.height)
                         assertEquals(1, dimensions.depth)
+                    }
+                }
+            }
+
+            on("filtering an abstract schema by equal expression") {
+                db {
+                    val results = (Products filter { Shipping.Weight eq 6 }).toList()
+                    it("should return a correct object") {
+                        validate(results)
+                    }
+                }
+            }
+
+            on("filtering an abstract schema by equal expression") {
+                db {
+                    val results = (Products filter { Shipping.Weight eq 7 }).toList()
+                    it("should return nothing") {
+                        assert(results.isEmpty())
+                    }
+                }
+            }
+
+            on("filtering an abstract schema by notEqual expression") {
+                db {
+                    val results = (Products filter { Shipping.Weight ne 7 }).toList()
+                    it("should return a correct object") {
+                        validate(results)
+                    }
+                }
+            }
+
+            on("filtering an abstract schema by notEqual expression") {
+                db {
+                    val results = (Products filter { Shipping.Weight ne 6 }).toList()
+                    it("should return nothing") {
+                        assert(results.isEmpty())
+                    }
+                }
+            }
+
+            on("filtering an abstract schema by gt expression") {
+                db {
+                    val results = (Products filter { Shipping.Weight gt 5 }).toList()
+                    it("should return a correct object") {
+                        validate(results)
+                    }
+                }
+            }
+
+            on("filtering an abstract schema by gt expression") {
+                db {
+                    val results = (Products filter { Shipping.Weight gt 6 }).toList()
+                    it("should return nothing") {
+                        assert(results.isEmpty())
+                    }
+                }
+            }
+
+            on("filtering an abstract schema by lt expression") {
+                db {
+                    val results = (Products filter { Shipping.Weight lt 7 }).toList()
+                    it("should return a correct object") {
+                        validate(results)
+                    }
+                }
+            }
+
+            on("filtering an abstract schema by lt expression") {
+                db {
+                    val results = (Products filter { Shipping.Weight lt 6 }).toList()
+                    it("should return nothing") {
+                        assert(results.isEmpty())
+                    }
+                }
+            }
+
+            on("filtering an abstract schema by ge expression") {
+                db {
+                    val results = (Products filter { Shipping.Weight ge 6 }).toList()
+                    it("should return a correct object") {
+                        validate(results)
+                    }
+                }
+            }
+
+            on("filtering an abstract schema by ge expression") {
+                db {
+                    val results = (Products filter { Shipping.Weight ge 5 }).toList()
+                    it("should return a correct object") {
+                        validate(results)
+                    }
+                }
+            }
+
+            on("filtering an abstract schema by ge expression") {
+                db {
+                    val results = (Products filter { Shipping.Weight ge 7 }).toList()
+                    it("should return nothing") {
+                        assert(results.isEmpty())
+                    }
+                }
+            }
+
+            on("filtering an abstract schema by le expression") {
+                db {
+                    val results = (Products filter { Shipping.Weight le 6 }).toList()
+                    it("should return a correct object") {
+                        validate(results)
+                    }
+                }
+            }
+
+            on("filtering an abstract schema by le expression") {
+                db {
+                    val results = (Products filter { Shipping.Weight le 7 }).toList()
+                    it("should return a correct object") {
+                        validate(results)
+                    }
+                }
+            }
+
+            on("filtering an abstract schema by le expression") {
+                db {
+                    val results = (Products filter { Shipping.Weight le 5 }).toList()
+                    it("should return nothing") {
+                        assert(results.isEmpty())
+                    }
+                }
+            }
+
+            on("filtering an abstract schema by mb expression") {
+                db {
+                    val results = (Products filter { Shipping.Weight mb array(5, 6) }).toList()
+                    it("should return a correct object") {
+                        validate(results)
+                    }
+                }
+            }
+
+            on("filtering an abstract schema by mb expression") {
+                db {
+                    val results = (Products filter { Shipping.Weight mb array(5, 7) }).toList()
+                    it("should return nothing") {
+                        assert(results.isEmpty())
+                    }
+                }
+            }
+
+            on("filtering an abstract schema by nm expression") {
+                db {
+                    val results = (Products filter { Shipping.Weight nm array(5, 7) }).toList()
+                    it("should return a correct object") {
+                        validate(results)
+                    }
+                }
+            }
+
+            on("filtering an abstract schema by nm expression") {
+                db {
+                    val results = (Products filter { Shipping.Weight nm array(5, 6) }).toList()
+                    it("should return nothing") {
+                        assert(results.isEmpty())
+                    }
+                }
+            }
+
+            on("filtering an abstract schema by equal expression (compare to a column)") {
+                db {
+                    val results = (Products filter { with (Shipping.Dimensions) { Width eq Height } }).toList()
+                    it("should return a correct object") {
+                        validate(results)
+                    }
+                }
+            }
+
+            on("filtering an abstract schema by equal expression (compare to a column)") {
+                db {
+                    val results = (Products filter { with (Shipping.Dimensions) { Width eq Depth } }).toList()
+                    it("should return nothing") {
+                        assert(results.isEmpty())
+                    }
+                }
+            }
+
+            on("filtering an abstract schema by equal expression (compare to a column)") {
+                db {
+                    val results = (Products filter { with (Shipping.Dimensions) { Width ne Depth } }).toList()
+                    it("should return a correct object") {
+                        validate(results)
+                    }
+                }
+            }
+
+            on("filtering an abstract schema by equal expression (compare to a column)") {
+                db {
+                    val results = (Products filter { with (Shipping.Dimensions) { Width ne Height } }).toList()
+                    it("should return nothing") {
+                        assert(results.isEmpty())
+                    }
+                }
+            }
+
+            //
+
+            on("filtering an abstract schema by gt expression (compare to a column)") {
+                db {
+                    val results = (Products filter { Shipping.Dimensions.Width gt Shipping.Dimensions.Depth }).toList()
+                    it("should return a correct object") {
+                        validate(results)
+                    }
+                }
+            }
+
+            on("filtering an abstract schema by gt expression (compare to a column)") {
+                db {
+                    val results = (Products filter { Shipping.Dimensions.Depth gt Shipping.Dimensions.Width }).toList()
+                    it("should return nothing") {
+                        assert(results.isEmpty())
+                    }
+                }
+            }
+
+            on("filtering an abstract schema by lt expression (compare to a column)") {
+                db {
+                    val results = (Products filter { Shipping.Dimensions.Depth lt Shipping.Dimensions.Width }).toList()
+                    it("should return a correct object") {
+                        validate(results)
+                    }
+                }
+            }
+
+            on("filtering an abstract schema by lt expression (compare to a column)") {
+                db {
+                    val results = (Products filter { Shipping.Dimensions.Width lt Shipping.Dimensions.Depth }).toList()
+                    it("should return nothing") {
+                        assert(results.isEmpty())
+                    }
+                }
+            }
+
+            on("filtering an abstract schema by ge expression (compare to a column)") {
+                db {
+                    val results = (Products filter { Shipping.Dimensions.Width ge Shipping.Dimensions.Height }).toList()
+                    it("should return a correct object") {
+                        validate(results)
+                    }
+                }
+            }
+
+            on("filtering an abstract schema by ge expression (compare to a column)") {
+                db {
+                    val results = (Products filter { Shipping.Dimensions.Width ge Shipping.Dimensions.Depth }).toList()
+                    it("should return a correct object") {
+                        validate(results)
+                    }
+                }
+            }
+
+            on("filtering an abstract schema by ge expression (compare to a column)") {
+                db {
+                    val results = (Products filter { Shipping.Dimensions.Depth ge Shipping.Dimensions.Width }).toList()
+                    it("should return nothing") {
+                        assert(results.isEmpty())
+                    }
+                }
+            }
+
+            on("filtering an abstract schema by le expression (compare to a column)") {
+                db {
+                    val results = (Products filter { Shipping.Dimensions.Depth le Shipping.Dimensions.Width }).toList()
+                    it("should return a correct object") {
+                        validate(results)
+                    }
+                }
+            }
+
+            on("filtering an abstract schema by le expression (compare to a column)") {
+                db {
+                    val results = (Products filter { Shipping.Dimensions.Width le Shipping.Dimensions.Height }).toList()
+                    it("should return a correct object") {
+                        validate(results)
+                    }
+                }
+            }
+
+            on("filtering an abstract schema by le expression (compare to a column)") {
+                db {
+                    val results = (Products filter { Shipping.Dimensions.Width le Shipping.Dimensions.Depth }).toList()
+                    it("should return nothing") {
+                        assert(results.isEmpty())
                     }
                 }
             }
@@ -511,7 +800,7 @@ class MongoDBSpek : Spek() {
 
             on("setting values to a few integer columns on an abstract schema by a filter expression") {
                 db {
-                    Products columns { Pricing.Retail + Pricing.Savings } filter { SKU equal "00e8da9b" } set { values(1150, 50) }
+                    Products columns { Pricing.Retail + Pricing.Savings } filter { SKU eq "00e8da9b" } set { values(1150, 50) }
                     val (retail, savings)= Products columns { Pricing.Retail + Pricing.Savings } get { albumId!! }
                     it("takes effect") {
                         assertEquals(1150, retail)
@@ -534,9 +823,9 @@ class MongoDBSpek : Spek() {
 
             on("deleting a document") {
                 db {
-                    Products delete { ID equal albumId!! }
+                    Products delete { ID eq albumId!! }
                     it("deletes the document from database") {
-                        assert((Albums filter { pk equal albumId!! }).toList().isEmpty())
+                        assert((Albums filter { pk eq albumId!! }).toList().isEmpty())
                     }
                 }
             }

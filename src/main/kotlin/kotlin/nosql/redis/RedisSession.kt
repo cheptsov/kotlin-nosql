@@ -39,7 +39,8 @@ import kotlin.nosql.Nonuple
 import kotlin.nosql.Template10
 import kotlin.nosql.Decuple
 import kotlin.nosql.Query
-import kotlin.nosql.equal
+import kotlin.nosql.eq
+import kotlin.nosql.eq
 
 class RedisSession(val jedis: Jedis) : Session() {
     override fun <T : AbstractTableSchema, C> iterator(query: Query<C, T>): Iterator<C> {
@@ -252,7 +253,7 @@ class RedisSession(val jedis: Jedis) : Session() {
 
     override fun <T : TableSchema<P>, P, C> AbstractColumn<C, T, *>.get(id: () -> P): C {
         val table = Schema.current<T>()
-        return get(table.pk equal id())
+        return get(table.pk eq id())
     }
 
     private fun <T : AbstractTableSchema, C> AbstractColumn<C, T, *>.get(where: Op): C {

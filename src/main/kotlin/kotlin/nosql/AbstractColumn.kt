@@ -17,51 +17,52 @@ open class AbstractColumn<C, T : Schema, S>(val name: String, val valueClass: Cl
     }
 }
 
-fun <T : Schema, C> AbstractColumn<C?, T, C>.isNull(): Op {
+fun <T : Schema, C> AbstractColumn<C?, T, C>.nl(): Op {
     return NullOp(this)
 }
 
-fun <T : Schema, C> AbstractColumn<C?, T, C>.isNotNull(): Op {
+fun <T : Schema, C> AbstractColumn<C?, T, C>.nn(): Op {
     return NotNullOp(this)
 }
 
-fun <T : Schema, C> AbstractColumn<out C?, T, *>.equal(other: C): Op {
+fun <T : Schema, C> AbstractColumn<out C?, T, *>.eq(other: C): Op {
     return EqualsOp(this, LiteralOp(other))
 }
 
-fun <T : Schema, C> AbstractColumn<out C?, T, *>.notEqual(other: C): Op {
+fun <T : Schema, C> AbstractColumn<out C?, T, *>.ne(other: C): Op {
     return NotEqualsOp(this, LiteralOp(other))
 }
 
-fun <T : Schema, C> AbstractColumn<out C?, T, *>.isMember(other: Iterable<C>): Op {
+fun <T : Schema, C> AbstractColumn<out C?, T, *>.mb(other: Iterable<C>): Op {
     return InOp(this, LiteralOp(other))
 }
 
-fun <T : Schema, C> AbstractColumn<out C?, T, *>.isMember(other: Array<C>): Op {
+fun <T : Schema, C> AbstractColumn<out C?, T, *>.mb(other: Array<C>): Op {
     return InOp(this, LiteralOp(other))
 }
 
-fun <T : Schema, C> AbstractColumn<out C?, T, *>.isMember(other: Expression<out Iterable<C>>): Op {
+// TODO TODO TODO: Expression should be typed
+fun <T : Schema, C> AbstractColumn<out C?, T, *>.mb(other: Expression<out Iterable<C>>): Op {
     return InOp(this, LiteralOp(other))
 }
 
-fun <T : Schema, C> AbstractColumn<out C?, T, *>.isNotMember(other: Iterable<C>): Op {
+fun <T : Schema, C> AbstractColumn<out C?, T, *>.nm(other: Iterable<C>): Op {
     return NotInOp(this, LiteralOp(other))
 }
 
-fun <T : Schema, C> AbstractColumn<out C?, T, *>.isNotMember(other: Array<C>): Op {
+fun <T : Schema, C> AbstractColumn<out C?, T, *>.nm(other: Array<C>): Op {
     return NotInOp(this, LiteralOp(other))
 }
 
-fun <T : Schema, C> AbstractColumn<out C?, T, *>.isNotMember(other: Expression<out Iterable<C>>): Op {
+fun <T : Schema, C> AbstractColumn<out C?, T, *>.nm(other: Expression<out Iterable<C>>): Op {
     return NotInOp(this, LiteralOp(other))
 }
 
-fun <T : Schema, C> AbstractColumn<out C?, T, C>.equal(other: Expression<out C?>): Op {
+fun <T : Schema, C> AbstractColumn<out C?, T, C>.eq(other: Expression<out C?>): Op {
     return EqualsOp(this, other)
 }
 
-fun <T : Schema, C> AbstractColumn<out C?, T, C>.notEqual(other: Expression<out C?>): Op {
+fun <T : Schema, C> AbstractColumn<out C?, T, C>.ne(other: Expression<out C?>): Op {
     return NotEqualsOp(this, other)
 }
 
@@ -96,7 +97,6 @@ fun <T : Schema> AbstractColumn<out Int?, T, Int>.lt(other: Expression<out Int?>
 fun <T : Schema> AbstractColumn<out Int?, T, Int>.lt(other: Int): Op {
     return LessOp(this, LiteralOp(other))
 }
-
 
 open class Column<C, T : Schema>(name: String, valueClass: Class<C>, columnType: ColumnType = ColumnType.CUSTOM_CLASS) : AbstractColumn<C, T, C>(name, valueClass, columnType) {
 }
