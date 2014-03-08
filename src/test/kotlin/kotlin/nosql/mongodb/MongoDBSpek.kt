@@ -650,7 +650,7 @@ class MongoDBSpek : Spek() {
                 }
             }
 
-            on("filtering an abstract schema by equal expression (compare to a column)") {
+            on("filtering an abstract schema by equal expression - compare to a column") {
                 db {
                     val results = (Products filter { with (Shipping.Dimensions) { Width eq Height } }).toList()
                     it("should return a correct object") {
@@ -659,7 +659,7 @@ class MongoDBSpek : Spek() {
                 }
             }
 
-            on("filtering an abstract schema by equal expression (compare to a column)") {
+            on("filtering an abstract schema by equal expression - compare to a column") {
                 db {
                     val results = (Products filter { with (Shipping.Dimensions) { Width eq Depth } }).toList()
                     it("should return nothing") {
@@ -668,7 +668,7 @@ class MongoDBSpek : Spek() {
                 }
             }
 
-            on("filtering an abstract schema by equal expression (compare to a column)") {
+            on("filtering an abstract schema by equal expression - compare to a column") {
                 db {
                     val results = (Products filter { with (Shipping.Dimensions) { Width ne Depth } }).toList()
                     it("should return a correct object") {
@@ -677,7 +677,7 @@ class MongoDBSpek : Spek() {
                 }
             }
 
-            on("filtering an abstract schema by equal expression (compare to a column)") {
+            on("filtering an abstract schema by equal expression - compare to a column") {
                 db {
                     val results = (Products filter { with (Shipping.Dimensions) { Width ne Height } }).toList()
                     it("should return nothing") {
@@ -688,7 +688,7 @@ class MongoDBSpek : Spek() {
 
             //
 
-            on("filtering an abstract schema by gt expression (compare to a column)") {
+            on("filtering an abstract schema by gt expression - compare to a column") {
                 db {
                     val results = (Products filter { Shipping.Dimensions.Width gt Shipping.Dimensions.Depth }).toList()
                     it("should return a correct object") {
@@ -697,7 +697,7 @@ class MongoDBSpek : Spek() {
                 }
             }
 
-            on("filtering an abstract schema by gt expression (compare to a column)") {
+            on("filtering an abstract schema by gt expression - compare to a column") {
                 db {
                     val results = (Products filter { Shipping.Dimensions.Depth gt Shipping.Dimensions.Width }).toList()
                     it("should return nothing") {
@@ -706,7 +706,7 @@ class MongoDBSpek : Spek() {
                 }
             }
 
-            on("filtering an abstract schema by lt expression (compare to a column)") {
+            on("filtering an abstract schema by lt expression - compare to a column") {
                 db {
                     val results = (Products filter { Shipping.Dimensions.Depth lt Shipping.Dimensions.Width }).toList()
                     it("should return a correct object") {
@@ -715,7 +715,7 @@ class MongoDBSpek : Spek() {
                 }
             }
 
-            on("filtering an abstract schema by lt expression (compare to a column)") {
+            on("filtering an abstract schema by lt expression - compare to a column") {
                 db {
                     val results = (Products filter { Shipping.Dimensions.Width lt Shipping.Dimensions.Depth }).toList()
                     it("should return nothing") {
@@ -724,7 +724,7 @@ class MongoDBSpek : Spek() {
                 }
             }
 
-            on("filtering an abstract schema by ge expression (compare to a column)") {
+            on("filtering an abstract schema by ge expression - compare to a column") {
                 db {
                     val results = (Products filter { Shipping.Dimensions.Width ge Shipping.Dimensions.Height }).toList()
                     it("should return a correct object") {
@@ -733,7 +733,7 @@ class MongoDBSpek : Spek() {
                 }
             }
 
-            on("filtering an abstract schema by ge expression (compare to a column)") {
+            on("filtering an abstract schema by ge expression - compare to a column") {
                 db {
                     val results = (Products filter { Shipping.Dimensions.Width ge Shipping.Dimensions.Depth }).toList()
                     it("should return a correct object") {
@@ -742,7 +742,7 @@ class MongoDBSpek : Spek() {
                 }
             }
 
-            on("filtering an abstract schema by ge expression (compare to a column)") {
+            on("filtering an abstract schema by ge expression - compare to a column") {
                 db {
                     val results = (Products filter { Shipping.Dimensions.Depth ge Shipping.Dimensions.Width }).toList()
                     it("should return nothing") {
@@ -751,7 +751,7 @@ class MongoDBSpek : Spek() {
                 }
             }
 
-            on("filtering an abstract schema by le expression (compare to a column)") {
+            on("filtering an abstract schema by le expression - compare to a column") {
                 db {
                     val results = (Products filter { Shipping.Dimensions.Depth le Shipping.Dimensions.Width }).toList()
                     it("should return a correct object") {
@@ -760,7 +760,7 @@ class MongoDBSpek : Spek() {
                 }
             }
 
-            on("filtering an abstract schema by le expression (compare to a column)") {
+            on("filtering an abstract schema by le expression - compare to a column") {
                 db {
                     val results = (Products filter { Shipping.Dimensions.Width le Shipping.Dimensions.Height }).toList()
                     it("should return a correct object") {
@@ -769,7 +769,7 @@ class MongoDBSpek : Spek() {
                 }
             }
 
-            on("filtering an abstract schema by le expression (compare to a column)") {
+            on("filtering an abstract schema by le expression - compare to a column") {
                 db {
                     val results = (Products filter { Shipping.Dimensions.Width le Shipping.Dimensions.Depth }).toList()
                     it("should return nothing") {
