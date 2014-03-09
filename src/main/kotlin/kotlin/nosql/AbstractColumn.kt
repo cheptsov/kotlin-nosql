@@ -4,7 +4,7 @@ import java.util.ArrayList
 import java.util.regex.Pattern
 
 open class AbstractColumn<C, T : Schema, S>(val name: String, val valueClass: Class<S>, val columnType: ColumnType) : Field<C, T>() {
-    fun matches(other: Pattern): Op {
+    fun rx(other: String): Op {
         return MatchesOp(this, LiteralOp(other))
     }
 

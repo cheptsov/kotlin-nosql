@@ -4,6 +4,7 @@ import java.util.ArrayList
 import java.util.HashMap
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.Date
 
 abstract class Schema(val name: String) {
     // TODO TODO TODO
@@ -77,19 +78,58 @@ abstract class PolymorphicSchema<P, V>(name: String, valueClass: Class<V>, prima
 }
 
 fun <T: Schema> string(name: String): AbstractColumn<String, T, String> = AbstractColumn(name, javaClass<String>(), ColumnType.STRING)
-
 fun <T: Schema> T.string(name: String): AbstractColumn<String, T, String> = AbstractColumn(name, javaClass<String>(), ColumnType.STRING)
+
+fun <T: Schema> boolean(name: String): AbstractColumn<Boolean, T, Boolean> = AbstractColumn(name, javaClass<Boolean>(), ColumnType.BOOLEAN)
+fun <T: Schema> T.boolean(name: String): AbstractColumn<Boolean, T, Boolean> = AbstractColumn(name, javaClass<Boolean>(), ColumnType.BOOLEAN)
+
+fun <T: Schema> date(name: String): AbstractColumn<Date, T, Date> = AbstractColumn(name, javaClass<Date>(), ColumnType.DATE)
+fun <T: Schema> T.date(name: String): AbstractColumn<Date, T, Date> = AbstractColumn(name, javaClass<Date>(), ColumnType.DATE)
+
+fun <T: Schema> double(name: String): AbstractColumn<Double, T, Double> = AbstractColumn(name, javaClass<Double>(), ColumnType.DOUBLE)
+fun <T: Schema> T.double(name: String): AbstractColumn<Double, T, Double> = AbstractColumn(name, javaClass<Double>(), ColumnType.DOUBLE)
 
 fun <T: Schema> integer(name: String): AbstractColumn<Int, T, Int> = AbstractColumn(name, javaClass<Int>(), ColumnType.INTEGER)
 fun <T: Schema> T.integer(name: String): AbstractColumn<Int, T, Int> = AbstractColumn(name, javaClass<Int>(), ColumnType.INTEGER)
 
+fun <T: Schema> float(name: String): AbstractColumn<Float, T, Float> = AbstractColumn(name, javaClass<Float>(), ColumnType.FLOAT)
+fun <T: Schema> T.float(name: String): AbstractColumn<Float, T, Float> = AbstractColumn(name, javaClass<Float>(), ColumnType.FLOAT)
+
+fun <T: Schema> long(name: String): AbstractColumn<Long, T, Long> = AbstractColumn(name, javaClass<Long>(), ColumnType.LONG)
+fun <T: Schema> T.long(name: String): AbstractColumn<Long, T, Long> = AbstractColumn(name, javaClass<Long>(), ColumnType.LONG)
+
+fun <T: Schema> short(name: String): AbstractColumn<Short, T, Short> = AbstractColumn(name, javaClass<Short>(), ColumnType.SHORT)
+fun <T: Schema> T.short(name: String): AbstractColumn<Short, T, Short> = AbstractColumn(name, javaClass<Short>(), ColumnType.SHORT)
+
+fun <T: Schema> byte(name: String): AbstractColumn<Byte, T, Byte> = AbstractColumn(name, javaClass<Byte>(), ColumnType.BYTE)
+fun <T: Schema> T.byte(name: String): AbstractColumn<Byte, T, Byte> = AbstractColumn(name, javaClass<Byte>(), ColumnType.BYTE)
+
 fun <T: Schema> nullableString(name: String): NullableColumn<String, T> = NullableColumn(name, javaClass<String>(), ColumnType.STRING)
-
-fun <T: Schema> nullableInteger(name: String): NullableColumn<Int, T> = NullableColumn(name, javaClass<Int>(), ColumnType.INTEGER)
-
 fun <T: Schema> T.nullableString(name: String): NullableColumn<String, T> = NullableColumn(name, javaClass<String>(), ColumnType.STRING)
 
+fun <T: Schema> nullableInteger(name: String): NullableColumn<Int, T> = NullableColumn(name, javaClass<Int>(), ColumnType.INTEGER)
 fun <T: Schema> T.nullableInteger(name: String): NullableColumn<Int, T> = NullableColumn(name, javaClass<Int>(), ColumnType.INTEGER)
+
+fun <T: Schema> nullableBoolean(name: String): NullableColumn<Boolean, T> = NullableColumn(name, javaClass<Boolean>(), ColumnType.BOOLEAN)
+fun <T: Schema> T.nullableBoolean(name: String): NullableColumn<Boolean, T> = NullableColumn(name, javaClass<Boolean>(), ColumnType.BOOLEAN)
+
+fun <T: Schema> nullableDate(name: String): NullableColumn<Date, T> = NullableColumn(name, javaClass<Date>(), ColumnType.DATE)
+fun <T: Schema> T.nullableDate(name: String): NullableColumn<Date, T> = NullableColumn(name, javaClass<Date>(), ColumnType.DATE)
+
+fun <T: Schema> nullableDouble(name: String): NullableColumn<Double, T> = NullableColumn(name, javaClass<Double>(), ColumnType.DOUBLE)
+fun <T: Schema> T.nullableDouble(name: String): NullableColumn<Double, T> = NullableColumn(name, javaClass<Double>(), ColumnType.DOUBLE)
+
+fun <T: Schema> nullableFloat(name: String): NullableColumn<Float, T> = NullableColumn(name, javaClass<Float>(), ColumnType.FLOAT)
+fun <T: Schema> T.nullableFloat(name: String): NullableColumn<Float, T> = NullableColumn(name, javaClass<Float>(), ColumnType.FLOAT)
+
+fun <T: Schema> nullableLong(name: String): NullableColumn<Long, T> = NullableColumn(name, javaClass<Long>(), ColumnType.LONG)
+fun <T: Schema> T.nullableLong(name: String): NullableColumn<Long, T> = NullableColumn(name, javaClass<Long>(), ColumnType.LONG)
+
+fun <T: Schema> nullableShort(name: String): NullableColumn<Short, T> = NullableColumn(name, javaClass<Short>(), ColumnType.SHORT)
+fun <T: Schema> T.nullableShort(name: String): NullableColumn<Short, T> = NullableColumn(name, javaClass<Short>(), ColumnType.SHORT)
+
+fun <T: Schema> nullableByte(name: String): NullableColumn<Byte, T> = NullableColumn(name, javaClass<Byte>(), ColumnType.BYTE)
+fun <T: Schema> T.nullableByte(name: String): NullableColumn<Byte, T> = NullableColumn(name, javaClass<Byte>(), ColumnType.BYTE)
 
 //fun <T: AbstractSchema, C> T.setColumn(name: String, javaClass: Class<C>): SetColumn<C, T> = SetColumn(name, javaClass)
 

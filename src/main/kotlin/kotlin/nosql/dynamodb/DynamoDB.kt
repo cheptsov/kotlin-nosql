@@ -7,6 +7,7 @@ import com.amazonaws.auth.BasicAWSCredentials
 import kotlin.nosql.Session
 import kotlin.nosql.Schema
 
+/*
 class DynamoDB(val accessKey: String, val secretKey: String, schemas: Array<Schema>) : Database<DynamoDBSession>(schemas) {
     override fun invoke(statement: DynamoDBSession.() -> Unit) {
         val session = DynamoDBSession(AmazonDynamoDBClient(BasicAWSCredentials(accessKey, secretKey)))
@@ -14,4 +15,4 @@ class DynamoDB(val accessKey: String, val secretKey: String, schemas: Array<Sche
         session.statement()
         Session.threadLocale.set(null)
     }
-}
+}*/

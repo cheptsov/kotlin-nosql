@@ -2,7 +2,7 @@ package kotlin.nosql.redis
 
 import org.junit.Test
 import kotlin.nosql.*
-
+/*
 class RedisTests {
     object Users: DocumentSchema<Int, User>("users", javaClass(), integer("id")) {
         val Name = string("username")
@@ -90,5 +90,4 @@ class RedisTests {
             }
         }
     }
-}
-
+}*/

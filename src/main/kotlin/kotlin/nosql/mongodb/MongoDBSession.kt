@@ -11,6 +11,8 @@ import org.bson.types.ObjectId
 import com.mongodb.BasicDBList
 import kotlin.nosql.*
 import kotlin.nosql.util.*
+import java.util.regex.Pattern
+import java.util.Date
 
 class MongoDBSession(val db: DB) : Session() {
     override fun <T : AbstractTableSchema> T.create() {
@@ -64,24 +66,15 @@ class MongoDBSession(val db: DB) : Session() {
                 val column = schemaField.asColumn(objectSchema)
                 val value = field.get(o)
                 if (value != null) {
-                    // TODO TODO TODO
-                    when (value) {
-                        is Int -> doc.append(column.name, value)
-                        is String -> doc.append(column.name, value)
-                        is Iterable<*> -> {
-                            val list = BasicDBList()
-                            for (v in value) {
-                                list.add(when (column.columnType ) {
-                                    ColumnType.INTEGER_LIST, ColumnType.STRING_LIST,
-                                    ColumnType.INTEGER_SET, ColumnType.STRING_SET-> v!!
-                                    ColumnType.CUSTOM_CLASS_SET, ColumnType.CUSTOM_CLASS_LIST-> getDBObject(v!!, column)
-                                    else -> throw UnsupportedOperationException()
-                                })
-                            }
-                            doc.append(column.name, list)
+                    if (column.columnType.primitive) {
+                        doc.append(column.name, value)
+                    } else if (column.columnType.iterable) {
+                        val list = BasicDBList()
+                        for (v in (value as Iterable<Any>)) {
+                            list.add(if (column.columnType.custom) getDBObject(v, column) else v)
                         }
-                        else -> doc.append(column.name, getDBObject(value, column))
-                    }
+                        doc.append(column.name, list)
+                    } else doc.append(column.name, getDBObject(value, column))
                 }
             }
         }
@@ -105,7 +98,7 @@ class MongoDBSession(val db: DB) : Session() {
         }
     }
 
-    private fun getQuery(op: Op): BasicDBObject {
+    private fun getQuery(op: Op, removePrefix: String = ""): BasicDBObject {
         val query = BasicDBObject()
         when (op) {
             is EqualsOp -> {
@@ -115,13 +108,32 @@ class MongoDBSession(val db: DB) : Session() {
                             if (op.expr1 is PrimaryKeyColumn<*, *>) {
                                 query.append(op.expr1.fullName, ObjectId(op.expr2.value.toString()))
                             } else {
-                                query.append(op.expr1.fullName, op.expr2.value)
+                                var columnName = op.expr1.fullName
+                                if (removePrefix.isNotEmpty() && columnName.startsWith(removePrefix)) {
+                                    columnName = columnName.substring(removePrefix.length + 1)
+                                }
+                                query.append( columnName, op.expr2.value)
                             }
                         } else {
                             throw UnsupportedOperationException()
                         }
                     } else if (op.expr2 is AbstractColumn<*, *, *>) {
                         query.append("\$where", "this.${op.expr1.fullName} == this.${op.expr2.fullName}")
+                    } else {
+                        throw UnsupportedOperationException()
+                    }
+                } else {
+                    throw UnsupportedOperationException()
+                }
+            }
+            is MatchesOp -> {
+                if (op.expr1 is AbstractColumn<*, *, *>) {
+                    if (op.expr2 is LiteralOp) {
+                        if (op.expr2.value is String) {
+                            query.append(op.expr1.fullName, BasicDBObject().append("\$regex", Pattern.compile(op.expr2.value)))
+                        } else {
+                            throw UnsupportedOperationException()
+                        }
                     } else {
                         throw UnsupportedOperationException()
                     }
@@ -297,12 +309,12 @@ class MongoDBSession(val db: DB) : Session() {
                     schemaField.setAccessible(true)
                     valueField.setAccessible(true)
                     val column = schemaField.asColumn(s!!)
-                    val columnValue: Any? = when (column.columnType) {
-                        ColumnType.INTEGER -> doc.get(column.name)
-                        ColumnType.STRING -> doc.get(column.name)?.toString()
-                        else -> {
-                            getObject(doc.get(column.name) as DBObject, column as Column<Any?, T>)
-                        }
+                    val columnValue: Any? = if (column is PrimaryKeyColumn<*, *>)
+                        doc.get(column.name)?.toString()
+                    else if (column.columnType.primitive) {
+                        doc.get(column.name)
+                    } else {
+                        getObject(doc.get(column.name) as DBObject, column as Column<Any?, T>)
                     }
                     if (columnValue != null || column is NullableColumn<*, *>) {
                         valueField.set(valueInstance, columnValue)
@@ -322,6 +334,13 @@ class MongoDBSession(val db: DB) : Session() {
             when (constructorParamTypes[index].getName()) {
                 "int" -> 0
                 "java.lang.String" -> ""
+                "java.util.Date" -> Date()
+                "double" -> 0.toDouble()
+                "float" -> 0.toFloat()
+                "long" -> 0.toLong()
+                "short" -> 0.toShort()
+                "byte" -> 0.toByte()
+                "boolean" -> false
                 "java.util.List" -> listOf<Any>()
                 "java.util.Set" -> setOf<Any>()
                 else -> newInstance(constructorParamTypes[index])
@@ -342,21 +361,17 @@ class MongoDBSession(val db: DB) : Session() {
                     columnField.setAccessible(true)
                     valueField.setAccessible(true)
                     val column = columnField.asColumn(column)
-                    val columnValue = when (column.columnType) {
-                        ColumnType.INTEGER, ColumnType.STRING -> doc.get(column.name)
-                        ColumnType.INTEGER_LIST, ColumnType.STRING_LIST -> (doc.get(column.name) as BasicDBList).toList()
-                        ColumnType.INTEGER_SET, ColumnType.STRING_SET -> (doc.get(column.name) as BasicDBList).toSet()
-                        ColumnType.CUSTOM_CLASS_LIST -> {
-                            val list = doc.get(column.name) as BasicDBList
-                            list.map { getObject(it as DBObject, column as ListColumn<Any?, out Schema>) }
-                        }
-                        ColumnType.CUSTOM_CLASS_SET -> {
-                            val list = doc.get(column.name) as BasicDBList
-                            list.map { getObject(it as DBObject, column as ListColumn<Any?, out Schema>) }.toSet()
-                        }
-                        else -> {
-                            getObject(doc.get(column.name) as DBObject, column as Column<Any?, out Schema>)
-                        }
+                    val columnValue: Any? = if (column.columnType.primitive) doc.get(column.name)
+                    else if (column.columnType.list && !column.columnType.custom) (doc.get(column.name) as BasicDBList).toList()
+                    else if (column.columnType.set && !column.columnType.custom) (doc.get(column.name) as BasicDBList).toSet()
+                    else if (column.columnType.custom && column.columnType.list) {
+                        val list = doc.get(column.name) as BasicDBList
+                        list.map { getObject(it as DBObject, column as ListColumn<*, out Schema>) }
+                    } else if (column.columnType.custom && column.columnType.list) {
+                        val list = doc.get(column.name) as BasicDBList
+                        list.map { getObject(it as DBObject, column as ListColumn<*, out Schema>) }.toSet()
+                    } else {
+                        getObject(doc.get(column.name) as DBObject, column as Column<*, out Schema>)
                     }
                     if (columnValue != null || column is NullableColumn<*, *>) {
                         valueField.set(valueInstance, columnValue)
@@ -377,7 +392,7 @@ class MongoDBSession(val db: DB) : Session() {
         val query = getQuery(op)
         collection.remove(query)
     }
-    override fun <T : AbstractTableSchema, C> Query1<T, C>.set(c: () -> C) {
+    override fun <T : AbstractTableSchema, A: AbstractColumn<C, T, out Any?>, C> Query1<T, A, C>.set(c: () -> C) {
         update(array(Pair(a, c())), op!!, "\$set")
     }
     override fun <T : AbstractTableSchema, A, B> Query2<T, A, B>.set(c: () -> Pair<A, B>) {
@@ -396,16 +411,12 @@ class MongoDBSession(val db: DB) : Session() {
     }
 
     private fun getDBValue(value: Any?, column: AbstractColumn<*, *, *>): Any? {
-        return when (column.columnType) {
-            ColumnType.INTEGER, ColumnType.STRING -> value
-            ColumnType.INTEGER_LIST, ColumnType.STRING_LIST, ColumnType.INTEGER_SET, ColumnType.STRING_SET -> {
-                value as List<Any>
-            }
-            ColumnType.CUSTOM_CLASS -> if (value != null) getDBObject(value, column) else null
-            ColumnType.CUSTOM_CLASS_LIST, ColumnType.CUSTOM_CLASS_SET -> {
-                (value as List<Any>).map { getDBObject(it, column) }
-            }
-        }
+        return if (!column.columnType.custom)
+            value
+        else if (column.columnType.custom && !column.columnType.iterable)
+            if (value != null) getDBObject(value, column) else null
+        else
+            (value as List<*>).map { getDBObject(it!!, column) }
     }
 
 /*
@@ -607,14 +618,26 @@ class MongoDBSession(val db: DB) : Session() {
         throw UnsupportedOperationException()
     }
 */
-    override fun <T : AbstractTableSchema, C> RangeQuery<T, C>.forEach(st: (C) -> Unit) {
+    /*override fun <T : AbstractTableSchema, C> RangeQuery<T, C>.forEach(st: (C) -> Unit) {
         throw UnsupportedOperationException()
-    }
-    override fun <T : AbstractTableSchema, C, CC : Collection<Any?>> Query1<T, CC>.add(c: () -> C) {
+    }*/
+    override fun <T : AbstractTableSchema, A: AbstractColumn<CC, T, out Any?>, CC: Collection<C>, C> Query1<T, A, CC>.add(c: () -> C) {
         // TODO TODO TODO
         update(array(Pair(a, listOf(c()))), op!!, "\$pushAll")
     }
-    override fun <T : AbstractTableSchema> Query1<T, Int>.add(c: () -> Int): Int {
+    override fun <T : AbstractTableSchema, A: AbstractColumn<CC, T, out Any?>, CC: Collection<C>, C> Query1<T, A, CC>.delete(c: A.() -> Op) {
+        val cOp = a.c()
+        val collection = db.getCollection(Schema.current<Schema>().name)!!
+        collection.update(getQuery(op), BasicDBObject().append("\$pull", BasicDBObject().append(a.fullName, getQuery(cOp, a.fullName)))!!)
+    }
+
+    override fun <T : AbstractTableSchema, A: AbstractColumn<CC, T, out Any?>, CC: Set<C>, C> Query1<T, A, CC>.remove(c: () -> C) {
+        val collection = db.getCollection(Schema.current<Schema>().name)!!
+        val fields = BasicDBObject().append("\$pull", BasicDBObject().append(a.fullName, getDBValue(c(), a)))!!
+        collection.update(getQuery(op), fields)
+    }
+
+    override fun <T : AbstractTableSchema, A: AbstractColumn<Int, T, Int>> Query1<T, A, Int>.add(c: () -> Int): Int {
         throw UnsupportedOperationException()
     }
     override fun <T : KeyValueSchema, C> T.get(c: T.() -> AbstractColumn<C, T, out Any?>): C {
@@ -624,9 +647,6 @@ class MongoDBSession(val db: DB) : Session() {
         throw UnsupportedOperationException()
     }
     override fun <T : KeyValueSchema, C> T.set(c: () -> AbstractColumn<C, T, out Any?>, v: C) {
-        throw UnsupportedOperationException()
-    }
-    override fun <T : AbstractTableSchema> AbstractColumn<Int, T, out Any?>.add(c: () -> Int): Int {
         throw UnsupportedOperationException()
     }
     override fun <T : AbstractTableSchema, A, B> Query2<T, A, B>.get(statement: (A, B) -> Unit) {

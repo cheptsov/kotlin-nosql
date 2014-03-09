@@ -42,6 +42,7 @@ import kotlin.nosql.Query
 import kotlin.nosql.eq
 import kotlin.nosql.eq
 
+/*
 class RedisSession(val jedis: Jedis) : Session() {
     override fun <T : AbstractTableSchema, C> iterator(query: Query<C, T>): Iterator<C> {
         throw UnsupportedOperationException()
@@ -363,5 +364,4 @@ class RedisSession(val jedis: Jedis) : Session() {
     /*override fun <T : AbstractTableSchema, A, B> Query2<T, A, B>.iterator(): Iterator<Pair<A, B>> {
         throw UnsupportedOperationException()
     }*/
-
-}
+}*/

@@ -3,6 +3,7 @@ package kotlin.nosql.mongodb
 import org.spek.Spek
 import kotlin.test.assertEquals
 import kotlin.nosql.*
+import java.util.Date
 
 class MongoDBSpek : Spek() {
     open class ProductSchema<V, T : Schema>(javaClass: Class<V>, discriminator: String) : PolymorphicSchema<String, V>("products",
@@ -11,6 +12,15 @@ class MongoDBSpek : Spek() {
         val Title = string<T>("title")
         val Description = string<T>("description")
         val ASIN = string<T>("asin")
+        val Available = boolean<T>("available")
+        val CreatedAtDate = date<T>("createdAtDate")
+        val NullableBooleanNoValue = nullableBoolean<T>("nullableBooleanNoValue")
+        val NullableBooleanWithValue = nullableBoolean<T>("nullableBooleanWithValue")
+        val NullableDateNoValue = nullableDate<T>("nullableDateNoValue")
+        val NullableDateWithValue = nullableDate<T>("nullableDateWithValue")
+        val Cost = double<T>("cost")
+        val NullableDoubleNoValue = nullableDouble<T>("nullableDoubleNoValue")
+        val NullableDoubleWithValue = nullableDouble<T>("nullableDoubleWithValue")
 
         val Shipping = ShippingColumn<T>()
         val Pricing = PricingColumn<T>()
@@ -22,7 +32,7 @@ class MongoDBSpek : Spek() {
 
         class DimensionsColumn<T : Schema>() : Column<Dimensions, T>("dimensions", javaClass()) {
             val Width = integer<T>("width")
-            val Height = nullableInteger<T>("height")
+            val Height = integer<T>("height")
             val Depth = integer<T>("depth")
         }
 
@@ -55,21 +65,32 @@ class MongoDBSpek : Spek() {
     }
 
     abstract class Product(val sku: String, val title: String, val description: String,
-                           val asin: String, val shipping: Shipping, val pricing: Pricing) {
+                           val asin: String, val available: Boolean, val cost: Double,
+                           val createdAtDate: Date, val nullableBooleanNoValue: Boolean?,
+                           val nullableBooleanWithValue: Boolean?,
+                           val nullableDateNoValue: Date?, val nullableDateWithValue: Date?,
+                           val nullableDoubleNoValue: Double?, val nullableDoubleWithValue: Double?,
+                           val shipping: Shipping, val pricing: Pricing) {
         val id: String? = null
     }
 
     class Shipping(val weight: Int, val dimensions: Dimensions) {
     }
 
-    class Dimensions(val width: Int, val height: Int?, val depth: Int) {
+    class Dimensions(val width: Int, val height: Int, val depth: Int) {
     }
 
     class Pricing(val list: Int, val retail: Int, val savings: Int, val pctSavings: Int) {
     }
 
-    class Album(sku: String, title: String, description: String, asin: String, shipping: Shipping, pricing: Pricing,
-                val details: Details) : Product(sku, title, description, asin, shipping, pricing) {
+    class Album(sku: String, title: String, description: String, asin: String, available: Boolean,
+                cost: Double, createdAtDate: Date,
+                nullableBooleanNoValue: Boolean?, nullableBooleanWithValue: Boolean?,
+                nullableDateNoValue: Date?, nullableDateWithValue: Date?,
+                nullableDoubleNoValue: Double?, nullableDoubleWithValue: Double?, shipping: Shipping, pricing: Pricing,
+                val details: Details) : Product(sku, title, description, asin, available, cost, createdAtDate,
+            nullableBooleanNoValue, nullableBooleanWithValue, nullableDateNoValue, nullableDateWithValue,
+            nullableDoubleNoValue, nullableDoubleWithValue, shipping, pricing) {
     }
 
     class Details(val title: String, val artist: String, val genre: Set<String>, val tracks: List<Track>) {
@@ -80,7 +101,10 @@ class MongoDBSpek : Spek() {
 
     {
         val original_album = Album(sku = "00e8da9b", title = "A Love Supreme", description = "by John Coltrane",
-                asin = "B0000A118M", shipping = Shipping(weight = 6, dimensions = Dimensions(10, 10, 1)),
+                asin = "B0000A118M", available = true, cost = 1.23, createdAtDate = Date(2014, 3, 8), nullableBooleanNoValue = null,
+                nullableBooleanWithValue = false, nullableDateNoValue = null, nullableDateWithValue = Date(2014, 3, 7),
+                nullableDoubleNoValue = null, nullableDoubleWithValue = 1.24,
+                shipping = Shipping(weight = 6, dimensions = Dimensions(10, 10, 1)),
                 pricing = Pricing(list = 1200, retail = 1100, savings = 100, pctSavings = 8),
                 details = Details(title = "A Love Supreme [Original Recording Reissued]",
                         artist = "John Coltrane", genre = setOf("Jazz", "General"),
@@ -110,6 +134,15 @@ class MongoDBSpek : Spek() {
                 assert(results[0] is Album)
                 val album = results[0] as Album
                 assertEquals("00e8da9b", results[0].sku)
+                assertEquals(true, results[0].available)
+                assertEquals(1.23, results[0].cost)
+                assertEquals(Date(2014, 3, 8), results[0].createdAtDate)
+                assert(results[0].nullableDateNoValue == null)
+                assertEquals(Date(2014, 3, 7), results[0].nullableDateWithValue)
+                assert(results[0].nullableDoubleNoValue == null)
+                assertEquals(1.24, results[0].nullableDoubleWithValue)
+                assert(results[0].nullableBooleanNoValue == null)
+                assertEquals(false, results[0].nullableBooleanWithValue)
                 assertEquals("A Love Supreme", results[0].title)
                 assertEquals("by John Coltrane", results[0].description)
                 assertEquals("B0000A118M", results[0].asin)
@@ -778,6 +811,24 @@ class MongoDBSpek : Spek() {
                 }
             }
 
+            on("getting one column by regex filter expression") {
+                db {
+                    val results = (Albums filter { Details.Title rx "Love Supreme" }).toList()
+                    it("returns correct values") {
+                        validate(results)
+                    }
+                }
+            }
+
+            on("getting one column by regex filter expression") {
+                db {
+                    val results = (Albums filter { Details.Title rx "Love Supremex" }).toList()
+                    it("should return nothing") {
+                        assert(results.isEmpty())
+                    }
+                }
+            }
+
             on("setting a new value to a string column on a non-abstract schema by id") {
                 db {
                     Albums columns { Details.Title } at { albumId!! } set { "A Love Supreme. Original Recording Reissued" }
@@ -817,6 +868,50 @@ class MongoDBSpek : Spek() {
                         assertEquals(4, tracks.size)
                         assertEquals("A Love Supreme, Part IV-Psalm", tracks[3].title)
                         assertEquals(400, tracks[3].duration)
+                    }
+                }
+            }
+
+            // TODO TODO TODO
+/*
+            on("getting range of values for a list column on a non-abstract schema by id") {
+                db {
+                    val tracks = Albums columns { Albums.Details.Tracks } at { albumId!! } range{ 1..2 }
+                    it("takes effect") {
+                        assertEquals(4, tracks.size)
+                        assertEquals("A Love Supreme, Part IV-Psalm", tracks[3].title)
+                        assertEquals(400, tracks[3].duration)
+                    }
+                }
+            }
+*/
+
+            on("removing sn element from a collection column on a non-abstract schema by id") {
+                db {
+                    Albums columns { Details.Tracks } at { albumId!! } delete { Duration eq 100 }
+                    val tracks = Albums columns { Albums.Details.Tracks } get { albumId!! }
+                    it("takes effect") {
+                        assertEquals(3, tracks.size)
+                    }
+                }
+            }
+
+            on("removing sn element from a collection column on a non-abstract schema by a filter expression") {
+                db {
+                    Albums columns { Details.Tracks } filter { SKU eq "00e8da9b" } delete { Duration eq 200 }
+                    val tracks = Albums columns { Albums.Details.Tracks } get { albumId!! }
+                    it("takes effect") {
+                        assertEquals(2, tracks.size)
+                    }
+                }
+            }
+
+            on("removing sn element from a set column on a non-abstract schema by id") {
+                db {
+                    Albums columns { Details.Genre } at { albumId!! } remove { "General" } // Type validation failure
+                    val genre = Albums columns { Albums.Details.Genre } get { albumId!! }
+                    it("takes effect") {
+                        assertEquals(1, genre.size)
                     }
                 }
             }

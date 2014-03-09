@@ -58,6 +58,7 @@ import kotlin.nosql.Query
 import kotlin.nosql.eq
 import kotlin.nosql.eq
 
+/*
 class DynamoDBSession(val client: AmazonDynamoDBClient) : Session() {
     override fun <T : AbstractTableSchema, C> iterator(query: Query<C, T>): Iterator<C> {
         throw UnsupportedOperationException()
@@ -389,4 +390,4 @@ class DynamoDBSession(val client: AmazonDynamoDBClient) : Session() {
         }
         throw IllegalStateException("Table " + name + " never went status")
     }
-}
+}*/

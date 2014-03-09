@@ -8,11 +8,8 @@ abstract class Query<C, T : AbstractTableSchema>(val fields: Array<AbstractColum
     }
 }
 
-fun <T : AbstractTableSchema, C> Query<Set<C>, T>.remove(value: () -> C) {
-    throw UnsupportedOperationException()
-}
-
-class Query1<T : AbstractTableSchema, A>(val a: AbstractColumn<A, T, *>, op: Op) : Query<A, T>(array(a), op) {
+// TODO TODO TODO: * - out Any?
+class Query1<T : AbstractTableSchema, A: AbstractColumn<C, T, out Any?>, C>(val a: A, op: Op) : Query<C, T>(array(a as AbstractColumn<*, T, *>), op) {
 }
 
 class Query2<T : AbstractTableSchema, A, B>(val a: AbstractColumn<A, T, *>, val b: AbstractColumn<B, T, *>, op: Op) : Query<Pair<A, B>, T>(array(a, b), op) {
