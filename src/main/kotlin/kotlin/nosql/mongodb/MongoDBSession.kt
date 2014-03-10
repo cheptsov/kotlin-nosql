@@ -13,6 +13,35 @@ import kotlin.nosql.*
 import kotlin.nosql.util.*
 import java.util.regex.Pattern
 import java.util.Date
+import java.util.concurrent.atomic.AtomicReference
+
+class PaginatedIterator<X>(val callback: (drop: Int?, take: Int?) -> Iterator<X>) : Iterator<X> {
+    var drop: Int? = null
+    var take: Int? = null
+
+    var iterator:Iterator<X>? = null
+
+    override fun next(): X {
+        if (iterator == null) {
+            iterator = callback(drop, take)
+        }
+        return iterator!!.next()
+    }
+    override fun hasNext(): Boolean {
+        if (iterator == null) {
+            iterator = callback(drop, take)
+        }
+        return iterator!!.hasNext()
+    }
+    fun drop(n: Int) : PaginatedIterator<X> {
+        drop = n
+        return this
+    }
+    fun take(n: Int) : PaginatedIterator<X> {
+        take = n
+        return this
+    }
+}
 
 class MongoDBSession(val db: DB) : Session() {
     override fun <T : AbstractTableSchema> T.create() {
@@ -24,14 +53,13 @@ class MongoDBSession(val db: DB) : Session() {
         collection.remove(BasicDBObject())
     }
 
-    override fun <T : DocumentSchema<P, V>, P, V> T.insert(v: () -> V): P {
+    override fun <T : DocumentSchema<P, V>, P, V> T.insert(v: V): P {
         val collection = db.getCollection(this.name)!!
-        val obj = v()
-        val doc = getDBObject(obj, this)
-        if (this is PolymorphicSchema<*, *>) {
+        val doc = getDBObject(v, this)
+        if (discriminator != null) {
             var dominatorValue: Any? = null
-            for (entry in PolymorphicSchema.discriminatorClasses.entrySet()) {
-                if (entry.value.equals(obj.javaClass)) {
+            for (entry in DocumentSchema.discriminatorClasses.entrySet()) {
+                if (entry.value.equals(v.javaClass)) {
                     dominatorValue = entry.key.value
                 }
             }
@@ -47,16 +75,16 @@ class MongoDBSession(val db: DB) : Session() {
         val fields = getAllFields(javaClass)
         var sc: Class<out Any?>? = null
         var s: Schema? = null
-        if (schema is PolymorphicSchema<*, *>) {
-            for (entry in PolymorphicSchema.discriminatorClasses.entrySet()) {
+        if (schema is DocumentSchema<*, *> && schema.discriminator != null) {
+            for (entry in DocumentSchema.discriminatorClasses.entrySet()) {
                 if (entry.value.equals(o.javaClass)) {
-                    sc = PolymorphicSchema.discriminatorSchemaClasses.get(entry.key)!!
-                    s = PolymorphicSchema.discriminatorSchemas.get(entry.key)!!
+                    sc = DocumentSchema.discriminatorSchemaClasses.get(entry.key)!!
+                    s = DocumentSchema.discriminatorSchemas.get(entry.key)!!
                 }
             }
         }
-        val schemaClass: Class<out Any?> = if (schema is PolymorphicSchema<*, *>) sc!! else schema.javaClass
-        val objectSchema: Any = if (schema is PolymorphicSchema<*, *>) s!! else schema
+        val schemaClass: Class<out Any?> = if (schema is DocumentSchema<*, *> && schema.discriminator != null) sc!! else schema.javaClass
+        val objectSchema: Any = if (schema is DocumentSchema<*, *> && schema.discriminator != null) s!! else schema
         val schemaFields = getAllFieldsMap(schemaClass as Class<in Any>)
         for (field in fields) {
             val schemaField = schemaFields.get(field.getName()!!.toLowerCase())
@@ -81,21 +109,27 @@ class MongoDBSession(val db: DB) : Session() {
         return doc
     }
 
-    override fun <T : DocumentSchema<P, C>, P, C> T.filter(op: T.() -> Op): Iterator<C> {
+    override fun <T : DocumentSchema<P, C>, P, C> T.filter(op: T.() -> Op): PaginatedIterator<C> {
         val collection = db.getCollection(this.name)!!
         val query = getQuery(op())
-        val cursor = collection.find(query)!!
-        val docs = ArrayList<C>()
-        try {
-            while(cursor.hasNext()) {
-                val doc = cursor.next()
-                val obj = getObject(doc, this)
-                docs.add(obj)
+        return PaginatedIterator({ drop, take ->
+            val cursor = collection.find(query)!!
+            if (drop != null) {
+                cursor.skip(drop)
             }
-            return docs.iterator()
-        } finally {
-            cursor.close();
-        }
+            val docs = ArrayList<C>()
+            try {
+                while (cursor.hasNext()) {
+                    val doc = cursor.next()
+                    val obj = getObject(doc, this)
+                    docs.add(obj)
+                    if (take != null && docs.size == take) break
+                }
+                docs.iterator()
+            } finally {
+                cursor.close();
+            }
+        })
     }
 
     private fun getQuery(op: Op, removePrefix: String = ""): BasicDBObject {
@@ -284,21 +318,18 @@ class MongoDBSession(val db: DB) : Session() {
 
     private fun <T: DocumentSchema<P, V>, P, V> getObject(doc: DBObject, schema: T): V {
         var s: Schema? = null
-        val valueInstance: Any = when (schema) {
-            is PolymorphicSchema<*, *> -> {
-                var instance: Any? = null
-                val discriminatorValue = doc.get(schema.discriminator.column.name)
-                for (discriminator in PolymorphicSchema.tableDiscriminators.get(schema.name)!!) {
-                    if (discriminator.value.equals(discriminatorValue)) {
-                        instance = newInstance(PolymorphicSchema.discriminatorClasses.get(discriminator)!!)
-                        s = PolymorphicSchema.discriminatorSchemas.get(discriminator)!!
-                        break
-                    }
+        val valueInstance: Any = if (schema is DocumentSchema<*, *> && schema.discriminator != null) {
+            var instance: Any? = null
+            val discriminatorValue = doc.get(schema.discriminator.column.name)
+            for (discriminator in DocumentSchema.tableDiscriminators.get(schema.name)!!) {
+                if (discriminator.value.equals(discriminatorValue)) {
+                    instance = newInstance(DocumentSchema.discriminatorClasses.get(discriminator)!!)
+                    s = DocumentSchema.discriminatorSchemas.get(discriminator)!!
+                    break
                 }
-                instance!!
             }
-            else -> newInstance(schema.valueClass)
-        }
+            instance!!
+        } else newInstance(schema.valueClass)
         val schemaClass = s.javaClass
         val schemaFields = getAllFields(schemaClass as Class<in Any?>)
         val valueFields = getAllFieldsMap(valueInstance.javaClass as Class<in Any?>)
@@ -392,12 +423,11 @@ class MongoDBSession(val db: DB) : Session() {
         val query = getQuery(op)
         collection.remove(query)
     }
-    override fun <T : AbstractTableSchema, A: AbstractColumn<C, T, out Any?>, C> Query1<T, A, C>.set(c: () -> C) {
-        update(array(Pair(a, c())), op!!, "\$set")
+    override fun <T : AbstractTableSchema, A: AbstractColumn<C, T, out Any?>, C> Query1<T, A, C>.set(c: C) {
+        update(array(Pair(a, c)), op!!, "\$set")
     }
-    override fun <T : AbstractTableSchema, A, B> Query2<T, A, B>.set(c: () -> Pair<A, B>) {
-        val values = c()
-        update(array(Pair(a, values.component1()), Pair(b, values.component2())), op!!, "\$set")
+    override fun <T : AbstractTableSchema, A, B> Query2<T, A, B>.set(c: Pair<A, B>) {
+        update(array(Pair(a, c.component1()), Pair(b, c.component2())), op!!, "\$set")
     }
 
     private fun update(columnValues: Array<Pair<AbstractColumn<*, *, *>, *>>, op: Op, operator: String) {
@@ -430,10 +460,10 @@ class MongoDBSession(val db: DB) : Session() {
         throw UnsupportedOperationException()
     }
 */
-    override fun <T : TableSchema<P>, P, C> AbstractColumn<C, T, out Any?>.get(id: () -> P): C {
+    override fun <T : TableSchema<P>, P, C> AbstractColumn<C, T, out Any?>.get(id: P): C {
         val table = Schema.current<T>()
         val collection = db.getCollection(table.name)!!
-        val query = getQuery(table.pk eq id())
+        val query = getQuery(table.pk eq id)
         val doc = collection.findOne(query, BasicDBObject().append(this.fullName, "1"))!!
         return getColumnObject(doc, this) as C
     }
@@ -488,60 +518,60 @@ class MongoDBSession(val db: DB) : Session() {
         }
         return results.iterator()
     }
-    override fun <T : TableSchema<P>, P, A, B> Template2<T, A, B>.get(id: () -> P): Pair<A, B> {
+    override fun <T : TableSchema<P>, P, A, B> Template2<T, A, B>.get(id: P): Pair<A, B> {
         val table = Schema.current<T>()
         val collection = db.getCollection(table.name)!!
-        val query = getQuery(table.pk eq id())
+        val query = getQuery(table.pk eq id)
         val doc = collection.findOne(query, BasicDBObject().append(a.fullName, "1")!!.append(b.fullName, "1"))!!
         return Pair(getColumnObject(doc, a) as A, getColumnObject(doc, b) as B)
     }
-    override fun <T : TableSchema<P>, P, A, B, C> Template3<T, A, B, C>.get(id: () -> P): Triple<A, B, C> {
+    override fun <T : TableSchema<P>, P, A, B, C> Template3<T, A, B, C>.get(id: P): Triple<A, B, C> {
         val table = Schema.current<T>()
         val collection = db.getCollection(table.name)!!
-        val query = getQuery(table.pk eq id())
+        val query = getQuery(table.pk eq id)
         val doc = collection.findOne(query, BasicDBObject().append(a.fullName, "1")!!.append(b.fullName, "1")!!.append(c.fullName, "1"))!!
         return Triple(getColumnObject(doc, a) as A, getColumnObject(doc, b) as B, getColumnObject(doc, c) as C)
     }
-    override fun <T : TableSchema<P>, P, A, B, C, D> Template4<T, A, B, C, D>.get(id: () -> P): Quadruple<A, B, C, D> {
+    override fun <T : TableSchema<P>, P, A, B, C, D> Template4<T, A, B, C, D>.get(id: P): Quadruple<A, B, C, D> {
         val table = Schema.current<T>()
         val collection = db.getCollection(table.name)!!
-        val query = getQuery(table.pk eq id())
+        val query = getQuery(table.pk eq id)
         val doc = collection.findOne(query, BasicDBObject().append(a.fullName, "1")!!.append(b.fullName, "1")!!
                 .append(c.fullName, "1")!!.append(d.fullName, "1"))!!
         return Quadruple(getColumnObject(doc, a) as A, getColumnObject(doc, b) as B, getColumnObject(doc, c) as C, getColumnObject(doc, d) as D)
     }
-    override fun <T : TableSchema<P>, P, A, B, C, D, E> Template5<T, A, B, C, D, E>.get(id: () -> P): Quintuple<A, B, C, D, E> {
+    override fun <T : TableSchema<P>, P, A, B, C, D, E> Template5<T, A, B, C, D, E>.get(id: P): Quintuple<A, B, C, D, E> {
         val table = Schema.current<T>()
         val collection = db.getCollection(table.name)!!
-        val query = getQuery(table.pk eq id())
+        val query = getQuery(table.pk eq id)
         val doc = collection.findOne(query, BasicDBObject().append(a.fullName, "1")!!.append(b.fullName, "1")!!
                 .append(c.fullName, "1")!!.append(d.fullName, "1")!!.append(e.fullName, "1"))!!
         return Quintuple(getColumnObject(doc, a) as A, getColumnObject(doc, b) as B, getColumnObject(doc, c) as C,
                 getColumnObject(doc, d) as D, getColumnObject(doc, e) as E)
     }
-    override fun <T : TableSchema<P>, P, A, B, C, D, E, F> Template6<T, A, B, C, D, E, F>.get(id: () -> P): Sextuple<A, B, C, D, E, F> {
+    override fun <T : TableSchema<P>, P, A, B, C, D, E, F> Template6<T, A, B, C, D, E, F>.get(id: P): Sextuple<A, B, C, D, E, F> {
         val table = Schema.current<T>()
         val collection = db.getCollection(table.name)!!
-        val query = getQuery(table.pk eq id())
+        val query = getQuery(table.pk eq id)
         val doc = collection.findOne(query, BasicDBObject().append(a.fullName, "1")!!.append(b.fullName, "1")!!
                 .append(c.fullName, "1")!!.append(d.fullName, "1")!!.append(e.fullName, "1")!!.append(f.fullName, "1"))!!
         return Sextuple(getColumnObject(doc, a) as A, getColumnObject(doc, b) as B, getColumnObject(doc, c) as C,
                 getColumnObject(doc, d) as D, getColumnObject(doc, e) as E, getColumnObject(doc, f) as F)
     }
-    override fun <T : TableSchema<P>, P, A, B, C, D, E, F, G> Template7<T, A, B, C, D, E, F, G>.get(id: () -> P): Septuple<A, B, C, D, E, F, G> {
+    override fun <T : TableSchema<P>, P, A, B, C, D, E, F, G> Template7<T, A, B, C, D, E, F, G>.get(id: P): Septuple<A, B, C, D, E, F, G> {
         val table = Schema.current<T>()
         val collection = db.getCollection(table.name)!!
-        val query = getQuery(table.pk eq id())
+        val query = getQuery(table.pk eq id)
         val doc = collection.findOne(query, BasicDBObject().append(a.fullName, "1")!!.append(b.fullName, "1")!!
                 .append(c.fullName, "1")!!.append(d.fullName, "1")!!.append(e.fullName, "1")!!.append(f.fullName, "1")!!
                 .append(g.fullName, "1"))!!
         return Septuple(getColumnObject(doc, a) as A, getColumnObject(doc, b) as B, getColumnObject(doc, c) as C,
                 getColumnObject(doc, d) as D, getColumnObject(doc, e) as E, getColumnObject(doc, f) as F, getColumnObject(doc, g) as G)
     }
-    override fun <T : TableSchema<P>, P, A, B, C, D, E, F, G, H> Template8<T, A, B, C, D, E, F, G, H>.get(id: () -> P): Octuple<A, B, C, D, E, F, G, H> {
+    override fun <T : TableSchema<P>, P, A, B, C, D, E, F, G, H> Template8<T, A, B, C, D, E, F, G, H>.get(id: P): Octuple<A, B, C, D, E, F, G, H> {
         val table = Schema.current<T>()
         val collection = db.getCollection(table.name)!!
-        val query = getQuery(table.pk eq id())
+        val query = getQuery(table.pk eq id)
         val doc = collection.findOne(query, BasicDBObject().append(a.fullName, "1")!!.append(b.fullName, "1")!!
                 .append(c.fullName, "1")!!.append(d.fullName, "1")!!.append(e.fullName, "1")!!.append(f.fullName, "1")!!
                 .append(g.fullName, "1")!!.append(h.fullName, "1"))!!
@@ -549,10 +579,10 @@ class MongoDBSession(val db: DB) : Session() {
                 getColumnObject(doc, d) as D, getColumnObject(doc, e) as E, getColumnObject(doc, f) as F,
                 getColumnObject(doc, g) as G, getColumnObject(doc, h) as H)
     }
-    override fun <T : TableSchema<P>, P, A, B, C, D, E, F, G, H, J> Template9<T, A, B, C, D, E, F, G, H, J>.get(id: () -> P): Nonuple<A, B, C, D, E, F, G, H, J> {
+    override fun <T : TableSchema<P>, P, A, B, C, D, E, F, G, H, J> Template9<T, A, B, C, D, E, F, G, H, J>.get(id: P): Nonuple<A, B, C, D, E, F, G, H, J> {
         val table = Schema.current<T>()
         val collection = db.getCollection(table.name)!!
-        val query = getQuery(table.pk eq id())
+        val query = getQuery(table.pk eq id)
         val doc = collection.findOne(query, BasicDBObject().append(a.fullName, "1")!!.append(b.fullName, "1")!!
                 .append(c.fullName, "1")!!.append(d.fullName, "1")!!.append(e.fullName, "1")!!.append(f.fullName, "1")!!
                 .append(g.fullName, "1")!!.append(h.fullName, "1")!!.append(j.fullName, "1"))!!
@@ -560,10 +590,10 @@ class MongoDBSession(val db: DB) : Session() {
                 getColumnObject(doc, d) as D, getColumnObject(doc, e) as E, getColumnObject(doc, f) as F,
                 getColumnObject(doc, g) as G, getColumnObject(doc, h) as H, getColumnObject(doc, j) as J)
     }
-    override fun <T : TableSchema<P>, P, A, B, C, D, E, F, G, H, J, K> Template10<T, A, B, C, D, E, F, G, H, J, K>.get(id: () -> P): Decuple<A, B, C, D, E, F, G, H, J, K> {
+    override fun <T : TableSchema<P>, P, A, B, C, D, E, F, G, H, J, K> Template10<T, A, B, C, D, E, F, G, H, J, K>.get(id: P): Decuple<A, B, C, D, E, F, G, H, J, K> {
         val table = Schema.current<T>()
         val collection = db.getCollection(table.name)!!
-        val query = getQuery(table.pk eq id())
+        val query = getQuery(table.pk eq id)
         val doc = collection.findOne(query, BasicDBObject().append(a.fullName, "1")!!.append(b.fullName, "1")!!
                 .append(c.fullName, "1")!!.append(d.fullName, "1")!!.append(e.fullName, "1")!!.append(f.fullName, "1")!!
                 .append(g.fullName, "1")!!.append(h.fullName, "1")!!.append(j.fullName, "1")!!.append(k.fullName, "1"))!!
@@ -621,9 +651,9 @@ class MongoDBSession(val db: DB) : Session() {
     /*override fun <T : AbstractTableSchema, C> RangeQuery<T, C>.forEach(st: (C) -> Unit) {
         throw UnsupportedOperationException()
     }*/
-    override fun <T : AbstractTableSchema, A: AbstractColumn<CC, T, out Any?>, CC: Collection<C>, C> Query1<T, A, CC>.add(c: () -> C) {
+    override fun <T : AbstractTableSchema, A: AbstractColumn<CC, T, out Any?>, CC: Collection<C>, C> Query1<T, A, CC>.add(c: C) {
         // TODO TODO TODO
-        update(array(Pair(a, listOf(c()))), op!!, "\$pushAll")
+        update(array(Pair(a, listOf(c))), op!!, "\$pushAll")
     }
     override fun <T : AbstractTableSchema, A: AbstractColumn<CC, T, out Any?>, CC: Collection<C>, C> Query1<T, A, CC>.delete(c: A.() -> Op) {
         val cOp = a.c()
@@ -631,13 +661,13 @@ class MongoDBSession(val db: DB) : Session() {
         collection.update(getQuery(op), BasicDBObject().append("\$pull", BasicDBObject().append(a.fullName, getQuery(cOp, a.fullName)))!!)
     }
 
-    override fun <T : AbstractTableSchema, A: AbstractColumn<CC, T, out Any?>, CC: Set<C>, C> Query1<T, A, CC>.remove(c: () -> C) {
+    override fun <T : AbstractTableSchema, A: AbstractColumn<CC, T, out Any?>, CC: Set<C>, C> Query1<T, A, CC>.delete(c: C) {
         val collection = db.getCollection(Schema.current<Schema>().name)!!
-        val fields = BasicDBObject().append("\$pull", BasicDBObject().append(a.fullName, getDBValue(c(), a)))!!
+        val fields = BasicDBObject().append("\$pull", BasicDBObject().append(a.fullName, getDBValue(c, a)))!!
         collection.update(getQuery(op), fields)
     }
 
-    override fun <T : AbstractTableSchema, A: AbstractColumn<Int, T, Int>> Query1<T, A, Int>.add(c: () -> Int): Int {
+    override fun <T : AbstractTableSchema, A: AbstractColumn<Int, T, Int>> Query1<T, A, Int>.add(c: Int): Int {
         throw UnsupportedOperationException()
     }
     override fun <T : KeyValueSchema, C> T.get(c: T.() -> AbstractColumn<C, T, out Any?>): C {

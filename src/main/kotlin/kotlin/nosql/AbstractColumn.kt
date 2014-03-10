@@ -8,7 +8,7 @@ open class AbstractColumn<C, T : Schema, S>(val name: String, val valueClass: Cl
         return MatchesOp(this, LiteralOp(other))
     }
 
-    fun toString(): String {
+    override fun toString(): String {
         return "$name"
     }
 

@@ -34,10 +34,10 @@ abstract class TableSchema<P>(tableName: String, primaryKey: AbstractColumn<P, o
     val pk = PrimaryKeyColumn<P, TableSchema<P>>(this, primaryKey.name, primaryKey.valueClass, primaryKey.columnType)
 }
 
-open class PrimaryKey<P>(val name: jet.String, val javaClass: Class<P>, val columnType: ColumnType) {
+open class PrimaryKey<P>(val name: String, val javaClass: Class<P>, val columnType: ColumnType) {
     class object {
-        fun string(name: jet.String) = PrimaryKey<jet.String>(name, javaClass<jet.String>(), ColumnType.STRING)
-        fun integer(name: jet.String) = PrimaryKey<Int>(name, javaClass<Int>(), ColumnType.INTEGER)
+        fun string(name: String) = PrimaryKey<String>(name, javaClass<String>(), ColumnType.STRING)
+        fun integer(name: String) = PrimaryKey<Int>(name, javaClass<Int>(), ColumnType.INTEGER)
     }
 }
 
@@ -50,23 +50,20 @@ class Discriminator<V, T: DocumentSchema<out Any, out Any>>(val column: Abstract
 }
 
 abstract class DocumentSchema<P, V>(name: String, val valueClass: Class<V>, primaryKey: AbstractColumn<P,
-        out DocumentSchema<P, V>, P>) : TableSchema<P>(name, primaryKey) {
-}
-
-// TODO TODO TODO Join DocumentSchema
-abstract class PolymorphicSchema<P, V>(name: String, valueClass: Class<V>, primaryKey: AbstractColumn<P,
-        out DocumentSchema<P, V>, P>, val discriminator: Discriminator<out Any, out DocumentSchema<P, V>>) : DocumentSchema<P, V>(name, valueClass, primaryKey) {
+        out DocumentSchema<P, V>, P>, val discriminator: Discriminator<out Any, out DocumentSchema<P, V>>? = null) : TableSchema<P>(name, primaryKey) {
     {
-        val emptyDiscriminators = CopyOnWriteArrayList<Discriminator<*, *>>()
-        val discriminators = tableDiscriminators.putIfAbsent(name, emptyDiscriminators)
-        if (discriminators != null)
-            discriminators.add(discriminator)
-        else
-            emptyDiscriminators.add(discriminator)
-        // TODO TODO TODO
-        discriminatorClasses.put(discriminator, this.valueClass)
-        discriminatorSchemaClasses.put(discriminator, this.javaClass)
-        discriminatorSchemas.put(discriminator, this)
+        if (discriminator != null) {
+            val emptyDiscriminators = CopyOnWriteArrayList<Discriminator<*, *>>()
+            val discriminators = tableDiscriminators.putIfAbsent(name, emptyDiscriminators)
+            if (discriminators != null)
+                discriminators.add(discriminator)
+            else
+                emptyDiscriminators.add(discriminator)
+            // TODO TODO TODO
+            discriminatorClasses.put(discriminator, this.valueClass)
+            discriminatorSchemaClasses.put(discriminator, this.javaClass)
+            discriminatorSchemas.put(discriminator, this)
+        }
     }
 
     class object {

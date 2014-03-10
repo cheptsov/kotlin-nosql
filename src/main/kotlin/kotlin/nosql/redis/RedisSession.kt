@@ -1,47 +1,5 @@
 package kotlin.nosql.redis
 
-import kotlin.nosql.Session
-import kotlin.nosql.AbstractTableSchema
-import kotlin.nosql.AbstractColumn
-import kotlin.nosql.Op
-import kotlin.nosql.Query1
-import kotlin.nosql.Template2
-import kotlin.nosql.Query2
-import redis.clients.jedis.Jedis
-import kotlin.nosql.PrimaryKeyColumn
-import java.util.HashMap
-import kotlin.nosql.EqualsOp
-import kotlin.nosql.LiteralOp
-import kotlin.nosql.ColumnType
-import kotlin.nosql.ColumnType.INTEGER
-import kotlin.nosql.RangeQuery
-import kotlin.nosql.NullableColumn
-import kotlin.nosql.NotFoundException
-import kotlin.nosql.KeyValueSchema
-import kotlin.nosql.Schema
-import kotlin.nosql.TableSchema
-import kotlin.nosql.DocumentSchema
-import java.util.ArrayList
-import java.util.Arrays
-import kotlin.nosql.Template3
-import kotlin.nosql.Template4
-import kotlin.nosql.Quadruple
-import kotlin.nosql.Template5
-import kotlin.nosql.Quintuple
-import kotlin.nosql.Template6
-import kotlin.nosql.Sextuple
-import kotlin.nosql.Template7
-import kotlin.nosql.Septuple
-import kotlin.nosql.Template8
-import kotlin.nosql.Octuple
-import kotlin.nosql.Template9
-import kotlin.nosql.Nonuple
-import kotlin.nosql.Template10
-import kotlin.nosql.Decuple
-import kotlin.nosql.Query
-import kotlin.nosql.eq
-import kotlin.nosql.eq
-
 /*
 class RedisSession(val jedis: Jedis) : Session() {
     override fun <T : AbstractTableSchema, C> iterator(query: Query<C, T>): Iterator<C> {

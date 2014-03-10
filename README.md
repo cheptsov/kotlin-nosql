@@ -42,13 +42,13 @@ Insert column values by a primary key:
 
 ```kotlin
 val aUserId = Global next { UserId }
-Users columns { All } insert { values(aUserId, "antirez", "p1pp0") }
+Users columns { All } insert values(aUserId, "antirez", "p1pp0")
 ```
 
 Receive column values by a primary key:
 
 ```kotlin
-val (name, password) = Users columns { All } get { aUserId }
+val (name, password) = Users columns { All } get aUserId
 ```
 
 Receive a collection of column values by a filter condition:
@@ -61,8 +61,8 @@ Users columns { ID } filter { Name eq "antirez" } forEach { id ->
 Receive a column value by a primary key:
 
 ```kotlin
-val followers = Users columns { Followers } get { aUserId } map { userId ->
-    Users columns { this.Name } get { userId }
+val followers = Users columns { Followers } get aUserId map { userId ->
+    Users columns { this.Name } get userId
 }
 ```
 
@@ -94,13 +94,13 @@ Insert a document:
 
 ```kotlin
 val aUserId = Global next { UserId }
-Users add { User(aUserId, "antirez", "p1pp0") }
+Users insert User(aUserId, "antirez", "p1pp0")
 ```
 
 Get a document by its primary key:
 
 ```kotlin
-val user = Users get { aUserId }
+val user = Users get aUserId
 ```
 
 Receive a collection of documents by a filter condition:
@@ -111,12 +111,12 @@ for (user in Users filter { Name eq "antirez" }) {
 }
 ```
 
-### Polymorphic schema
+### Document schema (inheritance)
 
 Define base schema class:
 
 ```kotlin
-open class ProductSchema<V, T : Schema>(javaClass: Class<V>, discriminator: String) : PolymorphicSchema<String, V>("products",
+open class ProductSchema<V, T : Schema>(javaClass: Class<V>, discriminator: String) : DocumentSchema<String, V>("products",
         javaClass, primaryKey = string("_id"), discriminator = Discriminator(string("type"), discriminator) ) {
     val SKU = string<T>("sku")
     val Title = string<T>("title")
@@ -196,8 +196,7 @@ class Track(val title: String, val duration: Int) {
 Insert a document:
 
  ```kotlin
-Products insert {
-    Album(sku = "00e8da9b", title = "A Love Supreme", description = "by John Coltrane",
+Products insert Album(sku = "00e8da9b", title = "A Love Supreme", description = "by John Coltrane",
             asin = "B0000A118M", shipping = Shipping(weight = 6, dimensions = Dimensions(10, 10, 1)),
             pricing = Pricing(list = 1200, retail = 1100, savings = 100, pctSavings = 8),
             details = Details(title = "A Love Supreme [Original Recording Reissued]",
@@ -205,7 +204,6 @@ Products insert {
                     tracks = listOf(Track("A Love Supreme Part I: Acknowledgement", 100),
                              Track("A Love Supreme Part II - Resolution", 200),
                              Track("A Love Supreme, Part III: Pursuance", 300))))
-}
 ```
 
 Receive a collection of documents by a filter expression:
@@ -227,29 +225,28 @@ Albums filter { Details.Artist eq "John Coltrane" } forEach { album ->
 Receive a document by its id:
 
 ```kotlin
-val album = Albums get { id }
+val album = Albums get id
 println("Album tracks: ${album.details.tracks}")
 ```
 
 Receive selected columns by a document's id:
 
 ```kotlin
-val (title, pricing) = Albums columns { Details.Title + Pricing } get { id }
+val (title, pricing) = Albums columns { Details.Title + Pricing } get id
 println("Retail price for the album ${title} is ${pricing.retail}")
 ```
 
 Update selected columns by a document's id:
 
 ```kotlin
-Albums columns { Details.Title } find { id } set { "A Love Supreme (Original Recording Reissued)" }
+Albums columns { Details.Title } at id set "A Love Supreme (Original Recording Reissued)"
 ```
 
 ```kotlin
-Albums columns { Details.Tracks } find { id } add { Track("A Love Supreme, Part IV-Psalm", 400) }
+Albums columns { Details.Tracks } at id add Track("A Love Supreme, Part IV-Psalm", 400)
 ```
 Update selected columns by a filter expression:
 
-
 ```kotlin
-Products columns { Pricing.Retail + Pricing.Savings } filter { SKU eq "00e8da9b" } set { values(1150, 50) }
+Products columns { Pricing.Retail + Pricing.Savings } filter { SKU eq "00e8da9b" } set values(1150, 50)
 ```
