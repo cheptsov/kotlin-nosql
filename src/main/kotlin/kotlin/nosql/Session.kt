@@ -121,7 +121,7 @@ abstract class Session () {
         return Query1<T, A, C>(this, Schema.current<T>().op())
     }
 
-    fun <T : TableSchema<P>, A: AbstractColumn<C, T, *>, C, P> A.at(id: P): Query1<T, A, C> {
+    fun <T : TableSchema<P>, A: AbstractColumn<C, T, *>, C, P> A.find(id: P): Query1<T, A, C> {
         return Query1<T, A, C>(this, Schema.current<T>().pk eq id)
     }
 

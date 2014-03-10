@@ -852,7 +852,7 @@ class MongoDBSpek : Spek() {
 
             on("setting a new value to a string column on a non-abstract schema by id") {
                 db {
-                    Albums columns { Details.Title } at albumId!! set "A Love Supreme. Original Recording Reissued"
+                    Albums columns { Details.Title } find albumId!! set "A Love Supreme. Original Recording Reissued"
                     val title = Albums columns { Details.Title } get albumId!!
                     it("takes effect") {
                         assertEquals("A Love Supreme. Original Recording Reissued", title)
@@ -862,7 +862,7 @@ class MongoDBSpek : Spek() {
 
             on("setting a new value to a string column on a non-abstract schema by id") {
                 db {
-                    Albums columns { Details.Title } at albumId!! set "A Love Supreme. Original Recording Reissued"
+                    Albums columns { Details.Title } find albumId!! set "A Love Supreme. Original Recording Reissued"
                     val title = Albums columns { Details.Title } get albumId!!
                     it("takes effect") {
                         assertEquals("A Love Supreme. Original Recording Reissued", title)
@@ -883,7 +883,7 @@ class MongoDBSpek : Spek() {
 
             on("adding a new element to a list column on a non-abstract schema by id") {
                 db {
-                    Albums columns { Details.Tracks } at albumId!! add Track("A Love Supreme, Part IV-Psalm", 400)
+                    Albums columns { Details.Tracks } find albumId!! add Track("A Love Supreme, Part IV-Psalm", 400)
                     val tracks = Albums columns { Albums.Details.Tracks } get albumId!!
                     it("takes effect") {
                         assertEquals(4, tracks.size)
@@ -909,7 +909,7 @@ class MongoDBSpek : Spek() {
 
             on("removing sn element from a collection column on a non-abstract schema by id") {
                 db {
-                    Albums columns { Details.Tracks } at albumId!! delete { Duration eq 100 }
+                    Albums columns { Details.Tracks } find albumId!! delete { Duration eq 100 }
                     val tracks = Albums columns { Albums.Details.Tracks } get albumId!!
                     it("takes effect") {
                         assertEquals(3, tracks.size)
@@ -929,7 +929,7 @@ class MongoDBSpek : Spek() {
 
             on("removing sn element from a set column on a non-abstract schema by id") {
                 db {
-                    Albums columns { Details.Genre } at albumId!!  delete "General"
+                    Albums columns { Details.Genre } find albumId!!  delete "General"
                     val genre = Albums columns { Albums.Details.Genre } get albumId!!
                     it("takes effect") {
                         assertEquals(1, genre.size)

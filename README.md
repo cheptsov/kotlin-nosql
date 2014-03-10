@@ -15,7 +15,7 @@ object Global: KeyValueSchema("global") {
 }
 ```
 
-Get value at key:
+Get value find key:
 
 ```kotlin
 val aUserId = Global get { UserId }
@@ -239,11 +239,11 @@ println("Retail price for the album ${title} is ${pricing.retail}")
 Update selected columns by a document's id:
 
 ```kotlin
-Albums columns { Details.Title } at id set "A Love Supreme (Original Recording Reissued)"
+Albums columns { Details.Title } find id set "A Love Supreme (Original Recording Reissued)"
 ```
 
 ```kotlin
-Albums columns { Details.Tracks } at id add Track("A Love Supreme, Part IV-Psalm", 400)
+Albums columns { Details.Tracks } find id add Track("A Love Supreme, Part IV-Psalm", 400)
 ```
 Update selected columns by a filter expression:
 
