@@ -7,11 +7,40 @@ The following NoSQL databases are supported for now:
 
 - MongoDB
 
+## Principles
+
+The following key principles lie behind Kotlin NoSQL:
+
 #### First-class query
+
+```kotlin
+Albums columns { Details.Tracks } filter { Details.Artist.Title eq artistTitle } delete { Duration eq 200 }
+```
 
 #### Immutability
 
+```kotlin
+Products columns { Pricing.Retail + Pricing.Savings } find albumId set values(newRetail, newSavings)
+```
+
 #### Type-safety
+
+```kotlin
+for (product in Products filter { Pricing.Savings ge 1000 }) {
+    when (product) {
+        is Album -> // ...
+        else -> // ...
+    }
+}
+```
+
+```kotlin
+for ((artistTitle, retailPricing) in Albums columns { Details.Artist.Title +
+        Details.Pricing.Retail } filter { Pricing.Savings ge 1000 }) {
+    // ...
+}
+```
+
 
 ## Download
 
@@ -65,62 +94,52 @@ class AuthorInfo(val: id: ObjectId, val name: String)
 
 ```kotlin
 val db = MongoDB(database = "test", schemas = array(Comments))
+
+db {
+    // ...
+}
 ```
 
 #### Insert a document
 
 ```kotlin
-db {
-    val commentId = Comments insert Comment(discussionId, slug, fullSlug, posted,
-        text, AuthorInfo(author.id, author.name))
-}
+val commentId = Comments insert Comment(discussionId, slug, fullSlug, posted,
+    text, AuthorInfo(author.id, author.name))
 ```
 
 #### Get a document by id
 
 ```kotlin
-db {
-    val comment = Comments get commentId
-}
+val comment = Comments get commentId
 ```
 
 #### Get a list of documents by a filter expression
 
 ```kotlin
-db {
-    for (comment in Comments filter { AuthorInfo.ID eq author.id } sort { Posted } drop 10 take 5) {
-    }
+for (comment in Comments filter { AuthorInfo.ID eq authorId } sort { Posted } drop 10 take 5) {
 }
 ```
 
 #### Get selected fields by document id
 
 ```kotlin
-db {
-    val authorInfo = Comments columns { AuthorInfo } get commentId
-}
+val authorInfo = Comments columns { AuthorInfo } get commentId
 ```
 
 #### Get selected fields by a filter expression
 
 ```kotlin
-db {
-    for ((slug, fullSlug, posted, text, authorInfo) in Comments columns { Slug +
-        FullSlug + Posted + Text + AuthorInfo } filter { DiscussionID eq discussion Id }) {
-    }
+for ((slug, fullSlug, posted, text, authorInfo) in Comments columns { Slug +
+    FullSlug + Posted + Text + AuthorInfo } filter { DiscussionID eq discussion Id }) {
 }
 ```
 
 #### Update selected fields by document id
 
 ```kotlin
-db {
-    Comments columns { Posted } find commentId set newDate
-}
+Comments columns { Posted } find commentId set newDate
 ```
 
 ```kotlin
-db {
-    Comments columns { Posted + Text } find commentId set values(newDate, newText)
-}
+Comments columns { Posted + Text } find commentId set values(newDate, newText)
 ```
