@@ -14,22 +14,12 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" exported="" name="Gradle: aws-java-sdk-1.3.25" level="project" />
-    <orderEntry type="library" exported="" name="Gradle: commons-logging-1.1.1" level="project" />
-    <orderEntry type="library" exported="" name="Gradle: jackson-core-asl-1.8.9" level="project" />
-    <orderEntry type="library" exported="" name="Gradle: httpcore-4.1" level="project" />
-    <orderEntry type="library" exported="" name="Gradle: httpclient-4.1" level="project" />
-    <orderEntry type="library" exported="" name="Gradle: jackson-mapper-asl-1.8.9" level="project" />
-    <orderEntry type="library" exported="" name="Gradle: commons-codec-1.4" level="project" />
-    <orderEntry type="library" exported="" name="Gradle: commons-pool-1.6" level="project" />
-    <orderEntry type="library" exported="" name="Gradle: jedis-2.2.1" level="project" />
     <orderEntry type="library" exported="" name="Gradle: mongo-java-driver-2.10.1" level="project" />
-    <orderEntry type="library" exported="" name="Gradle: cglib-3.1" level="project" />
-    <orderEntry type="library" exported="" name="Gradle: asm-4.2" level="project" />
-    <orderEntry type="library" scope="TEST" name="Gradle: spek-0.1-SNAPSHOT" level="project" />
-    <orderEntry type="library" scope="TEST" name="Gradle: unresolved_dependency___spek_spek_core_unspecified" level="project" />
-    <orderEntry type="library" exported="" name="Gradle: kotlin-stdlib-0.6.2517" level="project" />
-    <orderEntry type="library" exported="" name="Gradle: kotlin-runtime-0.6.2517" level="project" />
+    <orderEntry type="library" exported="" name="Gradle: kotlin-stdlib-0.1-SNAPSHOT" level="project" />
+    <orderEntry type="library" exported="" name="Gradle: kotlin-runtime-0.1-SNAPSHOT" level="project" />
+    <orderEntry type="library" scope="TEST" name="Gradle: hamcrest-core-1.3" level="project" />
+    <orderEntry type="library" scope="TEST" name="Gradle: junit-4.11" level="project" />
+    <orderEntry type="library" exported="" name="Gradle: joda-time-2.3" level="project" />
   </component>
 </module>
 
