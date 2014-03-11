@@ -1,9 +1,9 @@
 # Kotlin NoSQL
 
 Kotlin NoSQL is a NoSQL database query and access library for [Kotlin](http://github.com/JetBrains/Kotlin) language.
-It offers a powerful DSL for working with key-value, column and document NoSQL databases.
+It offers a powerful and type-safe DSL for working with key-value, column and document NoSQL databases.
 
-The following NoSQL databases are supported for now:
+The following NoSQL databases are supported now:
 
 - MongoDB
 
@@ -13,8 +13,8 @@ The following key principles lie behind Kotlin NoSQL:
 
 #### First-class query
 
-Unlike to ORM frameworks with its persistence strategy
-Kotlin NoSQL uses completely different based on immutability of data and statically-typed queries.
+Unlike to ORM frameworks with its object persistence strategy
+Kotlin NoSQL uses another approach based on immutability of data and queries.
 Each operation on data may be described via a query:
 
 ```kotlin
@@ -23,8 +23,7 @@ Albums columns { Details.Tracks } filter { Details.Artist.Title eq artistTitle }
 
 #### Type-safety
 
-Once you've defined a schema you can access documents or its part via statically-typed queries,
-getting type-safe results:
+Once you've defined a schema you can access documents via statically-typed queries getting type-safe results:
 
 ```kotlin
 for (product in Products filter { Pricing.Savings ge 1000 }) {
@@ -43,8 +42,7 @@ for ((slug, fullSlug, posted, text, authorInfo) in Comments columns { Slug +
 
 #### Immutability
 
-Queries enable you to access and modify any part of documents right away,
-without a necessity to change its state to memory.
+Queries enable you to access and modify any part of documents without a necessity to load and change its state to memory:
 
 ```kotlin
 Products columns { Pricing.Retail + Pricing.Savings } find productId set values(newRetail, newSavings)
