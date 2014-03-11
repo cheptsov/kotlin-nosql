@@ -32,7 +32,8 @@ To use it with Gradle insert the following in your build.gradle:
 ```groovy
 dependencies {
     compile 'org.jetbrains.kotlin:kotlin-nosql:$version'
-}```
+}
+```
 
 ## Getting Started
 
