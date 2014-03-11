@@ -116,6 +116,7 @@ class MongoDBSession(val db: DB) : Session() {
         return doc
     }
 
+    // TODO TODO TODO Real iterator instead of list
     override fun <T : DocumentSchema<P, C>, P, C> T.filter(op: T.() -> Op): PaginatedIterator<C> {
         val collection = db.getCollection(this.name)!!
         val query = getQuery(op())
@@ -138,6 +139,10 @@ class MongoDBSession(val db: DB) : Session() {
             }
         })
     }
+
+    /*override fun <T: AbstractTableSchema, A: AbstractColumn<List<C>, T, C>, C>iterator(rangeQuery: RangeQuery<T, A, C>): Iterator<C> {
+       throw new UnsupportedOperationException()
+    }*/
 
     private fun getQuery(op: Op, removePrefix: String = ""): BasicDBObject {
         val query = BasicDBObject()
@@ -650,26 +655,6 @@ class MongoDBSession(val db: DB) : Session() {
         }
     }
 
-/*
-    override fun <T : AbstractTableSchema, A, B> Template2<T, A, B>.forEach(statement: (A, B) -> Unit) {
-        throw UnsupportedOperationException()
-    }
-    override fun <T : AbstractTableSchema, A, B> Template2<T, A, B>.iterator(): Iterator<Pair<A, B>> {
-        throw UnsupportedOperationException()
-    }
-    override fun <T : AbstractTableSchema, A, B, M> Template2<T, A, B>.map(statement: (A, B) -> M): List<M> {
-        throw UnsupportedOperationException()
-    }
-    override fun <T : AbstractTableSchema, A, B> Query2<T, A, B>.forEach(statement: (A, B) -> Unit) {
-        throw UnsupportedOperationException()
-    }
-    override fun <T : AbstractTableSchema, A, B> Query2<T, A, B>.iterator(): Iterator<Pair<A, B>> {
-        throw UnsupportedOperationException()
-    }
-*/
-    /*override fun <T : AbstractTableSchema, C> RangeQuery<T, C>.forEach(st: (C) -> Unit) {
-        throw UnsupportedOperationException()
-    }*/
     override fun <T : AbstractTableSchema, A: AbstractColumn<CC, T, out Any?>, CC: Collection<C>, C> Query1<T, A, CC>.add(c: C) {
         // TODO TODO TODO
         update(array(Pair(a, listOf(c))), op!!, "\$pushAll")
@@ -703,7 +688,7 @@ class MongoDBSession(val db: DB) : Session() {
     }
 
     // TODO TODO TODO
-    /*fun <T: PolymorphicSchema<P, V>, P, V> T.aggregate (body: AggregateBody<T>.() -> Unit) {
+    /*fun <T: DocumentSchema<P, V>, P, V> T.aggregate (body: AggregateBody<T>.() -> Unit) {
 
     }
 

@@ -17,12 +17,6 @@ abstract class Session () {
 
     abstract fun <T : AbstractTableSchema, A, B> Query2<T, A, B>.set(c: Pair<A, B>)
 
-    //abstract fun <T : AbstractTableSchema, C> AbstractColumn<C, T, *>.forEach(statement: (C) -> Unit)
-
-    //abstract fun <T : AbstractTableSchema, C> AbstractColumn<C, T, *>.iterator(): Iterator<C>
-
-    //abstract fun <T : AbstractTableSchema, C, M> AbstractColumn<C, T, *>.map(statement: (C) -> M): List<M>
-
     abstract fun <T : TableSchema<P>, P, C> AbstractColumn<C, T, *>.get(id: P): C
 
     abstract fun <T : TableSchema<P>, P, A, B> Template2<T, A, B>.get(id: P): Pair<A, B>
@@ -35,15 +29,10 @@ abstract class Session () {
     abstract fun <T : TableSchema<P>, P, A, B, C, D, E, F, G, H, J> Template9<T, A, B, C, D, E, F, G, H, J>.get(id: P): Nonuple<A, B, C, D, E, F, G, H, J>
     abstract fun <T : TableSchema<P>, P, A, B, C, D, E, F, G, H, J, K> Template10<T, A, B, C, D, E, F, G, H, J, K>.get(id: P): Decuple<A, B, C, D, E, F, G, H, J, K>
 
-    //abstract fun <T : AbstractTableSchema, A, B> Template2<T, A, B>.forEach(statement: (A, B) -> Unit)
-    //abstract fun <T : AbstractTableSchema, A, B> Template2<T, A, B>.iterator(): Iterator<Pair<A, B>>
-    //abstract fun <T : AbstractTableSchema, A, B, M> Template2<T, A, B>.map(statement: (A, B) -> M): List<M>
-
-
-    //abstract fun <T : AbstractTableSchema, A, B> Query2<T, A, B>.forEach(statement: (A, B) -> Unit)
-    //abstract fun <T : AbstractTableSchema, A, B> Query2<T, A, B>.iterator(): Iterator<Pair<A, B>>
-
     abstract fun <T : AbstractTableSchema, C> iterator(query: Query<C, T>): Iterator<C>
+
+    // TODO TODO TODO Implement range
+    // abstract fun <T: AbstractTableSchema, A: AbstractColumn<List<C>, T, C>, C>iterator(rangeQuery: RangeQuery<T, A, C>): Iterator<C>
 
     fun <T : AbstractTableSchema, A, B> Template2<T, A, B>.filter(op: T.() -> Op): Query2<T, A, B> {
         return Query2<T, A, B>(a, b, Schema.current<T>().op())
@@ -125,21 +114,11 @@ abstract class Session () {
         return Query1<T, A, C>(this, Schema.current<T>().pk eq id)
     }
 
-    /*fun <T : AbstractTableSchema, A: AbstractColumn<List<C>, T, C>, C> Query1<T, A, List<C>>.get(range: () -> IntRange): List<C> {
-        val query = RangeQuery<T, A, C>(this, range())
-        val results = ArrayList<C>()
-        query.forEach {
-            results.add(it)
-        }
-        return results
-    }
+    //abstract fun <T : AbstractTableSchema, A: AbstractColumn<List<C>, T, C>, C> RangeQuery<T, A, C>.forEach(st: (c: C) -> Unit)
 
-    abstract fun <T : AbstractTableSchema, A: AbstractColumn<List<C>, T, C>, C> RangeQuery<T, A, C>.forEach(st: (c: C) -> Unit)
-    */
-
-    fun <T : AbstractTableSchema, A: AbstractColumn<List<C>, T, C>, C> Query1<T, A, List<C>>.range(range: IntRange): RangeQuery<T, A, C> {
+    /*fun <T : AbstractTableSchema, A: AbstractColumn<List<C>, T, C>, C> Query1<T, A, List<C>>.range(range: IntRange): RangeQuery<T, A, C> {
         return RangeQuery<T, A, C>(this, range)
-    }
+    }*/
 
     fun <A, B> values(a: A, b: B): Pair<A, B> {
         return Pair(a, b)
