@@ -155,8 +155,8 @@ Comments columns { Posted + Text } find commentId set values(newDate, newText)
 #### Define a base schema
 
 ```kotlin
-open class ProductSchema<V, T : MongoDBSchema>(javaClass: Class<V>, discriminator: String) : DocumentSchema<String, V>("products",
-            javaClass, discriminator = Discriminator(string("type"), discriminator)) {
+open class ProductSchema<V, T : Schema>(javaClass: Class<V>, discriminator: String) : MongoDBSchema<V>("products",
+            discriminator = Discriminator(string("type"), discriminator)) {
     val SKU = string<T>("sku")
     val Title = string<T>("title")
     val Description = string<T>("description")
