@@ -37,7 +37,7 @@ for ((slug, fullSlug, posted, text, authorInfo) in Comments columns { Slug +
 
 #### Immutability
 
-Queries enable you to access and modify any parts of documents, without a necessity to keep, load and change state in memory:
+Queries enable you to access and modify any part of document(s), without loading and changing its state in memory:
 
 ```kotlin
 Products columns { Pricing.Retail + Pricing.Savings } find productId set values(newRetail, newSavings)
