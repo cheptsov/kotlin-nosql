@@ -13,7 +13,7 @@ Unlike to ORM frameworks with its object persistence strategy Kotlin NoSQL uses 
 queries. Each operation on data may be described via a statically-typed query:
 
 ```kotlin
-Albums columns { Details.Tracks } filter { Details.Artist.Title eq artistTitle } delete { Duration eq 200 }
+Albums columns { Details.Tracks } filter { Details.ArtistId eq artistId } delete { Duration lt 200 }
 ```
 
 #### Type-safety
