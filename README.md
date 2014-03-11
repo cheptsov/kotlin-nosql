@@ -13,17 +13,18 @@ The following key principles lie behind Kotlin NoSQL:
 
 #### First-class query
 
+Unlike to ORM frameworks with its persistence strategy
+Kotlin NoSQL uses completely different based on immutability of data and statically-typed queries.
+Each operation on data may be described via a query:
+
 ```kotlin
 Albums columns { Details.Tracks } filter { Details.Artist.Title eq artistTitle } delete { Duration eq 200 }
 ```
 
-#### Immutability
-
-```kotlin
-Products columns { Pricing.Retail + Pricing.Savings } find albumId set values(newRetail, newSavings)
-```
-
 #### Type-safety
+
+Once you've defined a schema you can access documents or its part via statically-typed queries,
+getting type-safe results:
 
 ```kotlin
 for (product in Products filter { Pricing.Savings ge 1000 }) {
@@ -35,12 +36,19 @@ for (product in Products filter { Pricing.Savings ge 1000 }) {
 ```
 
 ```kotlin
-for ((artistId, retailPricing) in Albums columns { Details.ArtistId +
-        Details.Pricing.Retail } filter { Pricing.Savings ge 1000 }) {
-    // ...
+for ((slug, fullSlug, posted, text, authorInfo) in Comments columns { Slug +
+    FullSlug + Posted + Text + AuthorInfo } filter { DiscussionID eq discussion Id }) {
 }
 ```
 
+#### Immutability
+
+Queries enable you to access and modify any part of documents right away,
+without a necessity to change its state to memory.
+
+```kotlin
+Products columns { Pricing.Retail + Pricing.Savings } find productId set values(newRetail, newSavings)
+```
 
 ## Download
 
