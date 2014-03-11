@@ -231,7 +231,7 @@ val albumId = Products insert Album(sku = "00e8da9b", title = "A Love Supreme", 
     details = Details(title = "A Love Supreme [Original Recording Reissued]",
             artistId = arId, genre = setOf("Jazz", "General"),
             tracks = listOf(Track("A Love Supreme Part I: Acknowledgement", 100),
-                    Track("A Love Supreme Part II - Resolution", 200),
+                    Track("A Love Supreme Part II: Resolution", 200),
                     Track("A Love Supreme, Part III: Pursuance", 300))))
 ```
 
