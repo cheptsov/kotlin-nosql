@@ -225,7 +225,7 @@ class Details(val title: String, val artistId: Id, val genre: Set<String>, val t
 #### Insert a document
 
 ```kotlin
-val albumId = Products insert Album(sku = "00e8da9b", title = "A Love Supreme", description = "by John Coltrane",
+val productId = Products insert Album(sku = "00e8da9b", title = "A Love Supreme", description = "by John Coltrane",
     asin = "B0000A118M", shipping = Shipping(weight = 6, dimensions = Dimensions(10, 10, 1)),
     pricing = Pricing(list = 1200, retail = 1100, savings = 100, pctSavings = 8),
     details = Details(title = "A Love Supreme [Original Recording Reissued]",
