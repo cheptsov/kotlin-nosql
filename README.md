@@ -187,12 +187,7 @@ open class ProductSchema<V, T : Schema>(javaClass: Class<V>, discriminator: Stri
 object Products : ProductSchema<Product, Products>(javaClass(), "")
 
 abstract class Product(val id: String? = null, val sku: String, val title: String, val description: String,
-                       val asin: String, val available: Boolean, val cost: Double,
-                       val createdAtDate: LocalDate, val nullableBooleanNoValue: Boolean?,
-                       val nullableBooleanWithValue: Boolean?,
-                       val nullableDateNoValue: LocalDate?, val nullableDateWithValue: LocalDate?,
-                       val nullableDoubleNoValue: Double?, val nullableDoubleWithValue: Double?,
-                       val shipping: Shipping, val pricing: Pricing)
+                       val asin: String, val shipping: Shipping, val pricing: Pricing)
 
 class Shipping(val weight: Int, val dimensions: Dimensions)
 
@@ -225,6 +220,19 @@ class Album(sku: String, title: String, description: String, asin: String, shipp
     pricing: Pricing, val details: Details) : Product(sku, title, description, asin, shipping, pricing)
 
 class Details(val title: String, val artistId: Id, val genre: Set<String>, val tracks: List<Track>)
+```
+
+#### Insert a document
+
+```kotlin
+val albumId = Products insert Album(sku = "00e8da9b", title = "A Love Supreme", description = "by John Coltrane",
+    asin = "B0000A118M", shipping = Shipping(weight = 6, dimensions = Dimensions(10, 10, 1)),
+    pricing = Pricing(list = 1200, retail = 1100, savings = 100, pctSavings = 8),
+    details = Details(title = "A Love Supreme [Original Recording Reissued]",
+            artistId = arId, genre = setOf("Jazz", "General"),
+            tracks = listOf(Track("A Love Supreme Part I: Acknowledgement", 100),
+                    Track("A Love Supreme Part II - Resolution", 200),
+                    Track("A Love Supreme, Part III: Pursuance", 300))))
 ```
 
 #### Access documents via an abstract schema
