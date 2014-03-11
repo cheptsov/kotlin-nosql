@@ -10,7 +10,7 @@ The following key principles lie behind Kotlin NoSQL:
 #### First-class query
 
 Unlike to ORM frameworks with its object persistence strategy Kotlin NoSQL uses another approach: immutability and
-statically-typed queries. Each operation on a set of data may be described via a query:
+queries. Each operation on data may be described via a statically-typed query:
 
 ```kotlin
 Albums columns { Details.Tracks } filter { Details.Artist.Title eq artistTitle } delete { Duration eq 200 }
@@ -18,7 +18,7 @@ Albums columns { Details.Tracks } filter { Details.Artist.Title eq artistTitle }
 
 #### Type-safety
 
-Once have a schema defined you can access documents via queries, always getting type-safe results:
+Once you have a schema defined you can access documents with queries, always getting type-safe results:
 
 ```kotlin
 for (product in Products filter { Pricing.Savings ge 1000 }) {
@@ -37,7 +37,7 @@ for ((slug, fullSlug, posted, text, authorInfo) in Comments columns { Slug +
 
 #### Immutability
 
-Queries enable you to access and modify any parts of documents, without a necessity to load and change its state in memory:
+Queries enable you to access and modify any parts of documents, without a necessity to keep, load and change state in memory:
 
 ```kotlin
 Products columns { Pricing.Retail + Pricing.Savings } find productId set values(newRetail, newSavings)
@@ -53,21 +53,21 @@ Feedback is welcome.
 
 ## Download
 
-To use it with Maven insert the following in your pom.xml file:
+To use it with Maven insert the following code in your pom.xml file:
 
 ```xml
 <dependency>
     <groupId>org.jetbrains.kotlin</groupId>
     <artifactId>kotlin-nosql</artifactId>
-    <version>$version</version>
+    <version>0.1-SNAPSHOT</version>
  </dependency>
 ```
 
-To use it with Gradle insert the following in your build.gradle:
+To use it with Gradle insert the following code in your build.gradle:
 
 ```groovy
 dependencies {
-    compile 'org.jetbrains.kotlin:kotlin-nosql:$version'
+    compile 'org.jetbrains.kotlin:kotlin-nosql:0.1-SNAPSHOT'
 }
 ```
 
