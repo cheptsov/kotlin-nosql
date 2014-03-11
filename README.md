@@ -35,7 +35,7 @@ for (product in Products filter { Pricing.Savings ge 1000 }) {
 ```
 
 ```kotlin
-for ((artistTitle, retailPricing) in Albums columns { Details.Artist.Title +
+for ((artistId, retailPricing) in Albums columns { Details.ArtistId +
         Details.Pricing.Retail } filter { Pricing.Savings ge 1000 }) {
     // ...
 }
@@ -70,7 +70,7 @@ dependencies {
 
 ```kotlin
 object Comments: MongoDBSchema<Comment>("comments", javaClass()) {
-    val DiscussionID = objectId("discussion_id")
+    val DiscussionID = id("discussion_id")
     val Slug = string("slug")
     val FullSlug = string("full_slug")
     val Posted = dateTime("posted")
@@ -79,15 +79,15 @@ object Comments: MongoDBSchema<Comment>("comments", javaClass()) {
     val AuthorInfo = AuthorInfoColumn()
 
     class AuthorInfoColumn() : Column<AuthorInfo, Comments>("author", javaClass()) {
-        val ID = objectId("id")
+        val ID = id("id")
         val Name = string("name")
     }
 }
 
-class Comment(val: id: ObjectId, val discussionId: ObjectId, val slug: String,
+class Comment(val: id: Id? = null, val discussionId: Id, val slug: String,
     val fullSlug: String, posted: DateTime, text: String, authorInfo: AuthorInfo)
 
-class AuthorInfo(val: id: ObjectId, val name: String)
+class AuthorInfo(val: id: Id, val name: String)
 ```
 
 #### Define a database
@@ -142,4 +142,99 @@ Comments columns { Posted } find commentId set newDate
 
 ```kotlin
 Comments columns { Posted + Text } find commentId set values(newDate, newText)
+```
+
+### Advanced
+
+#### Define a base schema
+
+```kotlin
+open class ProductSchema<V, T : MongoDBSchema>(javaClass: Class<V>, discriminator: String) : DocumentSchema<String, V>("products",
+            javaClass, discriminator = Discriminator(string("type"), discriminator)) {
+    val SKU = string<T>("sku")
+    val Title = string<T>("title")
+    val Description = string<T>("description")
+    val ASIN = string<T>("asin")
+
+    val Shipping = ShippingColumn<T>()
+    val Pricing = PricingColumn<T>()
+
+    class ShippingColumn<T : Schema>() : Column<Shipping, T>("shipping", javaClass()) {
+        val Weight = integer<T>("weight")
+        val Dimensions = DimensionsColumn<T>()
+    }
+
+    class DimensionsColumn<T : Schema>() : Column<Dimensions, T>("dimensions", javaClass()) {
+        val Width = integer<T>("width")
+        val Height = integer<T>("height")
+        val Depth = integer<T>("depth")
+    }
+
+    class PricingColumn<T : Schema>() : Column<Pricing, T>("pricing", javaClass()) {
+        val List = integer<T>("list")
+        val Retail = integer<T>("retail")
+        val Savings = integer<T>("savings")
+        val PCTSavings = integer<T>("pct_savings")
+    }
+}
+
+object Products : ProductSchema<Product, Products>(javaClass(), "")
+
+abstract class Product(val id: String? = null, val sku: String, val title: String, val description: String,
+                       val asin: String, val available: Boolean, val cost: Double,
+                       val createdAtDate: LocalDate, val nullableBooleanNoValue: Boolean?,
+                       val nullableBooleanWithValue: Boolean?,
+                       val nullableDateNoValue: LocalDate?, val nullableDateWithValue: LocalDate?,
+                       val nullableDoubleNoValue: Double?, val nullableDoubleWithValue: Double?,
+                       val shipping: Shipping, val pricing: Pricing)
+
+class Shipping(val weight: Int, val dimensions: Dimensions)
+
+class Dimensions(val width: Int, val height: Int, val depth: Int)
+
+class Pricing(val list: Int, val retail: Int, val savings: Int, val pctSavings: Int)
+```
+
+#### Define an inherited schema
+
+```kotlin
+object Albums : ProductSchema<Album, Albums>(javaClass(), discriminator = "Audio Album") {
+    val Details = DetailsColumn<Albums>()
+
+    class DetailsColumn<T : Schema>() : Column<Details, T>("details", javaClass()) {
+        val Title = string<T>("title")
+        val ArtistId = id<T>("artistId")
+        val Genre = setOfString<T>("genre")
+
+        val Tracks = TracksColumn<T>()
+    }
+
+    class TracksColumn<T : Schema>() : ListColumn<Track, T>("tracks", javaClass()) {
+        val Title = string<T>("title")
+        val Duration = integer<T>("duration")
+    }
+}
+
+class Album(sku: String, title: String, description: String, asin: String, shipping: Shipping,
+    pricing: Pricing, val details: Details) : Product(sku, title, description, asin, shipping, pricing)
+
+class Details(val title: String, val artistId: Id, val genre: Set<String>, val tracks: List<Track>)
+```
+
+#### Access documents via abstract schema
+
+```kotlin
+val product = Products get productId
+    if (product is Album) {
+        // ...
+    }
+}
+```
+
+#### Access documents via inherited schema
+
+```kotlin
+for (albums in Albums filter { Details.ArtistId eq artistId }) {
+    // ...
+}
 ```
