@@ -1,10 +1,11 @@
 package kotlin.nosql
 
 import java.util.ArrayList
-import java.util.HashMap
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
-import java.util.Date
+import org.joda.time.LocalDate
+import org.joda.time.LocalTime
+import org.joda.time.DateTime
 
 abstract class Schema(val name: String) {
     // TODO TODO TODO
@@ -80,8 +81,14 @@ fun <T: Schema> T.string(name: String): AbstractColumn<String, T, String> = Abst
 fun <T: Schema> boolean(name: String): AbstractColumn<Boolean, T, Boolean> = AbstractColumn(name, javaClass<Boolean>(), ColumnType.BOOLEAN)
 fun <T: Schema> T.boolean(name: String): AbstractColumn<Boolean, T, Boolean> = AbstractColumn(name, javaClass<Boolean>(), ColumnType.BOOLEAN)
 
-fun <T: Schema> date(name: String): AbstractColumn<Date, T, Date> = AbstractColumn(name, javaClass<Date>(), ColumnType.DATE)
-fun <T: Schema> T.date(name: String): AbstractColumn<Date, T, Date> = AbstractColumn(name, javaClass<Date>(), ColumnType.DATE)
+fun <T: Schema> date(name: String): AbstractColumn<LocalDate, T, LocalDate> = AbstractColumn(name, javaClass<LocalDate>(), ColumnType.DATE)
+fun <T: Schema> T.date(name: String): AbstractColumn<LocalDate, T, LocalDate> = AbstractColumn(name, javaClass<LocalDate>(), ColumnType.DATE)
+
+fun <T: Schema> time(name: String): AbstractColumn<LocalTime, T, LocalTime> = AbstractColumn(name, javaClass<LocalTime>(), ColumnType.TIME)
+fun <T: Schema> T.time(name: String): AbstractColumn<LocalTime, T, LocalTime> = AbstractColumn(name, javaClass<LocalTime>(), ColumnType.TIME)
+
+fun <T: Schema> dateTime(name: String): AbstractColumn<DateTime, T, DateTime> = AbstractColumn(name, javaClass<DateTime>(), ColumnType.DATE_TIME)
+fun <T: Schema> T.dateTime(name: String): AbstractColumn<DateTime, T, DateTime> = AbstractColumn(name, javaClass<DateTime>(), ColumnType.DATE_TIME)
 
 fun <T: Schema> double(name: String): AbstractColumn<Double, T, Double> = AbstractColumn(name, javaClass<Double>(), ColumnType.DOUBLE)
 fun <T: Schema> T.double(name: String): AbstractColumn<Double, T, Double> = AbstractColumn(name, javaClass<Double>(), ColumnType.DOUBLE)
@@ -110,8 +117,14 @@ fun <T: Schema> T.nullableInteger(name: String): NullableColumn<Int, T> = Nullab
 fun <T: Schema> nullableBoolean(name: String): NullableColumn<Boolean, T> = NullableColumn(name, javaClass<Boolean>(), ColumnType.BOOLEAN)
 fun <T: Schema> T.nullableBoolean(name: String): NullableColumn<Boolean, T> = NullableColumn(name, javaClass<Boolean>(), ColumnType.BOOLEAN)
 
-fun <T: Schema> nullableDate(name: String): NullableColumn<Date, T> = NullableColumn(name, javaClass<Date>(), ColumnType.DATE)
-fun <T: Schema> T.nullableDate(name: String): NullableColumn<Date, T> = NullableColumn(name, javaClass<Date>(), ColumnType.DATE)
+fun <T: Schema> nullableDate(name: String): NullableColumn<LocalDate, T> = NullableColumn(name, javaClass<LocalDate>(), ColumnType.DATE)
+fun <T: Schema> T.nullableDate(name: String): NullableColumn<LocalDate, T> = NullableColumn(name, javaClass<LocalDate>(), ColumnType.DATE)
+
+fun <T: Schema> nullableTime(name: String): NullableColumn<LocalTime, T> = NullableColumn(name, javaClass<LocalTime>(), ColumnType.TIME)
+fun <T: Schema> T.nullableTime(name: String): NullableColumn<LocalTime, T> = NullableColumn(name, javaClass<LocalTime>(), ColumnType.TIME)
+
+fun <T: Schema> nullableDateTime(name: String): NullableColumn<DateTime, T> = NullableColumn(name, javaClass<DateTime>(), ColumnType.DATE_TIME)
+fun <T: Schema> T.nullableDateTime(name: String): NullableColumn<DateTime, T> = NullableColumn(name, javaClass<DateTime>(), ColumnType.DATE_TIME)
 
 fun <T: Schema> nullableDouble(name: String): NullableColumn<Double, T> = NullableColumn(name, javaClass<Double>(), ColumnType.DOUBLE)
 fun <T: Schema> T.nullableDouble(name: String): NullableColumn<Double, T> = NullableColumn(name, javaClass<Double>(), ColumnType.DOUBLE)

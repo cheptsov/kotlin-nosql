@@ -3,7 +3,7 @@ package kotlin.nosql.mongodb
 import org.spek.Spek
 import kotlin.test.assertEquals
 import kotlin.nosql.*
-import java.util.Date
+import org.joda.time.LocalDate
 
 class MongoDBSpek : Spek() {
     open class ProductSchema<V, T : Schema>(javaClass: Class<V>, discriminator: String) : DocumentSchema<String, V>("products",
@@ -70,9 +70,9 @@ class MongoDBSpek : Spek() {
 
     abstract class Product(val sku: String, val title: String, val description: String,
                            val asin: String, val available: Boolean, val cost: Double,
-                           val createdAtDate: Date, val nullableBooleanNoValue: Boolean?,
+                           val createdAtDate: LocalDate, val nullableBooleanNoValue: Boolean?,
                            val nullableBooleanWithValue: Boolean?,
-                           val nullableDateNoValue: Date?, val nullableDateWithValue: Date?,
+                           val nullableDateNoValue: LocalDate?, val nullableDateWithValue: LocalDate?,
                            val nullableDoubleNoValue: Double?, val nullableDoubleWithValue: Double?,
                            val shipping: Shipping, val pricing: Pricing) {
         val id: String? = null
@@ -88,9 +88,9 @@ class MongoDBSpek : Spek() {
     }
 
     class Album(sku: String, title: String, description: String, asin: String, available: Boolean,
-                cost: Double, createdAtDate: Date,
+                cost: Double, createdAtDate: LocalDate,
                 nullableBooleanNoValue: Boolean?, nullableBooleanWithValue: Boolean?,
-                nullableDateNoValue: Date?, nullableDateWithValue: Date?,
+                nullableDateNoValue: LocalDate?, nullableDateWithValue: LocalDate?,
                 nullableDoubleNoValue: Double?, nullableDoubleWithValue: Double?, shipping: Shipping, pricing: Pricing,
                 val details: Details) : Product(sku, title, description, asin, available, cost, createdAtDate,
             nullableBooleanNoValue, nullableBooleanWithValue, nullableDateNoValue, nullableDateWithValue,
@@ -123,8 +123,8 @@ class MongoDBSpek : Spek() {
                         assert(arId.length > 0)
                     }
                     val aId = Products insert Album(sku = "00e8da9b", title = "A Love Supreme", description = "by John Coltrane",
-                            asin = "B0000A118M", available = true, cost = 1.23, createdAtDate = Date(2014, 3, 8), nullableBooleanNoValue = null,
-                            nullableBooleanWithValue = false, nullableDateNoValue = null, nullableDateWithValue = Date(2014, 3, 7),
+                            asin = "B0000A118M", available = true, cost = 1.23, createdAtDate = LocalDate(2014, 3, 8), nullableBooleanNoValue = null,
+                            nullableBooleanWithValue = false, nullableDateNoValue = null, nullableDateWithValue = LocalDate(2014, 3, 7),
                             nullableDoubleNoValue = null, nullableDoubleWithValue = 1.24,
                             shipping = Shipping(weight = 6, dimensions = Dimensions(10, 10, 1)),
                             pricing = Pricing(list = 1200, retail = 1100, savings = 100, pctSavings = 8),
@@ -148,9 +148,9 @@ class MongoDBSpek : Spek() {
                 assertEquals("00e8da9b", results[0].sku)
                 assertEquals(true, results[0].available)
                 assertEquals(1.23, results[0].cost)
-                assertEquals(Date(2014, 3, 8), results[0].createdAtDate)
+                assertEquals(LocalDate(2014, 3, 8), results[0].createdAtDate)
                 assert(results[0].nullableDateNoValue == null)
-                assertEquals(Date(2014, 3, 7), results[0].nullableDateWithValue)
+                assertEquals(LocalDate(2014, 3, 7), results[0].nullableDateWithValue)
                 assert(results[0].nullableDoubleNoValue == null)
                 assertEquals(1.24, results[0].nullableDoubleWithValue)
                 assert(results[0].nullableBooleanNoValue == null)

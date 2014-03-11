@@ -14,6 +14,10 @@ import kotlin.nosql.util.*
 import java.util.regex.Pattern
 import java.util.Date
 import java.util.concurrent.atomic.AtomicReference
+import org.joda.time.DateTime
+import org.joda.time.format.ISODateTimeFormat
+import org.joda.time.LocalDate
+import org.joda.time.LocalTime
 
 class PaginatedIterator<X>(val callback: (drop: Int?, take: Int?) -> Iterator<X>) : Iterator<X> {
     var drop: Int? = null
@@ -95,7 +99,10 @@ class MongoDBSession(val db: DB) : Session() {
                 val value = field.get(o)
                 if (value != null) {
                     if (column.columnType.primitive) {
-                        doc.append(column.name, value)
+                        doc.append(column.name, when (value) {
+                            is DateTime, is LocalDate, is LocalTime -> value.toString()
+                            else -> value
+                        })
                     } else if (column.columnType.iterable) {
                         val list = BasicDBList()
                         for (v in (value as Iterable<Any>)) {
@@ -343,7 +350,17 @@ class MongoDBSession(val db: DB) : Session() {
                     val columnValue: Any? = if (column is PrimaryKeyColumn<*, *>)
                         doc.get(column.name)?.toString()
                     else if (column.columnType.primitive) {
-                        doc.get(column.name)
+                        val value = doc.get(column.name)
+                        if (value != null) {
+                            when (column.columnType) {
+                                ColumnType.DATE -> LocalDate(value.toString())
+                                ColumnType.TIME -> LocalTime(value.toString())
+                                ColumnType.DATE_TIME -> DateTime(value.toString())
+                                else -> doc.get(column.name)
+                            }
+                        } else {
+                            value
+                        }
                     } else {
                         getObject(doc.get(column.name) as DBObject, column as Column<Any?, T>)
                     }
@@ -365,7 +382,9 @@ class MongoDBSession(val db: DB) : Session() {
             when (constructorParamTypes[index].getName()) {
                 "int" -> 0
                 "java.lang.String" -> ""
-                "java.util.Date" -> Date()
+                "org.joda.time.LocalDate" -> LocalDate()
+                "org.joda.time.LocalTime" -> LocalTime()
+                "org.joda.time.DateTime" -> DateTime()
                 "double" -> 0.toDouble()
                 "float" -> 0.toFloat()
                 "long" -> 0.toLong()
