@@ -5,7 +5,7 @@ It offers a powerful and type-safe DSL for working with key-value, column and do
 
 The following NoSQL databases are supported now:
 
-- MongoDB
+- [MongoDB](https://www.mongodb.org/)
 
 ## Principles
 
@@ -23,7 +23,7 @@ Albums columns { Details.Tracks } filter { Details.Artist.Title eq artistTitle }
 
 #### Type-safety
 
-Once you've defined a schema you can access documents via statically-typed queries getting type-safe results:
+Once you've defined a schema you can access documents via statically-typed queries always getting type-safe results:
 
 ```kotlin
 for (product in Products filter { Pricing.Savings ge 1000 }) {
@@ -150,7 +150,7 @@ Comments columns { Posted } find commentId set newDate
 Comments columns { Posted + Text } find commentId set values(newDate, newText)
 ```
 
-### Advanced
+### Inheritance
 
 #### Define a base schema
 
@@ -227,7 +227,7 @@ class Album(sku: String, title: String, description: String, asin: String, shipp
 class Details(val title: String, val artistId: Id, val genre: Set<String>, val tracks: List<Track>)
 ```
 
-#### Access documents via abstract schema
+#### Access documents via an abstract schema
 
 ```kotlin
 val product = Products get productId
@@ -237,7 +237,7 @@ val product = Products get productId
 }
 ```
 
-#### Access documents via inherited schema
+#### Access documents via an inherited schema
 
 ```kotlin
 for (albums in Albums filter { Details.ArtistId eq artistId }) {
