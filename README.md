@@ -1,252 +1,127 @@
-# Kotlin NoSQL DSL
+# Kotlin NoSQL
 
-A type-safe Kotlin DSL to access NoSQL databases.
+Kotlin NoSQL is a NoSQL database query and access library for [Kotlin](http://github.com/JetBrains/Kotlin) language.
+It offers a powerful DSL for working with key-value, column and document NoSQL databases.
 
-## Examples
+The key principles of Kotlin NoSQL:
 
-### Key-value schema
+### First-class query
 
-Define schema:
+### Immutability
 
-```kotlin
-object Global: KeyValueSchema("global") {
-    val UserId = integer("nextUserId")
-    val PostId = integer("nextPostId")
-}
+### Type-safety
+
+The following NoSQL databases are supported for now:
+
+- MongoDB
+
+## Download
+
+To use it with Maven insert the following in your pom.xml file:
+
+```xml
+<dependency>
+    <groupId>org.jetbrains.kotlin</groupId>
+    <artifactId>kotlin-nosql</artifactId>
+    <version>$version</version>
+ </dependency>
 ```
 
-Get value find key:
+To use it with Gradle insert the following in your build.gradle:
+
+```groovy
+dependencies {
+    compile 'org.jetbrains.kotlin:kotlin-nosql:$version'
+}```
+
+## Getting Started
+
+### Basics
+
+#### Define a schema
 
 ```kotlin
-val aUserId = Global get { UserId }
-```
+object Comments: MongoDBSchema<Comment>("comments", javaClass()) {
+    val DiscussionID = objectId("discussion_id")
+    val Slug = string("slug")
+    val FullSlug = string("full_slug")
+    val Posted = dateTime("posted")
+    val Text = string("text")
 
-### Primary-key table schema
+    val AuthorInfo = AuthorInfoColumn()
 
-Define schema:
-
-```kotlin
-object Users: TableSchema<Int>("users", primaryKey = integer("id")) {
-    val Name = string("username")
-    val Password = string("password")
-    val Posts = listOfInteger("password")
-    val Followers = setOfInteger("followers")
-    val Following = setOfInteger("following")
-    val Auth = nullableString("auth")
-
-    val All = Name + Password
-}
-```
-
-Insert column values by a primary key:
-
-```kotlin
-val aUserId = Global next { UserId }
-Users columns { All } insert values(aUserId, "antirez", "p1pp0")
-```
-
-Receive column values by a primary key:
-
-```kotlin
-val (name, password) = Users columns { All } get aUserId
-```
-
-Receive a collection of column values by a filter condition:
-
-```kotlin
-Users columns { ID } filter { Name eq "antirez" } forEach { id ->
-}
-```
-
-Receive a column value by a primary key:
-
-```kotlin
-val followers = Users columns { Followers } get aUserId map { userId ->
-    Users columns { this.Name } get userId
-}
-```
-
-### Document schema
-
-Define schema:
-
-```kotlin
-object Users: DocumentSchema<Int, User>("users", javaClass(), primaryKey = integer("id")) {
-    val Name = string("username")
-    val Password = string("password")
-    val Posts = listOfInteger("password")
-    val Followers = setOfInteger("followers")
-    val Following = setOfInteger("following")
-    val Auth = nullableString("auth")
-}
-
-class User(val id: Int,
-           val name: String,
-           val password: String,
-           val posts: List<Int> = listOf(),
-           val followers: Set<Int> = setOf(),
-           val following: Set<Int> = setOf(),
-           val auth: String? = null) {
-}
-```
-
-Insert a document:
-
-```kotlin
-val aUserId = Global next { UserId }
-Users insert User(aUserId, "antirez", "p1pp0")
-```
-
-Get a document by its primary key:
-
-```kotlin
-val user = Users get aUserId
-```
-
-Receive a collection of documents by a filter condition:
-
-```kotlin
-for (user in Users filter { Name eq "antirez" }) {
-    println(user)
-}
-```
-
-### Document schema (inheritance)
-
-Define base schema class:
-
-```kotlin
-open class ProductSchema<V, T : Schema>(javaClass: Class<V>, discriminator: String) : DocumentSchema<String, V>("products",
-        javaClass, primaryKey = string("_id"), discriminator = Discriminator(string("type"), discriminator) ) {
-    val SKU = string<T>("sku")
-    val Title = string<T>("title")
-    val Description = string<T>("description")
-    val ASIN = string<T>("asin")
-
-    val Shipping = ShippingColumn<T>()
-    val Pricing = PricingColumn<T>()
-
-    class ShippingColumn<T : Schema>() : Column<Shipping, T>("shipping", javaClass()) {
-        val Weight = integer<T>("weight")
-    }
-
-    class DimensionsColumn<V, T : Schema>() : Column<V, T>("dimensions", javaClass()) {
-        val Width = integer<T>("width")
-        val Height = integer<T>("height")
-        val Depth = integer<T>("depth")
-    }
-
-    class PricingColumn<T : Schema>() : Column<Pricing, T>("pricing", javaClass()) {
-        val List = integer<T>("list")
-        val Retail = integer<T>("retail")
-        val Savings = integer<T>("savings")
-        val PCTSavings = integer<T>("pct_savings")
+    class AuthorInfoColumn() : Column<AuthorInfo, Comments>("author", javaClass()) {
+        val ID = objectId("id")
+        val Name = string("name")
     }
 }
 
-object Products : ProductSchema<Product, Products>(javaClass(), "") {
-}
+class Comment(val: id: ObjectId, val discussionId: ObjectId, val slug: String,
+    val fullSlug: String, posted: DateTime, text: String, authorInfo: AuthorInfo)
 
-abstract class Product(val sku: String, val title: String, val description: String,
-                       val asin: String, val shipping: Shipping, val pricing: Pricing) {
-    val id: String? = null
-}
-
-class Shipping(val weight: Int, dimensions: Dimensions) {
-}
-
-class Dimensions(val weight: Int, val height: Int, val depth: Int) {
-}
-
-class Pricing(val list: Int, val retail: Int, val savings: Int, val pctSavings: Int) {
-}
+class AuthorInfo(val: id: ObjectId, val name: String)
 ```
 
-Define inherited schema:
-
- ```kotlin
-object Albums : ProductSchema<Album, Albums>(javaClass(), discriminator = "Audio Album") {
-    val Details = DetailsColumn<Albums>()
-
-    class DetailsColumn<T : Schema>() : Column<Details, T>("details", javaClass()) {
-        val Title = string<T>("title")
-        val Artist = string<T>("artist")
-        val Genre = setOfString<T>("genre")
-
-        val Tracks = TracksColumn<T>()
-    }
-
-    class TracksColumn<T: Schema>() : ListColumn<Track, T>("tracks", javaClass()) {
-        val Title = string<T>("title")
-        val Duration = integer<T>("duration")
-    }
-}
-
-class Album(sku: String, title: String, description: String, asin: String, shipping: Shipping, pricing: Pricing,
-    val details: Details) : Product(sku, title, description, asin, shipping, pricing) {
-}
-
-class Details(val title: String, val artist: String, val genre: Set<String>, val tracks: List<Track>) {
-}
-
-class Track(val title: String, val duration: Int) {
-}
-```
-
-Insert a document:
-
- ```kotlin
-Products insert Album(sku = "00e8da9b", title = "A Love Supreme", description = "by John Coltrane",
-            asin = "B0000A118M", shipping = Shipping(weight = 6, dimensions = Dimensions(10, 10, 1)),
-            pricing = Pricing(list = 1200, retail = 1100, savings = 100, pctSavings = 8),
-            details = Details(title = "A Love Supreme [Original Recording Reissued]",
-                    artist = "John Coltrane"), genre = setOf("Jazz", "General")
-                    tracks = listOf(Track("A Love Supreme Part I: Acknowledgement", 100),
-                             Track("A Love Supreme Part II - Resolution", 200),
-                             Track("A Love Supreme, Part III: Pursuance", 300))))
-```
-
-Receive a collection of documents by a filter expression:
+#### Define a database
 
 ```kotlin
-for (product in Products filter { SKU eq "00e8da9b" }) {
-    if (product is Album) {
-        println("Found music album ${product.details.title}")
+val db = MongoDB(database = "test", schemas = array(Comments))
+```
+
+#### Insert a document
+
+```kotlin
+db {
+    val commentId = Comments insert Comment(discussionId, slug, fullSlug, posted,
+        text, AuthorInfo(author.id, author.name))
+}
+```
+
+#### Get a document by id
+
+```kotlin
+db {
+    val comment = Comments get commentId
+}
+```
+
+#### Get a list of documents by a filter expression
+
+```kotlin
+db {
+    for (comment in Comments filter { AuthorInfo.ID eq author.id } sort { Posted } drop 10 take 5) {
     }
 }
 ```
 
+#### Get selected fields by document id
+
 ```kotlin
-Albums filter { Details.Artist eq "John Coltrane" } forEach { album ->
-    println("Found music album ${album.details.title} by John Coltrane")
+db {
+    val authorInfo = Comments columns { AuthorInfo } get commentId
 }
 ```
 
-Receive a document by its id:
+#### Get selected fields by a filter expression
 
 ```kotlin
-val album = Albums get id
-println("Album tracks: ${album.details.tracks}")
+db {
+    for ((slug, fullSlug, posted, text, authorInfo) in Comments columns { Slug +
+        FullSlug + Posted + Text + AuthorInfo } filter { DiscussionID eq discussion Id }) {
+    }
+}
 ```
 
-Receive selected columns by a document's id:
+#### Update selected fields by document id
 
 ```kotlin
-val (title, pricing) = Albums columns { Details.Title + Pricing } get id
-println("Retail price for the album ${title} is ${pricing.retail}")
-```
-
-Update selected columns by a document's id:
-
-```kotlin
-Albums columns { Details.Title } find id set "A Love Supreme (Original Recording Reissued)"
+db {
+    Comments columns { Posted } find commentId set newDate
+}
 ```
 
 ```kotlin
-Albums columns { Details.Tracks } find id add Track("A Love Supreme, Part IV-Psalm", 400)
-```
-Update selected columns by a filter expression:
-
-```kotlin
-Products columns { Pricing.Retail + Pricing.Savings } filter { SKU eq "00e8da9b" } set values(1150, 50)
+db {
+    Comments columns { Posted + Text } find commentId set values(newDate, newText)
+}
 ```
