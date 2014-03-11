@@ -3,10 +3,6 @@
 Kotlin NoSQL is a NoSQL database query and access library for [Kotlin](http://github.com/JetBrains/Kotlin) language.
 It offers a powerful and type-safe DSL for working with key-value, column and document NoSQL databases.
 
-The following NoSQL databases are supported now:
-
-- [MongoDB](https://www.mongodb.org/)
-
 ## Principles
 
 The following key principles lie behind Kotlin NoSQL:
@@ -47,6 +43,12 @@ Queries enable you to access and modify documents without a necessity to load an
 ```kotlin
 Products columns { Pricing.Retail + Pricing.Savings } find productId set values(newRetail, newSavings)
 ```
+
+## Status
+
+Under development (POC). The following NoSQL databases are supported now:
+
+- [MongoDB](https://www.mongodb.org/)
 
 ## Download
 
