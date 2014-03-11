@@ -31,7 +31,7 @@ for (product in Products filter { Pricing.Savings ge 1000 }) {
 
 ```kotlin
 for ((slug, fullSlug, posted, text, authorInfo) in Comments columns { Slug +
-    FullSlug + Posted + Text + AuthorInfo } filter { DiscussionID eq discussion Id }) {
+    FullSlug + Posted + Text + AuthorInfo } filter { DiscussionID eq discussionId }) {
 }
 ```
 
