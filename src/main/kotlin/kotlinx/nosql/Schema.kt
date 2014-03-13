@@ -53,7 +53,7 @@ open class PrimaryKey<P>(val name: String, val javaClass: Class<P>, val columnTy
     }
 }
 
-val <C, T : TableSchema<C>> T.ID: AbstractColumn<Id<C, T>, T, C>
+val <C, T : TableSchema<C>> T.Id: AbstractColumn<Id<C, T>, T, C>
     get () {
         return pk as AbstractColumn<Id<C, T>, T, C>
     }
@@ -86,11 +86,11 @@ abstract class DocumentSchema<P, V>(name: String, val valueClass: Class<V>, prim
     }
 }
 
-fun <T: TableSchema<P>, R: TableSchema<P>, P> id(name: String, schema: R): AbstractColumn<Id<P, R>, T, P> = AbstractColumn(name, schema.ID.valueClass, ColumnType.FOREIGN_ID)
-fun <T: TableSchema<P>, R: TableSchema<P>, P> T.id(name: String, schema: R): AbstractColumn<Id<P, R>, T, P> = AbstractColumn(name, schema.ID.valueClass, ColumnType.FOREIGN_ID)
+fun <T: TableSchema<P>, R: TableSchema<P>, P> id(name: String, schema: R): AbstractColumn<Id<P, R>, T, P> = AbstractColumn(name, schema.Id.valueClass, ColumnType.FOREIGN_ID)
+fun <T: TableSchema<P>, R: TableSchema<P>, P> T.id(name: String, schema: R): AbstractColumn<Id<P, R>, T, P> = AbstractColumn(name, schema.Id.valueClass, ColumnType.FOREIGN_ID)
 
-fun <T: TableSchema<P>, R: TableSchema<P>, P> nullableId(name: String, schema: R): NullableIdColumn<P, T, R> = NullableIdColumn(name, schema.ID.valueClass, ColumnType.FOREIGN_ID)
-fun <T: TableSchema<P>, R: TableSchema<P>, P> T.nullableId(name: String, schema: R): NullableIdColumn<P, T, R> = NullableIdColumn(name, schema.ID.valueClass, ColumnType.FOREIGN_ID)
+fun <T: TableSchema<P>, R: TableSchema<P>, P> nullableId(name: String, schema: R): NullableIdColumn<P, T, R> = NullableIdColumn(name, schema.Id.valueClass, ColumnType.FOREIGN_ID)
+fun <T: TableSchema<P>, R: TableSchema<P>, P> T.nullableId(name: String, schema: R): NullableIdColumn<P, T, R> = NullableIdColumn(name, schema.Id.valueClass, ColumnType.FOREIGN_ID)
 
 fun <T: Schema> string(name: String): AbstractColumn<String, T, String> = AbstractColumn(name, javaClass<String>(), ColumnType.STRING)
 fun <T: Schema> T.string(name: String): AbstractColumn<String, T, String> = AbstractColumn(name, javaClass<String>(), ColumnType.STRING)

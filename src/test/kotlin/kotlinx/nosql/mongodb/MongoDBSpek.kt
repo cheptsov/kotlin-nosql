@@ -942,9 +942,9 @@ class MongoDBSpek : Spek() {
 
             on("deleting a document") {
                 db {
-                    Albums delete { ID eq albumId!! }
+                    Albums delete { Id eq albumId!! }
                     it("deletes the document from database") {
-                        assert((Albums filter { ID eq albumId!! }).toList().isEmpty())
+                        assert((Albums filter { Id eq albumId!! }).toList().isEmpty())
                     }
                 }
             }

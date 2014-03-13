@@ -368,7 +368,7 @@ class MongoDBSession(val db: DB) : Session() {
                     } else {
                         getObject(doc.get(column.name) as DBObject, column as Column<Any?, T>)
                     }
-                    if (columnValue != null || column is NullableColumn<*, *>) {
+                    if (columnValue != null || column is AbstractNullableColumn) {
                         valueField.set(valueInstance, columnValue)
                     } else {
                         throw NullPointerException()
@@ -428,7 +428,7 @@ class MongoDBSession(val db: DB) : Session() {
                     } else {
                         getObject(doc.get(column.name) as DBObject, column as Column<*, out Schema>)
                     }
-                    if (columnValue != null || column is NullableColumn<*, *>) {
+                    if (columnValue != null || column is AbstractNullableColumn) {
                         valueField.set(valueInstance, columnValue)
                     } else {
                         throw NullPointerException()
@@ -487,7 +487,7 @@ class MongoDBSession(val db: DB) : Session() {
     override fun <T : TableSchema<P>, P, C> AbstractColumn<C, T, out Any?>.get(id: Id<P, T>): C {
         val table = Schema.current<T>()
         val collection = db.getCollection(table.name)!!
-        val query = getQuery(table.ID eq id)
+        val query = getQuery(table.Id eq id)
         val doc = collection.findOne(query, BasicDBObject().append(this.fullName, "1"))!!
         return getColumnObject(doc, this) as C
     }
@@ -545,21 +545,21 @@ class MongoDBSession(val db: DB) : Session() {
     override fun <T : TableSchema<P>, P, A, B> Template2<T, A, B>.get(id: Id<P, T>): Pair<A, B> {
         val table = Schema.current<T>()
         val collection = db.getCollection(table.name)!!
-        val query = getQuery(table.ID eq id)
+        val query = getQuery(table.Id eq id)
         val doc = collection.findOne(query, BasicDBObject().append(a.fullName, "1")!!.append(b.fullName, "1"))!!
         return Pair(getColumnObject(doc, a) as A, getColumnObject(doc, b) as B)
     }
     override fun <T : TableSchema<P>, P, A, B, C> Template3<T, A, B, C>.get(id: Id<P, T>): Triple<A, B, C> {
         val table = Schema.current<T>()
         val collection = db.getCollection(table.name)!!
-        val query = getQuery(table.ID eq id)
+        val query = getQuery(table.Id eq id)
         val doc = collection.findOne(query, BasicDBObject().append(a.fullName, "1")!!.append(b.fullName, "1")!!.append(c.fullName, "1"))!!
         return Triple(getColumnObject(doc, a) as A, getColumnObject(doc, b) as B, getColumnObject(doc, c) as C)
     }
     override fun <T : TableSchema<P>, P, A, B, C, D> Template4<T, A, B, C, D>.get(id: Id<P, T>): Quadruple<A, B, C, D> {
         val table = Schema.current<T>()
         val collection = db.getCollection(table.name)!!
-        val query = getQuery(table.ID eq id)
+        val query = getQuery(table.Id eq id)
         val doc = collection.findOne(query, BasicDBObject().append(a.fullName, "1")!!.append(b.fullName, "1")!!
                 .append(c.fullName, "1")!!.append(d.fullName, "1"))!!
         return Quadruple(getColumnObject(doc, a) as A, getColumnObject(doc, b) as B, getColumnObject(doc, c) as C, getColumnObject(doc, d) as D)
@@ -567,7 +567,7 @@ class MongoDBSession(val db: DB) : Session() {
     override fun <T : TableSchema<P>, P, A, B, C, D, E> Template5<T, A, B, C, D, E>.get(id: Id<P, T>): Quintuple<A, B, C, D, E> {
         val table = Schema.current<T>()
         val collection = db.getCollection(table.name)!!
-        val query = getQuery(table.ID eq id)
+        val query = getQuery(table.Id eq id)
         val doc = collection.findOne(query, BasicDBObject().append(a.fullName, "1")!!.append(b.fullName, "1")!!
                 .append(c.fullName, "1")!!.append(d.fullName, "1")!!.append(e.fullName, "1"))!!
         return Quintuple(getColumnObject(doc, a) as A, getColumnObject(doc, b) as B, getColumnObject(doc, c) as C,
@@ -576,7 +576,7 @@ class MongoDBSession(val db: DB) : Session() {
     override fun <T : TableSchema<P>, P, A, B, C, D, E, F> Template6<T, A, B, C, D, E, F>.get(id: Id<P, T>): Sextuple<A, B, C, D, E, F> {
         val table = Schema.current<T>()
         val collection = db.getCollection(table.name)!!
-        val query = getQuery(table.ID eq id)
+        val query = getQuery(table.Id eq id)
         val doc = collection.findOne(query, BasicDBObject().append(a.fullName, "1")!!.append(b.fullName, "1")!!
                 .append(c.fullName, "1")!!.append(d.fullName, "1")!!.append(e.fullName, "1")!!.append(f.fullName, "1"))!!
         return Sextuple(getColumnObject(doc, a) as A, getColumnObject(doc, b) as B, getColumnObject(doc, c) as C,
@@ -585,7 +585,7 @@ class MongoDBSession(val db: DB) : Session() {
     override fun <T : TableSchema<P>, P, A, B, C, D, E, F, G> Template7<T, A, B, C, D, E, F, G>.get(id: Id<P, T>): Septuple<A, B, C, D, E, F, G> {
         val table = Schema.current<T>()
         val collection = db.getCollection(table.name)!!
-        val query = getQuery(table.ID eq id)
+        val query = getQuery(table.Id eq id)
         val doc = collection.findOne(query, BasicDBObject().append(a.fullName, "1")!!.append(b.fullName, "1")!!
                 .append(c.fullName, "1")!!.append(d.fullName, "1")!!.append(e.fullName, "1")!!.append(f.fullName, "1")!!
                 .append(g.fullName, "1"))!!
@@ -595,7 +595,7 @@ class MongoDBSession(val db: DB) : Session() {
     override fun <T : TableSchema<P>, P, A, B, C, D, E, F, G, H> Template8<T, A, B, C, D, E, F, G, H>.get(id: Id<P, T>): Octuple<A, B, C, D, E, F, G, H> {
         val table = Schema.current<T>()
         val collection = db.getCollection(table.name)!!
-        val query = getQuery(table.ID eq id)
+        val query = getQuery(table.Id eq id)
         val doc = collection.findOne(query, BasicDBObject().append(a.fullName, "1")!!.append(b.fullName, "1")!!
                 .append(c.fullName, "1")!!.append(d.fullName, "1")!!.append(e.fullName, "1")!!.append(f.fullName, "1")!!
                 .append(g.fullName, "1")!!.append(h.fullName, "1"))!!
@@ -606,7 +606,7 @@ class MongoDBSession(val db: DB) : Session() {
     override fun <T : TableSchema<P>, P, A, B, C, D, E, F, G, H, J> Template9<T, A, B, C, D, E, F, G, H, J>.get(id: Id<P, T>): Nonuple<A, B, C, D, E, F, G, H, J> {
         val table = Schema.current<T>()
         val collection = db.getCollection(table.name)!!
-        val query = getQuery(table.ID eq id)
+        val query = getQuery(table.Id eq id)
         val doc = collection.findOne(query, BasicDBObject().append(a.fullName, "1")!!.append(b.fullName, "1")!!
                 .append(c.fullName, "1")!!.append(d.fullName, "1")!!.append(e.fullName, "1")!!.append(f.fullName, "1")!!
                 .append(g.fullName, "1")!!.append(h.fullName, "1")!!.append(j.fullName, "1"))!!
@@ -617,7 +617,7 @@ class MongoDBSession(val db: DB) : Session() {
     override fun <T : TableSchema<P>, P, A, B, C, D, E, F, G, H, J, K> Template10<T, A, B, C, D, E, F, G, H, J, K>.get(id: Id<P, T>): Decuple<A, B, C, D, E, F, G, H, J, K> {
         val table = Schema.current<T>()
         val collection = db.getCollection(table.name)!!
-        val query = getQuery(table.ID eq id)
+        val query = getQuery(table.Id eq id)
         val doc = collection.findOne(query, BasicDBObject().append(a.fullName, "1")!!.append(b.fullName, "1")!!
                 .append(c.fullName, "1")!!.append(d.fullName, "1")!!.append(e.fullName, "1")!!.append(f.fullName, "1")!!
                 .append(g.fullName, "1")!!.append(h.fullName, "1")!!.append(j.fullName, "1")!!.append(k.fullName, "1"))!!

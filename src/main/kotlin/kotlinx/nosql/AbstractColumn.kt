@@ -101,12 +101,15 @@ fun <T : Schema> AbstractColumn<out Int?, T, Int>.lt(other: Int): Op {
 open class Column<C, T : Schema>(name: String, valueClass: Class<C>, columnType: ColumnType = ColumnType.CUSTOM_CLASS) : AbstractColumn<C, T, C>(name, valueClass, columnType) {
 }
 
+trait AbstractNullableColumn {
+}
+
 open class NullableIdColumn<P, T : TableSchema<P>, R: TableSchema<P>> (name: String, valueClass: Class<P>,
-                                                  columnType: ColumnType) : AbstractColumn<Id<P, R>?, T, P>(name, valueClass, columnType) {
+                                                  columnType: ColumnType) : AbstractColumn<Id<P, R>?, T, P>(name, valueClass, columnType), AbstractNullableColumn {
 }
 
 open class NullableColumn<C, T : Schema> (name: String, valueClass: Class<C>,
-                                                  columnType: ColumnType) : AbstractColumn<C?, T, C>(name, valueClass, columnType) {
+                                                  columnType: ColumnType) : AbstractColumn<C?, T, C>(name, valueClass, columnType), AbstractNullableColumn {
 }
 
 open class SetColumn<C, T : Schema> (name: String, valueClass: Class<C>) : AbstractColumn<Set<C>, T, C>(name, valueClass, ColumnType.CUSTOM_CLASS_SET) {
