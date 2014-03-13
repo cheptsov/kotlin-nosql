@@ -52,19 +52,19 @@ class MongoDBSpek : Spek() {
     }
 
     object Albums : ProductSchema<Album, Albums>(javaClass(), discriminator = "Audio Album") {
-        val Details = DetailsColumn<Albums>()
+        val Details = DetailsColumn()
 
-        class DetailsColumn<T : Schema>() : Column<Details, T>("details", javaClass()) {
+        class DetailsColumn() : Column<Details, Albums>("details", javaClass()) {
             val Title = string("title")
             val ArtistId = id("artistId", Artists)
             val Genre = setOfString("genre")
 
-            val Tracks = TracksColumn<T>()
+            val Tracks = TracksColumn()
         }
 
-        class TracksColumn<T : Schema>() : ListColumn<Track, T>("tracks", javaClass()) {
-            val Title = string<T>("title")
-            val Duration = integer<T>("duration")
+        class TracksColumn() : ListColumn<Track, Albums>("tracks", javaClass()) {
+            val Title = string("title")
+            val Duration = integer("duration")
         }
     }
 
