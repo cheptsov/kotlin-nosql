@@ -31,7 +31,7 @@ for (product in Products filter { Pricing.Savings ge 1000 }) {
 
 ```kotlin
 for ((slug, fullSlug, posted, text, authorInfo) in Comments columns { Slug +
-    FullSlug + Posted + Text + AuthorInfo } filter { DiscussionID eq discussionId }) {
+    FullSlug + Posted + Text + AuthorInfo } filter { DiscussionId eq DiscussionId }) {
 }
 ```
 
@@ -79,7 +79,7 @@ dependencies {
 
 ```kotlin
 object Comments: MongoDBSchema<Comment>("comments", javaClass()) {
-    val DiscussionID = id("discussion_id")
+    val DiscussionId = id("discussion_id")
     val Slug = string("slug")
     val FullSlug = string("full_slug")
     val Posted = dateTime("posted")
@@ -88,12 +88,12 @@ object Comments: MongoDBSchema<Comment>("comments", javaClass()) {
     val AuthorInfo = AuthorInfoColumn()
 
     class AuthorInfoColumn() : Column<AuthorInfo, Comments>("author", javaClass()) {
-        val ID = id("id")
+        val Id= id("id")
         val Name = string("name")
     }
 }
 
-class Comment(val: id: Id<String, Comments>? = null, val discussionId: Id<String, Discussions>, val slug: String,
+class Comment(val: id: Id<String, Comments>? = null, val DiscussionId: Id<String, Discussions>, val slug: String,
     val fullSlug: String, posted: DateTime, text: String, authorInfo: AuthorInfo)
 
 class AuthorInfo(val: id: Id, val name: String)
@@ -112,7 +112,7 @@ db {
 #### Insert a document
 
 ```kotlin
-val commentId = Comments insert Comment(discussionId, slug, fullSlug, posted,
+val commentId = Comments insert Comment(DiscussionId, slug, fullSlug, posted,
     text, AuthorInfo(author.id, author.name))
 ```
 
@@ -139,7 +139,7 @@ val authorInfo = Comments columns { AuthorInfo } get commentId
 
 ```kotlin
 for ((slug, fullSlug, posted, text, authorInfo) in Comments columns { Slug +
-    FullSlug + Posted + Text + AuthorInfo } filter { DiscussionID eq discussion Id }) {
+    FullSlug + Posted + Text + AuthorInfo } filter { DiscussionId eq discussion Id }) {
 }
 ```
 
