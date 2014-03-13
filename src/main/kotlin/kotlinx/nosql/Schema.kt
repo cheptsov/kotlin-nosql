@@ -31,8 +31,12 @@ abstract class KeyValueSchema(name: String): Schema(name) {
 abstract class AbstractTableSchema(name: String): Schema(name) {
 }
 
+class Id<P, R: TableSchema<P>>(val value: P) {
+    override fun toString() = value.toString()
+}
+
 abstract class TableSchema<P>(tableName: String, primaryKey: AbstractColumn<P, out TableSchema<P>, P>): AbstractTableSchema(tableName) {
-    val pk = PrimaryKeyColumn<P, TableSchema<P>>(this, primaryKey.name, primaryKey.valueClass, primaryKey.columnType)
+    val pk = AbstractColumn<Id<P, TableSchema<P>>, TableSchema<P>, P>(primaryKey.name, primaryKey.valueClass, ColumnType.ID)
 }
 
 open class PrimaryKey<P>(val name: String, val javaClass: Class<P>, val columnType: ColumnType) {
@@ -42,9 +46,9 @@ open class PrimaryKey<P>(val name: String, val javaClass: Class<P>, val columnTy
     }
 }
 
-val <C, T : TableSchema<C>> T.ID: AbstractColumn<C, T, C>
+val <C, T : TableSchema<C>> T.ID: AbstractColumn<Id<C, T>, T, C>
     get () {
-        return pk as AbstractColumn<C, T, C>
+        return pk as AbstractColumn<Id<C, T>, T, C>
     }
 
 class Discriminator<V, T: DocumentSchema<out Any, out Any>>(val column: AbstractColumn<V, T, V>, val value: V) {
@@ -74,6 +78,9 @@ abstract class DocumentSchema<P, V>(name: String, val valueClass: Class<V>, prim
         val discriminatorSchemas = ConcurrentHashMap<Discriminator<*, *>, Schema>()
     }
 }
+
+fun <T: TableSchema<*>, R: TableSchema<P>, P> id(name: String, schema: R): AbstractColumn<Id<P, R>, T, P> = AbstractColumn(name, schema.ID.valueClass, ColumnType.ID)
+fun <T: TableSchema<*>, R: TableSchema<P>, P> T.id(name: String, schema: R): AbstractColumn<Id<P, R>, T, P> = AbstractColumn(name, schema.ID.valueClass, ColumnType.ID)
 
 fun <T: Schema> string(name: String): AbstractColumn<String, T, String> = AbstractColumn(name, javaClass<String>(), ColumnType.STRING)
 fun <T: Schema> T.string(name: String): AbstractColumn<String, T, String> = AbstractColumn(name, javaClass<String>(), ColumnType.STRING)
@@ -265,7 +272,7 @@ class Template3<T: Schema, A, B, C>(val a: AbstractColumn<A, T, *>, val b: Abstr
     }
 }
 
-fun <T : TableSchema<P>, P, A, B> Template2<T, A, B>.insert(statement: () -> Triple<P, A, B>) {
+/*fun <T : TableSchema<P>, P, A, B> Template2<T, A, B>.insert(statement: () -> Triple<P, A, B>) {
     val tt = statement()
     Session.current().insert(array(Pair(Schema.current<T>().ID, tt.component1()), Pair(a, tt.component2()), Pair(b, tt.component3())))
 }
@@ -274,7 +281,7 @@ fun <T : TableSchema<P>, P, C> AbstractColumn<C, T, *>.insert(statement: () -> P
     val tt = statement()
     val id: AbstractColumn<P, T, *> = Schema.current<T>().ID // Type inference failure
     Session.current().insert(array(Pair(id, tt.component1()), Pair(this, tt.component2())))
-}
+}*/
 
 class Template4<T: Schema, A, B, C, D>(val a: AbstractColumn<A, T, *>, val b: AbstractColumn<B, T, *>, val c: AbstractColumn<C, T, *>, val d: AbstractColumn<D, T, *>) {
     fun <E> plus(e: AbstractColumn<E, T, *>): Template5<T, A, B, C, D, E> {

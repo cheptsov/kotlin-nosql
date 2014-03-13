@@ -6,6 +6,7 @@ enum class ColumnType(val primitive: Boolean = false,
                       val set: Boolean = false,
                       val custom: Boolean = false) {
     public INTEGER : ColumnType(primitive = true)
+    public ID : ColumnType(primitive = true)
     public STRING : ColumnType(primitive = true)
     public BOOLEAN : ColumnType(primitive = true)
     public DATE : ColumnType(primitive = true)

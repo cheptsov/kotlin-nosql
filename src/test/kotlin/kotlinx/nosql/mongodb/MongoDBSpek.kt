@@ -6,8 +6,8 @@ import kotlinx.nosql.*
 import org.joda.time.LocalDate
 
 class MongoDBSpek : Spek() {
-    open class ProductSchema<V, T : Schema>(javaClass: Class<V>, discriminator: String) : DocumentSchema<String, V>("products",
-            javaClass, primaryKey = string("_id"), discriminator = Discriminator(string("type"), discriminator)) {
+    open class ProductSchema<V, T : Schema>(javaClass: Class<V>, discriminator: String) : MongoDBSchema<V>("products",
+            javaClass, discriminator = Discriminator(string("type"), discriminator)) {
         val SKU = string<T>("sku")
         val Title = string<T>("title")
         val Description = string<T>("description")
@@ -44,7 +44,7 @@ class MongoDBSpek : Spek() {
         }
     }
 
-    object Artists : DocumentSchema<String, Artist>("artist", javaClass(), string("_id")) {
+    object Artists : MongoDBSchema<Artist>("artists", javaClass()) {
         val Name = string("name")
     }
 
@@ -56,7 +56,7 @@ class MongoDBSpek : Spek() {
 
         class DetailsColumn<T : Schema>() : Column<Details, T>("details", javaClass()) {
             val Title = string<T>("title")
-            val ArtistId = string<T>("artistId")
+            val ArtistId = id("artistId", Artists)
             val Genre = setOfString<T>("genre")
 
             val Tracks = TracksColumn<T>()
@@ -75,7 +75,7 @@ class MongoDBSpek : Spek() {
                            val nullableDateNoValue: LocalDate?, val nullableDateWithValue: LocalDate?,
                            val nullableDoubleNoValue: Double?, val nullableDoubleWithValue: Double?,
                            val shipping: Shipping, val pricing: Pricing) {
-        val id: String? = null
+        val id: Id<String, Products>? = null
     }
 
     class Shipping(val weight: Int, val dimensions: Dimensions) {
@@ -97,10 +97,11 @@ class MongoDBSpek : Spek() {
             nullableDoubleNoValue, nullableDoubleWithValue, shipping, pricing) {
     }
 
-    class Artist(val id: String? = null, val name: String) {
+    class Artist(val name: String) {
+        val id: Id<String, Artists>? = null
     }
 
-    class Details(val title: String, val artistId: String, val genre: Set<String>, val tracks: List<Track>) {
+    class Details(val title: String, val artistId: Id<String, Artists>, val genre: Set<String>, val tracks: List<Track>) {
     }
 
     class Track(val title: String, val duration: Int) {
@@ -113,16 +114,16 @@ class MongoDBSpek : Spek() {
             db {
                 Products.drop()
             }
-            var artistId: String? = null
-            var albumId: String? = null
+            var artistId: Id<String, Artists>? = null
+            var albumId: Id<String, Albums>? = null // KT-4680 Compiler failure
 
             on("inserting a document") {
                 db {
-                    val arId = Artists insert Artist(name = "John Coltrane")
+                    val arId: Id<String, Artists> = Artists insert Artist(name = "John Coltrane")
                     it("should return a generated id for artist") {
-                        assert(arId.length > 0)
+                        assert(arId.value.length > 0)
                     }
-                    val aId = Products insert Album(sku = "00e8da9b", title = "A Love Supreme", description = "by John Coltrane",
+                    val aId: Id<String, Products> = Products insert Album(sku = "00e8da9b", title = "A Love Supreme", description = "by John Coltrane",
                             asin = "B0000A118M", available = true, cost = 1.23, createdAtDate = LocalDate(2014, 3, 8), nullableBooleanNoValue = null,
                             nullableBooleanWithValue = false, nullableDateNoValue = null, nullableDateWithValue = LocalDate(2014, 3, 7),
                             nullableDoubleNoValue = null, nullableDoubleWithValue = 1.24,
@@ -134,7 +135,7 @@ class MongoDBSpek : Spek() {
                                             Track("A Love Supreme Part II - Resolution", 200),
                                             Track("A Love Supreme, Part III: Pursuance", 300))))
                     it("should return a generated id for album") {
-                        assert(aId.length > 0)
+                        assert(aId.value.length > 0)
                     }
                     albumId = aId
                     artistId = arId

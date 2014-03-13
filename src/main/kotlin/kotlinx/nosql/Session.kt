@@ -7,7 +7,7 @@ abstract class Session () {
 
     abstract fun <T : AbstractTableSchema>T.drop()
 
-    abstract fun <T : DocumentSchema<P, V>, P, V> T.insert(v: V): P
+    abstract fun <T : DocumentSchema<P, V>, P, V> T.insert(v: V): Id<P, T>
 
     abstract fun <T : Schema> insert(columns: Array<Pair<AbstractColumn<*, T, *>, *>>)
 
@@ -17,17 +17,17 @@ abstract class Session () {
 
     abstract fun <T : AbstractTableSchema, A, B> Query2<T, A, B>.set(c: Pair<A, B>)
 
-    abstract fun <T : TableSchema<P>, P, C> AbstractColumn<C, T, *>.get(id: P): C
+    abstract fun <T : TableSchema<P>, P, C> AbstractColumn<C, T, *>.get(id: Id<P, T>): C
 
-    abstract fun <T : TableSchema<P>, P, A, B> Template2<T, A, B>.get(id: P): Pair<A, B>
-    abstract fun <T : TableSchema<P>, P, A, B, C> Template3<T, A, B, C>.get(id: P): Triple<A, B, C>
-    abstract fun <T : TableSchema<P>, P, A, B, C, D> Template4<T, A, B, C, D>.get(id: P): Quadruple<A, B, C, D>
-    abstract fun <T : TableSchema<P>, P, A, B, C, D, E> Template5<T, A, B, C, D, E>.get(id: P): Quintuple<A, B, C, D, E>
-    abstract fun <T : TableSchema<P>, P, A, B, C, D, E, F> Template6<T, A, B, C, D, E, F>.get(id: P): Sextuple<A, B, C, D, E, F>
-    abstract fun <T : TableSchema<P>, P, A, B, C, D, E, F, G> Template7<T, A, B, C, D, E, F, G>.get(id: P): Septuple<A, B, C, D, E, F, G>
-    abstract fun <T : TableSchema<P>, P, A, B, C, D, E, F, G, H> Template8<T, A, B, C, D, E, F, G, H>.get(id: P): Octuple<A, B, C, D, E, F, G, H>
-    abstract fun <T : TableSchema<P>, P, A, B, C, D, E, F, G, H, J> Template9<T, A, B, C, D, E, F, G, H, J>.get(id: P): Nonuple<A, B, C, D, E, F, G, H, J>
-    abstract fun <T : TableSchema<P>, P, A, B, C, D, E, F, G, H, J, K> Template10<T, A, B, C, D, E, F, G, H, J, K>.get(id: P): Decuple<A, B, C, D, E, F, G, H, J, K>
+    abstract fun <T : TableSchema<P>, P, A, B> Template2<T, A, B>.get(id: Id<P, T>): Pair<A, B>
+    abstract fun <T : TableSchema<P>, P, A, B, C> Template3<T, A, B, C>.get(id: Id<P, T>): Triple<A, B, C>
+    abstract fun <T : TableSchema<P>, P, A, B, C, D> Template4<T, A, B, C, D>.get(id: Id<P, T>): Quadruple<A, B, C, D>
+    abstract fun <T : TableSchema<P>, P, A, B, C, D, E> Template5<T, A, B, C, D, E>.get(id: Id<P, T>): Quintuple<A, B, C, D, E>
+    abstract fun <T : TableSchema<P>, P, A, B, C, D, E, F> Template6<T, A, B, C, D, E, F>.get(id: Id<P, T>): Sextuple<A, B, C, D, E, F>
+    abstract fun <T : TableSchema<P>, P, A, B, C, D, E, F, G> Template7<T, A, B, C, D, E, F, G>.get(id: Id<P, T>): Septuple<A, B, C, D, E, F, G>
+    abstract fun <T : TableSchema<P>, P, A, B, C, D, E, F, G, H> Template8<T, A, B, C, D, E, F, G, H>.get(id: Id<P, T>): Octuple<A, B, C, D, E, F, G, H>
+    abstract fun <T : TableSchema<P>, P, A, B, C, D, E, F, G, H, J> Template9<T, A, B, C, D, E, F, G, H, J>.get(id: Id<P, T>): Nonuple<A, B, C, D, E, F, G, H, J>
+    abstract fun <T : TableSchema<P>, P, A, B, C, D, E, F, G, H, J, K> Template10<T, A, B, C, D, E, F, G, H, J, K>.get(id: Id<P, T>): Decuple<A, B, C, D, E, F, G, H, J, K>
 
     abstract fun <T : AbstractTableSchema, C> iterator(query: Query<C, T>): Iterator<C>
 
