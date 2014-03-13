@@ -33,10 +33,17 @@ abstract class AbstractTableSchema(name: String): Schema(name) {
 
 class Id<P, R: TableSchema<P>>(val value: P) {
     override fun toString() = value.toString()
+
+    override fun equals(other: Any?): Boolean {
+        return if (other is Id<*, *>) value.equals((other as Id<*, *>).value) else false
+    }
+    override fun hashCode(): Int {
+        return value.hashCode()
+    }
 }
 
 abstract class TableSchema<P>(tableName: String, primaryKey: AbstractColumn<P, out TableSchema<P>, P>): AbstractTableSchema(tableName) {
-    val pk = AbstractColumn<Id<P, TableSchema<P>>, TableSchema<P>, P>(primaryKey.name, primaryKey.valueClass, ColumnType.ID)
+    val pk = AbstractColumn<Id<P, TableSchema<P>>, TableSchema<P>, P>(primaryKey.name, primaryKey.valueClass, ColumnType.PRIMARY_ID)
 }
 
 open class PrimaryKey<P>(val name: String, val javaClass: Class<P>, val columnType: ColumnType) {
@@ -79,8 +86,11 @@ abstract class DocumentSchema<P, V>(name: String, val valueClass: Class<V>, prim
     }
 }
 
-fun <T: TableSchema<*>, R: TableSchema<P>, P> id(name: String, schema: R): AbstractColumn<Id<P, R>, T, P> = AbstractColumn(name, schema.ID.valueClass, ColumnType.ID)
-fun <T: TableSchema<*>, R: TableSchema<P>, P> T.id(name: String, schema: R): AbstractColumn<Id<P, R>, T, P> = AbstractColumn(name, schema.ID.valueClass, ColumnType.ID)
+fun <T: TableSchema<P>, R: TableSchema<P>, P> id(name: String, schema: R): AbstractColumn<Id<P, R>, T, P> = AbstractColumn(name, schema.ID.valueClass, ColumnType.FOREIGN_ID)
+fun <T: TableSchema<P>, R: TableSchema<P>, P> T.id(name: String, schema: R): AbstractColumn<Id<P, R>, T, P> = AbstractColumn(name, schema.ID.valueClass, ColumnType.FOREIGN_ID)
+
+fun <T: TableSchema<P>, R: TableSchema<P>, P> nullableId(name: String, schema: R): NullableIdColumn<P, T, R> = NullableIdColumn(name, schema.ID.valueClass, ColumnType.FOREIGN_ID)
+fun <T: TableSchema<P>, R: TableSchema<P>, P> T.nullableId(name: String, schema: R): NullableIdColumn<P, T, R> = NullableIdColumn(name, schema.ID.valueClass, ColumnType.FOREIGN_ID)
 
 fun <T: Schema> string(name: String): AbstractColumn<String, T, String> = AbstractColumn(name, javaClass<String>(), ColumnType.STRING)
 fun <T: Schema> T.string(name: String): AbstractColumn<String, T, String> = AbstractColumn(name, javaClass<String>(), ColumnType.STRING)

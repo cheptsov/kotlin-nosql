@@ -4,8 +4,11 @@ enum class ColumnType(val primitive: Boolean = false,
                       val iterable: Boolean = false,
                       val list: Boolean = false,
                       val set: Boolean = false,
-                      val custom: Boolean = false) {
+                      val custom: Boolean = false,
+                      val id: Boolean = false) {
     public INTEGER : ColumnType(primitive = true)
+    public PRIMARY_ID : ColumnType(primitive = true, id = true)
+    public FOREIGN_ID : ColumnType(primitive = true, id = true)
     public ID : ColumnType(primitive = true)
     public STRING : ColumnType(primitive = true)
     public BOOLEAN : ColumnType(primitive = true)

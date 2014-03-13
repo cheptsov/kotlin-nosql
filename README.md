@@ -93,7 +93,7 @@ object Comments: MongoDBSchema<Comment>("comments", javaClass()) {
     }
 }
 
-class Comment(val: id: Id? = null, val discussionId: Id, val slug: String,
+class Comment(val: id: Id<String, Comments>? = null, val discussionId: Id<String, Discussions>, val slug: String,
     val fullSlug: String, posted: DateTime, text: String, authorInfo: AuthorInfo)
 
 class AuthorInfo(val: id: Id, val name: String)
@@ -125,7 +125,7 @@ val comment = Comments get commentId
 #### Get a list of documents by a filter expression
 
 ```kotlin
-for (comment in Comments filter { AuthorInfo.ID eq authorId } sort { Posted } drop 10 take 5) {
+for (comment in Comments filter { AuthorInfo.Id eq authorId } sort { Posted } drop 10 take 5) {
 }
 ```
 
@@ -190,7 +190,9 @@ open class ProductSchema<V, T : Schema>(javaClass: Class<V>, discriminator: Stri
 object Products : ProductSchema<Product, Products>(javaClass(), "")
 
 abstract class Product(val id: String? = null, val sku: String, val title: String, val description: String,
-                       val asin: String, val shipping: Shipping, val pricing: Pricing)
+                       val asin: String, val shipping: Shipping, val pricing: Pricing) {
+    val id: Id<String, Products>? = null
+}
 
 class Shipping(val weight: Int, val dimensions: Dimensions)
 
@@ -206,9 +208,9 @@ object Albums : ProductSchema<Album, Albums>(javaClass(), discriminator = "Audio
     val Details = DetailsColumn<Albums>()
 
     class DetailsColumn<T : Schema>() : Column<Details, T>("details", javaClass()) {
-        val Title = string<T>("title")
-        val ArtistId = id<T>("artistId")
-        val Genre = setOfString<T>("genre")
+        val Title = string("title")
+        val ArtistId = id("artistId", Artists)
+        val Genre = setOfString("genre")
 
         val Tracks = TracksColumn<T>()
     }
@@ -232,7 +234,7 @@ val productId = Products insert Album(sku = "00e8da9b", title = "A Love Supreme"
     asin = "B0000A118M", shipping = Shipping(weight = 6, dimensions = Dimensions(10, 10, 1)),
     pricing = Pricing(list = 1200, retail = 1100, savings = 100, pctSavings = 8),
     details = Details(title = "A Love Supreme [Original Recording Reissued]",
-            artistId = arId, genre = setOf("Jazz", "General"),
+            artistId = artistId, genre = setOf("Jazz", "General"),
             tracks = listOf(Track("A Love Supreme Part I: Acknowledgement", 100),
                     Track("A Love Supreme Part II: Resolution", 200),
                     Track("A Love Supreme, Part III: Pursuance", 300))))

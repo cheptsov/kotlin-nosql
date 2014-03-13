@@ -140,8 +140,8 @@ abstract class Session () {
         }
     }
 
-    fun <T: DocumentSchema<P, C>, C, P> T.get(id: P): C {
-        return this.filter({ pk eq id }).next()
+    fun <T: DocumentSchema<P, C>, C, P> T.get(id: Id<P, T>): C {
+        return this.filter({ ID eq id }).next()
     }
 
     abstract fun <T: DocumentSchema<P, C>, P, C> T.filter(op: T.() -> Op): Iterator<C>

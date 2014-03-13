@@ -101,6 +101,10 @@ fun <T : Schema> AbstractColumn<out Int?, T, Int>.lt(other: Int): Op {
 open class Column<C, T : Schema>(name: String, valueClass: Class<C>, columnType: ColumnType = ColumnType.CUSTOM_CLASS) : AbstractColumn<C, T, C>(name, valueClass, columnType) {
 }
 
+open class NullableIdColumn<P, T : TableSchema<P>, R: TableSchema<P>> (name: String, valueClass: Class<P>,
+                                                  columnType: ColumnType) : AbstractColumn<Id<P, R>?, T, P>(name, valueClass, columnType) {
+}
+
 open class NullableColumn<C, T : Schema> (name: String, valueClass: Class<C>,
                                                   columnType: ColumnType) : AbstractColumn<C?, T, C>(name, valueClass, columnType) {
 }
@@ -120,6 +124,3 @@ fun <T: Schema> Count(column: AbstractColumn<*, T, *>): AggregatingFunction<Int,
     return AggregatingFunction(column.name, javaClass<Int>(), ColumnType.INTEGER, "count")
 }
 */
-
-open class PrimaryKeyColumn<C, T : Schema>(table: T, name: String, valueClass: Class<C>, columnType: ColumnType) : AbstractColumn<C, T, C>(name, valueClass, columnType) {
-}

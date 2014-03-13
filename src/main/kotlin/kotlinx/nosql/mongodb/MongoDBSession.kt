@@ -89,7 +89,7 @@ class MongoDBSession(val db: DB) : Session() {
         }
         val schemaClass: Class<out Any?> = if (schema is DocumentSchema<*, *> && schema.discriminator != null) sc!! else schema.javaClass
         val objectSchema: Any = if (schema is DocumentSchema<*, *> && schema.discriminator != null) s!! else schema
-        val schemaFields = getAllFieldsMap(schemaClass as Class<in Any>)
+        val schemaFields = getAllFieldsMap(schemaClass as Class<in Any>, { f -> f.isColumn })
         for (field in fields) {
             val schemaField = schemaFields.get(field.getName()!!.toLowerCase())
             if (schemaField != null && schemaField.isColumn) {
@@ -101,6 +101,7 @@ class MongoDBSession(val db: DB) : Session() {
                     if (column.columnType.primitive) {
                         doc.append(column.name, when (value) {
                             is DateTime, is LocalDate, is LocalTime -> value.toString()
+                            is Id<*, *> -> ObjectId(value.value.toString())
                             else -> value
                         })
                     } else if (column.columnType.iterable) {
@@ -150,8 +151,8 @@ class MongoDBSession(val db: DB) : Session() {
             is EqualsOp -> {
                 if (op.expr1 is AbstractColumn<*, *, *>) {
                     if (op.expr2 is LiteralOp) {
-                        if (op.expr2.value is String || op.expr2.value is Int) {
-                            if (op.expr1 is PrimaryKeyColumn<*, *>) {
+                        if (op.expr1.columnType.primitive) {
+                            if (op.expr1.columnType.id) {
                                 query.append(op.expr1.fullName, ObjectId(op.expr2.value.toString()))
                             } else {
                                 var columnName = op.expr1.fullName
@@ -191,7 +192,7 @@ class MongoDBSession(val db: DB) : Session() {
                 if (op.expr1 is AbstractColumn<*, *, *>) {
                     if (op.expr2 is LiteralOp) {
                         if (op.expr2.value is String || op.expr2.value is Int) {
-                            if (op.expr1 is PrimaryKeyColumn<*, *>) {
+                            if (op.expr1.columnType.id) {
                                 query.append(op.expr1.fullName, BasicDBObject().append("\$ne", ObjectId(op.expr2.value.toString())))
                             } else {
                                 query.append(op.expr1.fullName, BasicDBObject().append("\$ne", op.expr2.value))
@@ -352,19 +353,17 @@ class MongoDBSession(val db: DB) : Session() {
                     schemaField.setAccessible(true)
                     valueField.setAccessible(true)
                     val column = schemaField.asColumn(s!!)
-                    val columnValue: Any? = if (column is PrimaryKeyColumn<*, *>)
-                        doc.get(column.name)?.toString()
+                    val value = doc.get(column.name)
+                    val columnValue: Any? = if (value == null) {
+                        null
+                    } else if (column.columnType.id)
+                        Id<P, T>(value.toString() as P)
                     else if (column.columnType.primitive) {
-                        val value = doc.get(column.name)
-                        if (value != null) {
-                            when (column.columnType) {
-                                ColumnType.DATE -> LocalDate(value.toString())
-                                ColumnType.TIME -> LocalTime(value.toString())
-                                ColumnType.DATE_TIME -> DateTime(value.toString())
-                                else -> doc.get(column.name)
-                            }
-                        } else {
-                            value
+                        when (column.columnType) {
+                            ColumnType.DATE -> LocalDate(value.toString())
+                            ColumnType.TIME -> LocalTime(value.toString())
+                            ColumnType.DATE_TIME -> DateTime(value.toString())
+                            else -> doc.get(column.name)
                         }
                     } else {
                         getObject(doc.get(column.name) as DBObject, column as Column<Any?, T>)
@@ -416,7 +415,8 @@ class MongoDBSession(val db: DB) : Session() {
                     columnField.setAccessible(true)
                     valueField.setAccessible(true)
                     val column = columnField.asColumn(column)
-                    val columnValue: Any? = if (column.columnType.primitive) doc.get(column.name)
+                    val columnValue: Any? = if (column.columnType.id) Id<String, TableSchema<String>>(doc.get(column.name).toString())
+                    else if (column.columnType.primitive) doc.get(column.name)
                     else if (column.columnType.list && !column.columnType.custom) (doc.get(column.name) as BasicDBList).toList()
                     else if (column.columnType.set && !column.columnType.custom) (doc.get(column.name) as BasicDBList).toSet()
                     else if (column.columnType.custom && column.columnType.list) {

@@ -6,22 +6,24 @@ import java.util.HashMap
 import kotlinx.nosql.AbstractColumn
 import kotlinx.nosql.Schema
 
-fun getAllFields(_type: Class<in Any>, fields: MutableList<Field> = ArrayList()): MutableList<Field> {
+fun getAllFields(_type: Class<in Any>, condition: (Field) -> Boolean = { f -> true },
+                 fields: MutableList<Field> = ArrayList()): MutableList<Field> {
     for (field in _type.getDeclaredFields()) {
-        fields.add(field)
+        if (condition(field)) fields.add(field)
     }
     if (_type.getSuperclass() != null) {
-        getAllFields(_type.getSuperclass()!!, fields);
+        getAllFields(_type.getSuperclass()!!, condition, fields);
     }
     return fields
 }
 
-fun getAllFieldsMap(_type: Class<in Any>, fields: MutableMap<String, Field> = HashMap()): MutableMap<String, Field> {
+fun getAllFieldsMap(_type: Class<in Any>, condition: (Field) -> Boolean = { f -> true },
+                    fields: MutableMap<String, Field> = HashMap()): MutableMap<String, Field> {
     for (field in _type.getDeclaredFields()) {
-        fields.put(field.getName()!!.toLowerCase(), field)
+        if (condition(field)) fields.put(field.getName()!!.toLowerCase(), field)
     }
     if (_type.getSuperclass() != null) {
-        getAllFieldsMap(_type.getSuperclass()!!, fields);
+        getAllFieldsMap(_type.getSuperclass()!!, condition, fields);
     }
     return fields
 }

@@ -55,9 +55,9 @@ class MongoDBSpek : Spek() {
         val Details = DetailsColumn<Albums>()
 
         class DetailsColumn<T : Schema>() : Column<Details, T>("details", javaClass()) {
-            val Title = string<T>("title")
+            val Title = string("title")
             val ArtistId = id("artistId", Artists)
-            val Genre = setOfString<T>("genre")
+            val Genre = setOfString("genre")
 
             val Tracks = TracksColumn<T>()
         }
@@ -112,7 +112,7 @@ class MongoDBSpek : Spek() {
             val db = MongoDB(database = "test", schemas = array<Schema>(Products, Albums)) // Compiler failure
 
             db {
-                Products.drop()
+                array(Products, Artists).forEach { it.drop() }
             }
             var artistId: Id<String, Artists>? = null
             var albumId: Id<String, Albums>? = null // KT-4680 Compiler failure
@@ -123,7 +123,7 @@ class MongoDBSpek : Spek() {
                     it("should return a generated id for artist") {
                         assert(arId.value.length > 0)
                     }
-                    val aId: Id<String, Products> = Products insert Album(sku = "00e8da9b", title = "A Love Supreme", description = "by John Coltrane",
+                    val aId = Albums insert Album(sku = "00e8da9b", title = "A Love Supreme", description = "by John Coltrane",
                             asin = "B0000A118M", available = true, cost = 1.23, createdAtDate = LocalDate(2014, 3, 8), nullableBooleanNoValue = null,
                             nullableBooleanWithValue = false, nullableDateNoValue = null, nullableDateWithValue = LocalDate(2014, 3, 7),
                             nullableDoubleNoValue = null, nullableDoubleWithValue = 1.24,
@@ -255,7 +255,7 @@ class MongoDBSpek : Spek() {
 
             on("getting four columns by id") {
                 db {
-                    val (sku, title, description, pricing) = Products columns { SKU + Title + Description + Pricing } get albumId!!
+                    val (sku, title, description, pricing) = Albums columns { SKU + Title + Description + Pricing } get albumId!!
                     it("returns correct values") {
                         assertEquals("00e8da9b", sku)
                         assertEquals("A Love Supreme", title)
@@ -270,7 +270,7 @@ class MongoDBSpek : Spek() {
 
             on("getting five columns by id") {
                 db {
-                    val (sku, title, description, asin, pricing) = Products columns { SKU + Title + Description + ASIN + Pricing } get albumId!!
+                    val (sku, title, description, asin, pricing) = Albums columns { SKU + Title + Description + ASIN + Pricing } get albumId!!
                     it("returns correct values") {
                         assertEquals("00e8da9b", sku)
                         assertEquals("A Love Supreme", title)
@@ -286,7 +286,7 @@ class MongoDBSpek : Spek() {
 
             on("getting six columns by id") {
                 db {
-                    val (sku, title, description, asin, list, retail) = Products columns { SKU + Title +
+                    val (sku, title, description, asin, list, retail) = Albums columns { SKU + Title +
                         Description + ASIN + Pricing.List + Pricing.Retail } get albumId!!
                     it("returns correct values") {
                         assertEquals("00e8da9b", sku)
@@ -301,7 +301,7 @@ class MongoDBSpek : Spek() {
 
             on("getting seven columns by id") {
                 db {
-                    val (sku, title, description, asin, list, retail, savings) = Products columns { SKU + Title +
+                    val (sku, title, description, asin, list, retail, savings) = Albums columns { SKU + Title +
                         Description + ASIN + Pricing.List + Pricing.Retail + Pricing.Savings } get albumId!!
                     it("returns correct values") {
                         assertEquals("00e8da9b", sku)
@@ -317,7 +317,7 @@ class MongoDBSpek : Spek() {
 
             on("getting eight columns by id") {
                 db {
-                    val (sku, title, description, asin, list, retail, savings, pctSavings) = Products columns {
+                    val (sku, title, description, asin, list, retail, savings, pctSavings) = Albums columns {
                         SKU + Title + Description + ASIN + Pricing.List + Pricing.Retail + Pricing.Savings +
                         Pricing.PCTSavings
                     } get albumId!!
@@ -336,7 +336,7 @@ class MongoDBSpek : Spek() {
 
             on("getting nine columns by id") {
                 db {
-                    val (sku, title, description, asin, list, retail, savings, pctSavings, shipping) = Products columns {
+                    val (sku, title, description, asin, list, retail, savings, pctSavings, shipping) = Albums columns {
                         SKU + Title + Description + ASIN + Pricing.List + Pricing.Retail + Pricing.Savings +
                         Pricing.PCTSavings + Shipping
                     } get albumId!!
@@ -359,7 +359,7 @@ class MongoDBSpek : Spek() {
 
             on("getting ten columns by id") {
                 db {
-                    val (sku, title, description, asin, list, retail, savings, pctSavings, weight, dimensions) = Products columns {
+                    val (sku, title, description, asin, list, retail, savings, pctSavings, weight, dimensions) = Albums columns {
                         SKU + Title + Description + ASIN + Pricing.List + Pricing.Retail + Pricing.Savings +
                         Pricing.PCTSavings + Shipping.Weight + Shipping.Dimensions
                     } get albumId!!
@@ -874,7 +874,7 @@ class MongoDBSpek : Spek() {
             on("setting values to a few integer columns on an abstract schema by a filter expression") {
                 db {
                     Products columns { Pricing.Retail + Pricing.Savings } filter { SKU eq "00e8da9b" } set values(1150, 50)
-                    val (retail, savings)= Products columns { Pricing.Retail + Pricing.Savings } get albumId!!
+                    val (retail, savings)= Albums columns { Pricing.Retail + Pricing.Savings } get albumId!!
                     it("takes effect") {
                         assertEquals(1150, retail)
                         assertEquals(50, savings)
@@ -908,6 +908,8 @@ class MongoDBSpek : Spek() {
             }
 */
 
+
+
             on("removing sn element from a collection column on a non-abstract schema by id") {
                 db {
                     Albums columns { Details.Tracks } find albumId!! delete { Duration eq 100 }
@@ -940,9 +942,9 @@ class MongoDBSpek : Spek() {
 
             on("deleting a document") {
                 db {
-                    Products delete { ID eq albumId!! }
+                    Albums delete { ID eq albumId!! }
                     it("deletes the document from database") {
-                        assert((Albums filter { pk eq albumId!! }).toList().isEmpty())
+                        assert((Albums filter { ID eq albumId!! }).toList().isEmpty())
                     }
                 }
             }
