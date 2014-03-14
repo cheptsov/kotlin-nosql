@@ -61,11 +61,24 @@ To use it with Maven insert the following code in your pom.xml file:
     <artifactId>kotlin-nosql-mongodb</artifactId>
     <version>0.1-SNAPSHOT</version>
  </dependency>
+
+ <repositories>
+     <repository>
+       <id>kotlin-nosql</id>
+       <url>http://repository.jetbrains.com/kotlin-nosql</url>
+     </repository>
+</repositories>
 ```
 
 To use it with Gradle insert the following code in your build.gradle:
 
 ```groovy
+repositories {
+    maven {
+        url "http://repository.jetbrains.com/kotlin-nosql"
+    }
+}
+
 dependencies {
     compile 'org.jetbrains.kotlin:kotlin-nosql-mongodb:0.1-SNAPSHOT'
 }
