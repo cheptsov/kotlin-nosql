@@ -58,7 +58,7 @@ To use it with Maven insert the following code in your pom.xml file:
 ```xml
 <dependency>
     <groupId>org.jetbrains.kotlin</groupId>
-    <artifactId>kotlin-nosql</artifactId>
+    <artifactId>kotlin-nosql-mongodb</artifactId>
     <version>0.1-SNAPSHOT</version>
  </dependency>
 ```
@@ -67,7 +67,7 @@ To use it with Gradle insert the following code in your build.gradle:
 
 ```groovy
 dependencies {
-    compile 'org.jetbrains.kotlin:kotlin-nosql:0.1-SNAPSHOT'
+    compile 'org.jetbrains.kotlin:kotlin-nosql-mongodb:0.1-SNAPSHOT'
 }
 ```
 

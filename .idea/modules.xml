@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/kotlin-nosql.iml" filepath="$PROJECT_DIR$/kotlin-nosql.iml" />
+      <module fileurl="file://$PROJECT_DIR$/kotlin-nosql-mongodb/kotlin-nosql-mongodb.iml" filepath="$PROJECT_DIR$/kotlin-nosql-mongodb/kotlin-nosql-mongodb.iml" />
     </modules>
   </component>
 </project>

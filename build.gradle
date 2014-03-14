@@ -1,3 +1,8 @@
+configurations.all {
+    // check for updates every build
+    resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
+}
+
 buildscript {
     kotlin_version = '0.1-SNAPSHOT'
     repositories {
@@ -11,45 +16,47 @@ buildscript {
     }
 }
 
-configurations.all {
-    // check for updates every build
-    resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
-}
+allprojects {
+    apply plugin: "kotlin"
 
-apply plugin: "kotlin"
+    group = "org.jetbrains.kotlin"
+    version = "0.1-SNAPSHOT"
 
-repositories {
-    mavenCentral()
-    maven {
-        url "http://repository.jetbrains.com/spek"
-    }
-    maven {
-        url "http://oss.sonatype.org/content/repositories/snapshots"
-    }
-}
-
-apply plugin: "maven"
-
-dependencies {
-    compile 'joda-time:joda-time:2.3'
-    compile group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib', version: kotlin_version, changing: true
-    compile 'org.mongodb:mongo-java-driver:2.10.1'
-    // TODO TODO TODO Migrate to Spek when it's fixed
-    /*testCompile group: 'org.spek', name: 'spek', version: '0.1-SNAPSHOT', changing: true*/
-    testCompile 'junit:junit:4.11'
-}
-
-/*
-uploadArchives {
     repositories {
-        mavenDeployer {
-            repository(url: "http://repository.jetbrains.com/kotlin-nosql") {
-                authentication(userName: deploy_username, password: deploy_password)
+        mavenCentral()
+        maven {
+            url "http://repository.jetbrains.com/spek"
+        }
+        maven {
+            url "http://oss.sonatype.org/content/repositories/snapshots"
+        }
+    }
+
+    apply plugin: "maven"
+
+    dependencies {
+        compile 'joda-time:joda-time:2.3'
+        compile group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib', version: kotlin_version, changing: true
+        compile 'org.mongodb:mongo-java-driver:2.10.1'
+        testCompile group: 'org.spek', name: 'spek', version: '0.1-SNAPSHOT', changing: true
+    }
+
+    uploadArchives {
+        repositories {
+            mavenDeployer {
+                repository(url: "http://repository.jetbrains.com/kotlin-nosql") {
+                    authentication(userName: deploy_username, password: deploy_password)
+                }
+                pom.groupId = project.group
+                pom.artifactId = project.name
+                pom.version = project.version
             }
-            pom.groupId = "org.jetbrains.kotlin"
-            pom.artifactId = "kotlin-nosql"
-            pom.version = "0.1-SNAPSHOT"
         }
     }
 }
-*/
+
+project(':kotlin-nosql-mongodb') {
+    dependencies {
+        compile project(':')
+    }
+}
