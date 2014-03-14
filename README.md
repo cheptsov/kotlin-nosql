@@ -92,7 +92,7 @@ dependencies {
 
 ```kotlin
 object Comments: MongoDBSchema<Comment>("comments", javaClass()) {
-    val DiscussionId = id("discussion_id")
+    val DiscussionId = id("discussion_id", Discussions)
     val Slug = string("slug")
     val FullSlug = string("full_slug")
     val Posted = dateTime("posted")
@@ -101,15 +101,18 @@ object Comments: MongoDBSchema<Comment>("comments", javaClass()) {
     val AuthorInfo = AuthorInfoColumn()
 
     class AuthorInfoColumn() : Column<AuthorInfo, Comments>("author", javaClass()) {
-        val Id= id("id")
+        val Id = id("id", Authors)
         val Name = string("name")
     }
 }
 
-class Comment(val: id: Id<String, Comments>? = null, val DiscussionId: Id<String, Discussions>, val slug: String,
-    val fullSlug: String, posted: DateTime, text: String, authorInfo: AuthorInfo)
+class Comment(val id: Id<String, Comments>? = null,
+              val DiscussionId: Id<String, Discussions>, val slug: String,
+              val fullSlug: String, posted: DateTime, text: String, authorInfo: AuthorInfo) {
 
-class AuthorInfo(val: id: Id<String, Authors>, val name: String)
+}
+
+class AuthorInfo(val id: Id<String, Authors>, val name: String)
 ```
 
 #### Define a database
