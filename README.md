@@ -109,7 +109,7 @@ object Comments: MongoDBSchema<Comment>("comments", javaClass()) {
 class Comment(val: id: Id<String, Comments>? = null, val DiscussionId: Id<String, Discussions>, val slug: String,
     val fullSlug: String, posted: DateTime, text: String, authorInfo: AuthorInfo)
 
-class AuthorInfo(val: id: Id, val name: String)
+class AuthorInfo(val: id: Id<String, Authors>, val name: String)
 ```
 
 #### Define a database
@@ -202,7 +202,7 @@ open class ProductSchema<V, T : Schema>(javaClass: Class<V>, discriminator: Stri
 
 object Products : ProductSchema<Product, Products>(javaClass(), "")
 
-abstract class Product(val id: String? = null, val sku: String, val title: String, val description: String,
+abstract class Product(val id: Id<String, Products>? = null, val sku: String, val title: String, val description: String,
                        val asin: String, val shipping: Shipping, val pricing: Pricing) {
     val id: Id<String, Products>? = null
 }
