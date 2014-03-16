@@ -109,7 +109,7 @@ class MongoDBSpek : Spek() {
 
     {
         given("a polymorhpic schema") {
-            val db = MongoDB(database = "test", schemas = array<Schema>(Products, Albums)) // Compiler failure
+            val db = MongoDB(database = "test", schemas = array<Schema>(Artists, Products, Albums)) // Compiler failure
 
             db {
                 array(Products, Artists).forEach { it.drop() }
@@ -139,6 +139,15 @@ class MongoDBSpek : Spek() {
                     }
                     albumId = aId
                     artistId = arId
+                }
+            }
+
+            on("filtering a non-inherited schema") {
+                db {
+                    val artists = Artists.filter { Name eq "John Coltrane" }.toList()
+                    it("should return a generated id for artist") {
+                        assert(artists.size == 1)
+                    }
                 }
             }
 

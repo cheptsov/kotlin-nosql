@@ -342,7 +342,10 @@ class MongoDBSession(val db: DB) : Session() {
                 }
             }
             instance!!
-        } else newInstance(schema.valueClass)
+        } else {
+            s = schema
+            newInstance(schema.valueClass)
+        }
         val schemaClass = s.javaClass
         val schemaFields = getAllFields(schemaClass as Class<in Any?>)
         val valueFields = getAllFieldsMap(valueInstance.javaClass as Class<in Any?>)
