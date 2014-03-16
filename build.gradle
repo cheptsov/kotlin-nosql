@@ -41,6 +41,15 @@ allprojects {
         testCompile group: 'org.spek', name: 'spek', version: '0.1-SNAPSHOT', changing: true
     }
 
+    task sourcesJar(type: Jar, dependsOn: classes) {
+        classifier 'sources'
+        from sourceSets.main.allSource
+    }
+
+    artifacts {
+        archives sourcesJar
+    }
+
     uploadArchives {
         repositories {
             mavenDeployer {
