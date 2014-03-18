@@ -451,10 +451,34 @@ class MongoDBSession(val db: DB) : Session() {
         collection.remove(query)
     }
     override fun <T : AbstractTableSchema, A: AbstractColumn<C, T, out Any?>, C> Query1<T, A, C>.set(c: C) {
-        update(array(Pair(a, c)), op!!, "\$set")
+        update(array(Pair(a, c)), op, "\$set")
     }
-    override fun <T : AbstractTableSchema, A, B> Query2<T, A, B>.set(c: Pair<A, B>) {
-        update(array(Pair(a, c.component1()), Pair(b, c.component2())), op!!, "\$set")
+    override fun <T : AbstractTableSchema, A, B> Query2<T, A, B>.set(av: A, bv: B) {
+        update(array(Pair(a, av), Pair(b, bv)), op, "\$set")
+    }
+    override fun <T : AbstractTableSchema, A, B, C> Query3<T, A, B, C>.set(av: A, bv: B, cv: C) {
+        update(array(Pair(a, av), Pair(b, bv), Pair(c, cv)), op, "\$set")
+    }
+    override fun <T : AbstractTableSchema, A, B, C, D> Query4<T, A, B, C, D>.set(av: A, bv: B, cv: C, dv: D) {
+        update(array(Pair(a, av), Pair(b, bv), Pair(c, cv), Pair(d, dv)), op, "\$set")
+    }
+    override fun <T : AbstractTableSchema, A, B, C, D, E> Query5<T, A, B, C, D, E>.set(av: A, bv: B, cv: C, dv: D, ev: E) {
+        update(array(Pair(a, av), Pair(b, bv), Pair(c, cv), Pair(d, dv), Pair(e, ev)), op, "\$set")
+    }
+    override fun <T : AbstractTableSchema, A, B, C, D, E, F> Query6<T, A, B, C, D, E, F>.set(av: A, bv: B, cv: C, dv: D, ev: E, fv: F) {
+        update(array(Pair(a, av), Pair(b, bv), Pair(c, cv), Pair(d, dv), Pair(e, ev), Pair(f, fv)), op, "\$set")
+    }
+    override fun <T : AbstractTableSchema, A, B, C, D, E, F, G> Query7<T, A, B, C, D, E, F, G>.set(av: A, bv: B, cv: C, dv: D, ev: E, fv: F, gv: G) {
+        update(array(Pair(a, av), Pair(b, bv), Pair(c, cv), Pair(d, dv), Pair(e, ev), Pair(f, fv), Pair(g, gv)), op, "\$set")
+    }
+    override fun <T : AbstractTableSchema, A, B, C, D, E, F, G, H> Query8<T, A, B, C, D, E, F, G, H>.set(av: A, bv: B, cv: C, dv: D, ev: E, fv: F, gv: G, hv: H) {
+        update(array(Pair(a, av), Pair(b, bv), Pair(c, cv), Pair(d, dv), Pair(e, ev), Pair(f, fv), Pair(g, gv), Pair(h, hv)), op, "\$set")
+    }
+    override fun <T : AbstractTableSchema, A, B, C, D, E, F, G, H, I> Query9<T, A, B, C, D, E, F, G, H, I>.set(av: A, bv: B, cv: C, dv: D, ev: E, fv: F, gv: G, hv: H, iv: I) {
+        update(array(Pair(a, av), Pair(b, bv), Pair(c, cv), Pair(d, dv), Pair(e, ev), Pair(f, fv), Pair(g, gv), Pair(h, hv), Pair(i, iv)), op, "\$set")
+    }
+    override fun <T : AbstractTableSchema, A, B, C, D, E, F, G, H, I, J> Query10<T, A, B, C, D, E, F, G, H, I, J>.set(av: A, bv: B, cv: C, dv: D, ev: E, fv: F, gv: G, hv: H, iv: I, jv: J) {
+        update(array(Pair(a, av), Pair(b, bv), Pair(c, cv), Pair(d, dv), Pair(e, ev), Pair(f, fv), Pair(g, gv), Pair(h, hv), Pair(i, iv), Pair(i, jv)), op, "\$set")
     }
 
     private fun update(columnValues: Array<Pair<AbstractColumn<*, *, *>, *>>, op: Op, operator: String) {
@@ -606,7 +630,7 @@ class MongoDBSession(val db: DB) : Session() {
                 getColumnObject(doc, d) as D, getColumnObject(doc, e) as E, getColumnObject(doc, f) as F,
                 getColumnObject(doc, g) as G, getColumnObject(doc, h) as H)
     }
-    override fun <T : TableSchema<P>, P, A, B, C, D, E, F, G, H, J> Template9<T, A, B, C, D, E, F, G, H, J>.get(id: Id<P, T>): Nonuple<A, B, C, D, E, F, G, H, J> {
+    override fun <T : TableSchema<P>, P, A, B, C, D, E, F, G, H, I> Template9<T, A, B, C, D, E, F, G, H, I>.get(id: Id<P, T>): Nonuple<A, B, C, D, E, F, G, H, I> {
         val table = Schema.current<T>()
         val collection = db.getCollection(table.name)!!
         val query = getQuery(table.Id eq id)
@@ -615,18 +639,18 @@ class MongoDBSession(val db: DB) : Session() {
                 .append(g.fullName, "1")!!.append(h.fullName, "1")!!.append(j.fullName, "1"))!!
         return Nonuple(getColumnObject(doc, a) as A, getColumnObject(doc, b) as B, getColumnObject(doc, c) as C,
                 getColumnObject(doc, d) as D, getColumnObject(doc, e) as E, getColumnObject(doc, f) as F,
-                getColumnObject(doc, g) as G, getColumnObject(doc, h) as H, getColumnObject(doc, j) as J)
+                getColumnObject(doc, g) as G, getColumnObject(doc, h) as H, getColumnObject(doc, j) as I)
     }
-    override fun <T : TableSchema<P>, P, A, B, C, D, E, F, G, H, J, K> Template10<T, A, B, C, D, E, F, G, H, J, K>.get(id: Id<P, T>): Decuple<A, B, C, D, E, F, G, H, J, K> {
+    override fun <T : TableSchema<P>, P, A, B, C, D, E, F, G, H, I, J> Template10<T, A, B, C, D, E, F, G, H, I, J>.get(id: Id<P, T>): Decuple<A, B, C, D, E, F, G, H, I, J> {
         val table = Schema.current<T>()
         val collection = db.getCollection(table.name)!!
         val query = getQuery(table.Id eq id)
         val doc = collection.findOne(query, BasicDBObject().append(a.fullName, "1")!!.append(b.fullName, "1")!!
                 .append(c.fullName, "1")!!.append(d.fullName, "1")!!.append(e.fullName, "1")!!.append(f.fullName, "1")!!
-                .append(g.fullName, "1")!!.append(h.fullName, "1")!!.append(j.fullName, "1")!!.append(k.fullName, "1"))!!
+                .append(g.fullName, "1")!!.append(h.fullName, "1")!!.append(i.fullName, "1")!!.append(j.fullName, "1"))!!
         return Decuple(getColumnObject(doc, a) as A, getColumnObject(doc, b) as B, getColumnObject(doc, c) as C,
                 getColumnObject(doc, d) as D, getColumnObject(doc, e) as E, getColumnObject(doc, f) as F,
-                getColumnObject(doc, g) as G, getColumnObject(doc, h) as H, getColumnObject(doc, j) as J, getColumnObject(doc, k) as K)
+                getColumnObject(doc, g) as G, getColumnObject(doc, h) as H, getColumnObject(doc, i) as I, getColumnObject(doc, j) as J)
     }
 
     private fun getColumnObject(doc: DBObject, column: AbstractColumn<*, *, *>): Any? {

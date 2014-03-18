@@ -352,6 +352,6 @@ class Template10<T: Schema, A, B, C, D, E, F, G, H, J, K>(val a: AbstractColumn<
                                                       val c: AbstractColumn<C, T, *>, val d: AbstractColumn<D, T, *>,
                                                       val e: AbstractColumn<E, T, *>, val f: AbstractColumn<F, T, *>,
                                                       val g: AbstractColumn<G, T, *>, val h: AbstractColumn<H, T, *>,
-                                                      val j: AbstractColumn<J, T, *>, val k: AbstractColumn<K, T, *>) {
+                                                      val i: AbstractColumn<J, T, *>, val j: AbstractColumn<K, T, *>) {
 
 }

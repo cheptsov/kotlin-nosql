@@ -45,16 +45,16 @@ class Query8<T : AbstractTableSchema, A, B, C, D, E, F, G, H>(val a: AbstractCol
                                                   val g: AbstractColumn<G, T, *>, val h: AbstractColumn<H, T, *>, op: Op) : Query<Octuple<A, B, C, D, E, F, G, H>, T>(array(a, b, c, d, e, f, g, h), op) {
 }
 
-class Query9<T : AbstractTableSchema, A, B, C, D, E, F, G, H, J>(val a: AbstractColumn<A, T, *>, val b: AbstractColumn<B, T, *>,
+class Query9<T : AbstractTableSchema, A, B, C, D, E, F, G, H, I>(val a: AbstractColumn<A, T, *>, val b: AbstractColumn<B, T, *>,
                                                   val c: AbstractColumn<C, T, *>, val d: AbstractColumn<D, T, *>,
                                                   val e: AbstractColumn<E, T, *>, val f: AbstractColumn<F, T, *>,
                                                   val g: AbstractColumn<G, T, *>, val h: AbstractColumn<H, T, *>,
-                                                  val j: AbstractColumn<J, T, *>, op: Op) : Query<Nonuple<A, B, C, D, E, F, G, H, J>, T>(array(a, b, c, d, e, f, g, h, j), op) {
+                                                  val i: AbstractColumn<I, T, *>, op: Op) : Query<Nonuple<A, B, C, D, E, F, G, H, I>, T>(array(a, b, c, d, e, f, g, h, i), op) {
 }
 
-class Query10<T : AbstractTableSchema, A, B, C, D, E, F, G, H, J, K>(val a: AbstractColumn<A, T, *>, val b: AbstractColumn<B, T, *>,
+class Query10<T : AbstractTableSchema, A, B, C, D, E, F, G, H, I, J>(val a: AbstractColumn<A, T, *>, val b: AbstractColumn<B, T, *>,
                                                   val c: AbstractColumn<C, T, *>, val d: AbstractColumn<D, T, *>,
                                                   val e: AbstractColumn<E, T, *>, val f: AbstractColumn<F, T, *>,
                                                   val g: AbstractColumn<G, T, *>, val h: AbstractColumn<H, T, *>,
-                                                  val j: AbstractColumn<J, T, *>, val k: AbstractColumn<K, T, *>, op: Op) : Query<Decuple<A, B, C, D, E, F, G, H, J, K>, T>(array(a, b, c, d, e, f, g, h, j, k), op) {
+                                                  val i: AbstractColumn<I, T, *>, val j: AbstractColumn<J, T, *>, op: Op) : Query<Decuple<A, B, C, D, E, F, G, H, I, J>, T>(array(a, b, c, d, e, f, g, h, i, j), op) {
 }
