@@ -50,7 +50,7 @@ allprojects {
         archives sourcesJar
     }
 
-    /*uploadArchives {
+    uploadArchives {
         repositories {
             mavenDeployer {
                 repository(url: "http://repository.jetbrains.com/kotlin-nosql") {
@@ -61,7 +61,7 @@ allprojects {
                 pom.version = project.version
             }
         }
-    }*/
+    }
 }
 
 project(':kotlin-nosql-mongodb') {
