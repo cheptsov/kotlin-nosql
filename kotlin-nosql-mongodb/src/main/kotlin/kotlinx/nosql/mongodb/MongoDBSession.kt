@@ -478,7 +478,7 @@ class MongoDBSession(val db: DB) : Session() {
         update(array(Pair(a, av), Pair(b, bv), Pair(c, cv), Pair(d, dv), Pair(e, ev), Pair(f, fv), Pair(g, gv), Pair(h, hv), Pair(i, iv)), op, "\$set")
     }
     override fun <T : AbstractTableSchema, A, B, C, D, E, F, G, H, I, J> Query10<T, A, B, C, D, E, F, G, H, I, J>.set(av: A, bv: B, cv: C, dv: D, ev: E, fv: F, gv: G, hv: H, iv: I, jv: J) {
-        update(array(Pair(a, av), Pair(b, bv), Pair(c, cv), Pair(d, dv), Pair(e, ev), Pair(f, fv), Pair(g, gv), Pair(h, hv), Pair(i, iv), Pair(i, jv)), op, "\$set")
+        update(array(Pair(a, av), Pair(b, bv), Pair(c, cv), Pair(d, dv), Pair(e, ev), Pair(f, fv), Pair(g, gv), Pair(h, hv), Pair(i, iv), Pair(j, jv)), op, "\$set")
     }
 
     private fun update(columnValues: Array<Pair<AbstractColumn<*, *, *>, *>>, op: Op, operator: String) {
@@ -655,21 +655,20 @@ class MongoDBSession(val db: DB) : Session() {
 
     private fun getColumnObject(doc: DBObject, column: AbstractColumn<*, *, *>): Any? {
         val columnObject = parse(doc, column.fullName.split("\\."))
-        return when (columnObject) {
-            is String, is Integer -> columnObject
-            is BasicDBList -> when (column.columnType) {
-                ColumnType.STRING_SET, ColumnType.INTEGER_SET -> columnObject.toSet()
-                ColumnType.STRING_LIST, ColumnType.INTEGER_LIST -> columnObject.toList()
-                ColumnType.CUSTOM_CLASS_LIST -> {
-                    columnObject.map { getObject(it as DBObject, column as ListColumn<Any?, out Schema>) }
-                }
-                ColumnType.CUSTOM_CLASS_SET -> {
-                    columnObject.map { getObject(it as DBObject, column as ListColumn<Any?, out Schema>) }.toSet()
-                }
-                else -> throw UnsupportedOperationException()
-            }
-            is DBObject -> getObject(columnObject, column)
-            else -> throw UnsupportedOperationException()
+        return if (column.columnType.primitive) {
+            columnObject
+        } else if (!column.columnType.custom && column.columnType.set) {
+            (columnObject as BasicDBList).toSet()
+        } else if (!column.columnType.custom && column.columnType.list) {
+            (columnObject as BasicDBList).toList()
+        } else if (column.columnType.custom && column.columnType.list) {
+            (columnObject as BasicDBList).map { getObject(it as DBObject, column as ListColumn<Any?, out Schema>) }
+        } else if (column.columnType.custom && column.columnType.set) {
+            (columnObject as BasicDBList).map { getObject(it as DBObject, column as ListColumn<Any?, out Schema>) }.toSet()
+        } else if (column.columnType.custom) {
+            getObject(columnObject as DBObject, column)
+        } else {
+            UnsupportedOperationException()
         }
     }
 

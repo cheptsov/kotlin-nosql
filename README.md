@@ -13,7 +13,7 @@ Unlike to ORM frameworks with its object persistence strategy Kotlin NoSQL uses 
 queries. Each operation on data may be described via a statically-typed query:
 
 ```kotlin
-Albums columns { Details.Tracks } filter { Details.ArtistId eq artistId } delete { Duration lt 200 }
+Albums.columns { Details.Tracks }.filter { Details.ArtistId.eq(artistId) }.delete { Duration.lt(200) }
 ```
 
 #### Type-safety
@@ -21,7 +21,7 @@ Albums columns { Details.Tracks } filter { Details.ArtistId eq artistId } delete
 Once you have a schema defined you can access documents with queries, always getting type-safe results:
 
 ```kotlin
-for (product in Products filter { Pricing.Savings ge 1000 }) {
+for (product in Products.filter { Pricing.Savings.ge(1000) }) {
     when (product) {
         is Album -> // ...
         else -> // ...
@@ -30,8 +30,8 @@ for (product in Products filter { Pricing.Savings ge 1000 }) {
 ```
 
 ```kotlin
-for ((slug, fullSlug, posted, text, authorInfo) in Comments columns { Slug +
-    FullSlug + Posted + Text + AuthorInfo } filter { DiscussionId eq DiscussionId }) {
+for ((slug, fullSlug, posted, text, authorInfo) in Comments.columns { Slug +
+    FullSlug + Posted + Text + AuthorInfo }.filter { DiscussionId.eq(DiscussionId) }) {
 }
 ```
 
@@ -128,45 +128,45 @@ db {
 #### Insert a document
 
 ```kotlin
-val commentId = Comments insert Comment(DiscussionId, slug, fullSlug, posted,
-    text, AuthorInfo(author.id, author.name))
+val commentId = Comments.insert(Comment(DiscussionId, slug, fullSlug, posted,
+    text, AuthorInfo(author.id, author.name)))
 ```
 
 #### Get a document by id
 
 ```kotlin
-val comment = Comments get commentId
+val comment = Comments.get(commentId)
 ```
 
 #### Get a list of documents by a filter expression
 
 ```kotlin
-for (comment in Comments filter { AuthorInfo.Id eq authorId } sort { Posted } drop 10 take 5) {
+for (comment in Comments.filter { AuthorInfo.Id eq authorId }.sortBy { Posted }. drop(10).take(5)) {
 }
 ```
 
 #### Get selected fields by document id
 
 ```kotlin
-val authorInfo = Comments columns { AuthorInfo } get commentId
+val authorInfo = Comments.columns { AuthorInfo }.get(commentId)
 ```
 
 #### Get selected fields by a filter expression
 
 ```kotlin
-for ((slug, fullSlug, posted, text, authorInfo) in Comments columns { Slug +
-    FullSlug + Posted + Text + AuthorInfo } filter { DiscussionId eq discussion Id }) {
+for ((slug, fullSlug, posted, text, authorInfo) in Comments.columns { Slug +
+    FullSlug + Posted + Text + AuthorInfo }.filter { DiscussionId.eq(discussionId) }) {
 }
 ```
 
 #### Update selected fields by document id
 
 ```kotlin
-Comments columns { Posted } find commentId set newDate
+Comments.columns { Posted }.find(commentId).set(newDate)
 ```
 
 ```kotlin
-Comments columns { Posted + Text } find commentId set values(newDate, newText)
+Comments.columns { Posted + Text }.find(commentId).set(newDate, newText)
 ```
 
 ### Inheritance
@@ -246,20 +246,20 @@ class Details(val title: String, val artistId: Id<String, Artists>, val genre: S
 #### Insert a document
 
 ```kotlin
-val productId = Products insert Album(sku = "00e8da9b", title = "A Love Supreme", description = "by John Coltrane",
+val productId = Products.insert(Album(sku = "00e8da9b", title = "A Love Supreme", description = "by John Coltrane",
     asin = "B0000A118M", shipping = Shipping(weight = 6, dimensions = Dimensions(10, 10, 1)),
     pricing = Pricing(list = 1200, retail = 1100, savings = 100, pctSavings = 8),
     details = Details(title = "A Love Supreme [Original Recording Reissued]",
             artistId = artistId, genre = setOf("Jazz", "General"),
             tracks = listOf(Track("A Love Supreme Part I: Acknowledgement", 100),
                     Track("A Love Supreme Part II: Resolution", 200),
-                    Track("A Love Supreme, Part III: Pursuance", 300))))
+                    Track("A Love Supreme, Part III: Pursuance", 300)))))
 ```
 
 #### Access documents via an abstract schema
 
 ```kotlin
-val product = Products get productId
+val product = Products.get(productId)
     if (product is Album) {
         // ...
     }
@@ -269,7 +269,7 @@ val product = Products get productId
 #### Access documents via an inherited schema
 
 ```kotlin
-for (albums in Albums filter { Details.ArtistId eq artistId }) {
+for (albums in Albums.filter { Details.ArtistId.eq(artistId) }) {
     // ...
 }
 ```
