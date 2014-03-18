@@ -81,44 +81,44 @@ abstract class Session () {
         return Query1<T, A, C>(this, Schema.current<T>().op())
     }
 
-    fun <T : TableSchema<P>, A: AbstractColumn<C, T, *>, C, P> A.find(id: P): Query1<T, A, C> {
-        return Query1<T, A, C>(this, Schema.current<T>().pk eq id)
+    fun <T : TableSchema<P>, A: AbstractColumn<C, T, *>, C, P> A.find(id: Id<P, T>): Query1<T, A, C> {
+        return Query1<T, A, C>(this, Schema.current<T>().Id eq id)
     }
 
-    fun <T : TableSchema<P>, A, B, P> Template2<T, A, B>.find(id: P): Query2<T, A, B> {
-        return Query2<T, A, B>(a, b, Schema.current<T>().pk eq id)
+    fun <T : TableSchema<P>, A, B, P> Template2<T, A, B>.find(id: Id<P, T>): Query2<T, A, B> {
+        return Query2<T, A, B>(a, b, Schema.current<T>().Id eq id)
     }
 
-    fun <T : TableSchema<P>, A, B, C, P> Template3<T, A, B, C>.find(id: P): Query3<T, A, B, C> {
-        return Query3<T, A, B, C>(a, b, c, Schema.current<T>().pk eq id)
+    fun <T : TableSchema<P>, A, B, C, P> Template3<T, A, B, C>.find(id: Id<P, T>): Query3<T, A, B, C> {
+        return Query3<T, A, B, C>(a, b, c, Schema.current<T>().Id eq id)
     }
 
-    fun <T : TableSchema<P>, A, B, C, D, P> Template4<T, A, B, C, D>.find(id: P): Query4<T, A, B, C, D> {
-        return Query4<T, A, B, C, D>(a, b, c, d, Schema.current<T>().pk eq id)
+    fun <T : TableSchema<P>, A, B, C, D, P> Template4<T, A, B, C, D>.find(id: Id<P, T>): Query4<T, A, B, C, D> {
+        return Query4<T, A, B, C, D>(a, b, c, d, Schema.current<T>().Id eq id)
     }
 
-    fun <T : TableSchema<P>, A, B, C, D, E, P> Template5<T, A, B, C, D, E>.find(id: P): Query5<T, A, B, C, D, E> {
-        return Query5<T, A, B, C, D, E>(a, b, c, d, e, Schema.current<T>().pk eq id)
+    fun <T : TableSchema<P>, A, B, C, D, E, P> Template5<T, A, B, C, D, E>.find(id: Id<P, T>): Query5<T, A, B, C, D, E> {
+        return Query5<T, A, B, C, D, E>(a, b, c, d, e, Schema.current<T>().Id eq id)
     }
 
-    fun <T : TableSchema<P>, A, B, C, D, E, F, P> Template6<T, A, B, C, D, E, F>.find(id: P): Query6<T, A, B, C, D, E, F> {
-        return Query6<T, A, B, C, D, E, F>(a, b, c, d, e, f, Schema.current<T>().pk eq id)
+    fun <T : TableSchema<P>, A, B, C, D, E, F, P> Template6<T, A, B, C, D, E, F>.find(id: Id<P, T>): Query6<T, A, B, C, D, E, F> {
+        return Query6<T, A, B, C, D, E, F>(a, b, c, d, e, f, Schema.current<T>().Id eq id)
     }
 
-    fun <T : TableSchema<P>, A, B, C, D, E, F, G, P> Template7<T, A, B, C, D, E, F, G>.find(id: P): Query7<T, A, B, C, D, E, F, G> {
-        return Query7<T, A, B, C, D, E, F, G>(a, b, c, d, e, f, g, Schema.current<T>().pk eq id)
+    fun <T : TableSchema<P>, A, B, C, D, E, F, G, P> Template7<T, A, B, C, D, E, F, G>.find(id: Id<P, T>): Query7<T, A, B, C, D, E, F, G> {
+        return Query7<T, A, B, C, D, E, F, G>(a, b, c, d, e, f, g, Schema.current<T>().Id eq id)
     }
 
-    fun <T : TableSchema<P>, A, B, C, D, E, F, G, H, P> Template8<T, A, B, C, D, E, F, G, H>.find(id: P): Query8<T, A, B, C, D, E, F, G, H> {
-        return Query8<T, A, B, C, D, E, F, G, H>(a, b, c, d, e, f, g, h, Schema.current<T>().pk eq id)
+    fun <T : TableSchema<P>, A, B, C, D, E, F, G, H, P> Template8<T, A, B, C, D, E, F, G, H>.find(id: Id<P, T>): Query8<T, A, B, C, D, E, F, G, H> {
+        return Query8<T, A, B, C, D, E, F, G, H>(a, b, c, d, e, f, g, h, Schema.current<T>().Id eq id)
     }
 
-    fun <T : TableSchema<P>, A, B, C, D, E, F, G, H, J, P> Template9<T, A, B, C, D, E, F, G, H, J>.find(id: P): Query9<T, A, B, C, D, E, F, G, H, J> {
-        return Query9<T, A, B, C, D, E, F, G, H, J>(a, b, c, d, e, f, g, h, j, Schema.current<T>().pk eq id)
+    fun <T : TableSchema<P>, A, B, C, D, E, F, G, H, J, P> Template9<T, A, B, C, D, E, F, G, H, J>.find(id: Id<P, T>): Query9<T, A, B, C, D, E, F, G, H, J> {
+        return Query9<T, A, B, C, D, E, F, G, H, J>(a, b, c, d, e, f, g, h, j, Schema.current<T>().Id eq id)
     }
 
-    fun <T : TableSchema<P>, A, B, C, D, E, F, G, H, J, K, P> Template10<T, A, B, C, D, E, F, G, H, J, K>.find(id: P): Query10<T, A, B, C, D, E, F, G, H, J, K> {
-        return Query10<T, A, B, C, D, E, F, G, H, J, K>(a, b, c, d, e, f, g, h, i, j, Schema.current<T>().pk eq id)
+    fun <T : TableSchema<P>, A, B, C, D, E, F, G, H, J, K, P> Template10<T, A, B, C, D, E, F, G, H, J, K>.find(id: Id<P, T>): Query10<T, A, B, C, D, E, F, G, H, J, K> {
+        return Query10<T, A, B, C, D, E, F, G, H, J, K>(a, b, c, d, e, f, g, h, i, j, Schema.current<T>().Id eq id)
     }
 
     fun <T : TableSchema<P>, P, A, B> Template2<T, A, B>.at(id: P): Query2<T, A, B> {
