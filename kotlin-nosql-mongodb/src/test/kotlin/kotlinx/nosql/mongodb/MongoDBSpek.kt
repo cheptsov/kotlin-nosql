@@ -109,13 +109,13 @@ class MongoDBSpek : Spek() {
 
     {
         given("a polymorhpic schema") {
-            val db = MongoDB(database = "test", schemas = array<Schema>(Artists, Products, Albums)) // Compiler failure
+            val db = MongoDB(schemas = array<Schema>(Artists, Products, Albums)) // Compiler failure
 
             db {
                 array(Products, Artists).forEach { it.drop() }
             }
             var artistId: Id<String, Artists>? = null
-            var albumId: Id<String, Albums>? = null // KT-4680 Compiler failure
+            var albumId: Id<String, Albums>? = null
 
             on("inserting a document") {
                 db {

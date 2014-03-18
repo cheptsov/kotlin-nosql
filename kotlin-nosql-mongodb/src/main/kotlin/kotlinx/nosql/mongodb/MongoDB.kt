@@ -7,9 +7,30 @@ import kotlinx.nosql.Schema
 import kotlinx.nosql.AbstractColumn
 import kotlinx.nosql.util.*
 import java.util.concurrent.ConcurrentHashMap
+import com.mongodb.ServerAddress
+import com.mongodb.MongoClientOptions
+import com.mongodb.MongoClientURI
 
-class MongoDB(val host: String = "localhost", val database: String, val userName: String = "",
-              val password: String = "", schemas: Array<Schema>) : Database<MongoDBSession>(schemas) {
+fun MongoDB(uri: MongoClientURI, schemas: Array<Schema>): MongoDB {
+    val seeds: Array<ServerAddress> = uri.getHosts()!!.map { host ->
+        if (host.indexOf(':') > 0) {
+            val tokens = host.split(':')
+            ServerAddress(tokens[0], tokens[1].toInt())
+        } else
+            ServerAddress(host)
+    }.copyToArray()
+    val database: String = if (uri.getDatabase() != null) uri.getDatabase()!! else "test"
+    val username: String = if (uri.getUsername() != null) uri.getUsername()!! else ""
+    val password: String = if (uri.getPassword() != null) uri.getPassword().toString() else ""
+    val options: MongoClientOptions = uri.getOptions()!!
+    return MongoDB(seeds, database, username, password, options, schemas)
+}
+
+class MongoDB(seeds: Array<ServerAddress> = array(ServerAddress()), val database: String = "test", val userName: String = "",
+              val password: String = "", val options: MongoClientOptions = MongoClientOptions.Builder().build()!!,
+              schemas: Array<Schema>) : Database<MongoDBSession>(schemas) {
+    val seeds = seeds
+
     {
         for (schema in schemas) {
             buildFullColumnNames(schema)
@@ -33,7 +54,7 @@ class MongoDB(val host: String = "localhost", val database: String, val userName
     }
 
     override fun invoke(statement: MongoDBSession.() -> Unit) {
-        val db = MongoClient(host).getDB(database)!!
+        val db = MongoClient(seeds.toList(), options).getDB(database)!!
         if (userName != "")
             db.authenticate(userName, password.toCharArray())
         val session = MongoDBSession(db)
