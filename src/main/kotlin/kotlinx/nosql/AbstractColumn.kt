@@ -4,7 +4,7 @@ import java.util.ArrayList
 import java.util.regex.Pattern
 
 open class AbstractColumn<C, T : Schema, S>(val name: String, val valueClass: Class<S>, val columnType: ColumnType) : Field<C, T>() {
-    fun rx(other: String): Op {
+    fun matches(other: Pattern): Op {
         return MatchesOp(this, LiteralOp(other))
     }
 
@@ -17,52 +17,52 @@ open class AbstractColumn<C, T : Schema, S>(val name: String, val valueClass: Cl
     }
 }
 
-fun <T : Schema, C> AbstractColumn<C?, T, C>.nl(): Op {
+fun <T : Schema, C> AbstractColumn<C?, T, C>.isNull(): Op {
     return NullOp(this)
 }
 
-fun <T : Schema, C> AbstractColumn<C?, T, C>.nn(): Op {
+fun <T : Schema, C> AbstractColumn<C?, T, C>.notNull(): Op {
     return NotNullOp(this)
 }
 
-fun <T : Schema, C> AbstractColumn<out C?, T, *>.eq(other: C): Op {
+fun <T : Schema, C> AbstractColumn<out C?, T, *>.equal(other: C): Op {
     return EqualsOp(this, LiteralOp(other))
 }
 
-fun <T : Schema, C> AbstractColumn<out C?, T, *>.ne(other: C): Op {
+fun <T : Schema, C> AbstractColumn<out C?, T, *>.notEqual(other: C): Op {
     return NotEqualsOp(this, LiteralOp(other))
 }
 
-fun <T : Schema, C> AbstractColumn<out C?, T, *>.mb(other: Iterable<C>): Op {
+fun <T : Schema, C> AbstractColumn<out C?, T, *>.memberOf(other: Iterable<C>): Op {
     return InOp(this, LiteralOp(other))
 }
 
-fun <T : Schema, C> AbstractColumn<out C?, T, *>.mb(other: Array<C>): Op {
+fun <T : Schema, C> AbstractColumn<out C?, T, *>.memberOf(other: Array<C>): Op {
     return InOp(this, LiteralOp(other))
 }
 
 // TODO TODO TODO: Expression should be typed
-fun <T : Schema, C> AbstractColumn<out C?, T, *>.mb(other: Expression<out Iterable<C>>): Op {
+fun <T : Schema, C> AbstractColumn<out C?, T, *>.memberOf(other: Expression<out Iterable<C>>): Op {
     return InOp(this, LiteralOp(other))
 }
 
-fun <T : Schema, C> AbstractColumn<out C?, T, *>.nm(other: Iterable<C>): Op {
+fun <T : Schema, C> AbstractColumn<out C?, T, *>.notMemberOf(other: Iterable<C>): Op {
     return NotInOp(this, LiteralOp(other))
 }
 
-fun <T : Schema, C> AbstractColumn<out C?, T, *>.nm(other: Array<C>): Op {
+fun <T : Schema, C> AbstractColumn<out C?, T, *>.notMemberOf(other: Array<C>): Op {
     return NotInOp(this, LiteralOp(other))
 }
 
-fun <T : Schema, C> AbstractColumn<out C?, T, *>.nm(other: Expression<out Iterable<C>>): Op {
+fun <T : Schema, C> AbstractColumn<out C?, T, *>.notMemberOf(other: Expression<out Iterable<C>>): Op {
     return NotInOp(this, LiteralOp(other))
 }
 
-fun <T : Schema, C> AbstractColumn<out C?, T, C>.eq(other: Expression<out C?>): Op {
+fun <T : Schema, C> AbstractColumn<out C?, T, C>.equal(other: Expression<out C?>): Op {
     return EqualsOp(this, other)
 }
 
-fun <T : Schema, C> AbstractColumn<out C?, T, C>.ne(other: Expression<out C?>): Op {
+fun <T : Schema, C> AbstractColumn<out C?, T, C>.notEqual(other: Expression<out C?>): Op {
     return NotEqualsOp(this, other)
 }
 

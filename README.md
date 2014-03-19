@@ -13,7 +13,7 @@ Unlike to ORM frameworks with its object persistence strategy Kotlin NoSQL uses 
 queries. Each operation on data may be described via a statically-typed query:
 
 ```kotlin
-Albums.columns { Details.Tracks }.filter { Details.ArtistId.eq(artistId) }.delete { Duration.lt(200) }
+Albums.select { Details.Tracks }.filter { Details.ArtistId.eq(artistId) }.delete { Duration.lt(200) }
 ```
 
 #### Type-safety
@@ -30,7 +30,7 @@ for (product in Products.filter { Pricing.Savings.ge(1000) }) {
 ```
 
 ```kotlin
-for ((slug, fullSlug, posted, text, authorInfo) in Comments.columns { Slug +
+for ((slug, fullSlug, posted, text, authorInfo) in Comments.select { Slug +
     FullSlug + Posted + Text + AuthorInfo }.filter { DiscussionId.eq(discussionId) }) {
 }
 ```
@@ -40,7 +40,7 @@ for ((slug, fullSlug, posted, text, authorInfo) in Comments.columns { Slug +
 Queries enable you to access and modify any part of document(s), without loading and changing its state in memory:
 
 ```kotlin
-Products.columns { Pricing.Retail + Pricing.Savings }.find(productId).set(newRetail, newSavings)
+Products.select { Pricing.Retail + Pricing.Savings }.find(productId).set(newRetail, newSavings)
 ```
 
 ## Status
@@ -148,25 +148,25 @@ for (comment in Comments.filter { AuthorInfo.Id eq authorId }.sortBy { Posted }.
 #### Get selected fields by document id
 
 ```kotlin
-val authorInfo = Comments.columns { AuthorInfo }.get(commentId)
+val authorInfo = Comments.select { AuthorInfo }.get(commentId)
 ```
 
 #### Get selected fields by a filter expression
 
 ```kotlin
-for ((slug, fullSlug, posted, text, authorInfo) in Comments.columns { Slug +
-    FullSlug + Posted + Text + AuthorInfo }.filter { DiscussionId.eq(discussionId) }) {
+for ((slug, fullSlug, posted, text, authorInfo) in Comments.select { Slug +
+    FullSlug + Posted + Text + AuthorInfo }.filter { DiscussionId.equal(discussionId) }) {
 }
 ```
 
 #### Update selected fields by document id
 
 ```kotlin
-Comments.columns { Posted }.find(commentId).set(newDate)
+Comments.select { Posted }.find(commentId).set(newDate)
 ```
 
 ```kotlin
-Comments.columns { Posted + Text }.find(commentId).set(newDate, newText)
+Comments.select { Posted + Text }.find(commentId).set(newDate, newText)
 ```
 
 ### Inheritance
@@ -269,7 +269,7 @@ val product = Products.get(productId)
 #### Access documents via an inherited schema
 
 ```kotlin
-for (albums in Albums.filter { Details.ArtistId.eq(artistId) }) {
+for (albums in Albums.filter { Details.ArtistId.equal(artistId) }) {
     // ...
 }
 ```

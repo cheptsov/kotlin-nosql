@@ -179,7 +179,7 @@ fun <T: AbstractTableSchema> T.delete(body: T.() -> Op) {
 }
 
 // TODO TODO TODO
-fun <T: AbstractTableSchema, X> T.columns(selector: T.() -> X): X {
+fun <T: AbstractTableSchema, X> T.select(selector: T.() -> X): X {
     Schema.set(this)
     return selector();
 }
