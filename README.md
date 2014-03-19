@@ -31,7 +31,7 @@ for (product in Products.filter { Pricing.Savings.ge(1000) }) {
 
 ```kotlin
 for ((slug, fullSlug, posted, text, authorInfo) in Comments.columns { Slug +
-    FullSlug + Posted + Text + AuthorInfo }.filter { DiscussionId.eq(DiscussionId) }) {
+    FullSlug + Posted + Text + AuthorInfo }.filter { DiscussionId.eq(discussionId) }) {
 }
 ```
 
@@ -40,7 +40,7 @@ for ((slug, fullSlug, posted, text, authorInfo) in Comments.columns { Slug +
 Queries enable you to access and modify any part of document(s), without loading and changing its state in memory:
 
 ```kotlin
-Products columns { Pricing.Retail + Pricing.Savings } find productId set values(newRetail, newSavings)
+Products.columns { Pricing.Retail + Pricing.Savings }.find(productId).set(newRetail, newSavings)
 ```
 
 ## Status
