@@ -389,6 +389,15 @@ class MongoDBSpek : Spek() {
                 }
             }
 
+            on("getting one id-column by another id") {
+                db {
+                    val aId = Albums.select { Details.ArtistId }.get(albumId!!)
+                    it("returns correct values") {
+                        assertEquals(artistId, aId)
+                    }
+                }
+            }
+
             on("getting one column by filter expression") {
                 db {
                     val title = Albums.select { Details.Title }.filter { SKU.equal("00e8da9b") }.first()
@@ -1018,7 +1027,7 @@ class MongoDBSpek : Spek() {
             on("setting a new value to a date column on a non-abstract schema by id") {
                 db {
                     Albums.select { NullableDateNoValue }.find(albumId!!).set(LocalDate(2014, 3, 20))
-                    val nullableDateNoValue = Albums.select { Details.Title }.get(albumId!!)
+                    val nullableDateNoValue = Albums.select { NullableDateNoValue }.get(albumId!!)
                     it("takes effect") {
                         assertEquals(LocalDate(2014, 3, 20), nullableDateNoValue!!)
                     }

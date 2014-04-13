@@ -50,6 +50,7 @@ allprojects {
         archives sourcesJar
     }
 
+/*
     uploadArchives {
         repositories {
             mavenDeployer {
@@ -62,6 +63,7 @@ allprojects {
             }
         }
     }
+*/
 }
 
 project(':kotlin-nosql-mongodb') {
