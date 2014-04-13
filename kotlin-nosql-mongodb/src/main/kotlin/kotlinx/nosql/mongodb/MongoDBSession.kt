@@ -493,7 +493,11 @@ class MongoDBSession(val db: DB) : Session() {
 
     private fun getDBValue(value: Any?, column: AbstractColumn<*, *, *>): Any? {
         return if (!column.columnType.custom)
-            value
+            when (value) {
+                is DateTime, is LocalDate, is LocalTime -> value.toString()
+                is Id<*, *> -> ObjectId(value.value.toString())
+                else -> value
+            }
         else if (column.columnType.custom && !column.columnType.iterable)
             if (value != null) getDBObject(value, column) else null
         else

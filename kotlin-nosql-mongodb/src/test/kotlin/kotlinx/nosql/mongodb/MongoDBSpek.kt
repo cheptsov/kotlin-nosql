@@ -1015,6 +1015,16 @@ class MongoDBSpek : Spek() {
                 }
             }
 
+            on("setting a new value to a date column on a non-abstract schema by id") {
+                db {
+                    Albums.select { NullableDateNoValue }.find(albumId!!).set(LocalDate(2014, 3, 20))
+                    val nullableDateNoValue = Albums.select { Details.Title }.get(albumId!!)
+                    it("takes effect") {
+                        assertEquals(LocalDate(2014, 3, 20), nullableDateNoValue!!)
+                    }
+                }
+            }
+
             on("adding a new element to a list column on a non-abstract schema by id") {
                 db {
                     Albums.select { Details.Tracks }.find(albumId!!).add(Track("A Love Supreme, Part IV-Psalm", 400))
