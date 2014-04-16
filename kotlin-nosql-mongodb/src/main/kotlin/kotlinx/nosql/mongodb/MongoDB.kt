@@ -3,7 +3,7 @@ package kotlinx.nosql.mongodb
 import kotlinx.nosql.Database
 import kotlinx.nosql.Session
 import com.mongodb.MongoClient
-import kotlinx.nosql.Schema
+import kotlinx.nosql.AbstractSchema
 import kotlinx.nosql.AbstractColumn
 import kotlinx.nosql.util.*
 import java.util.concurrent.ConcurrentHashMap
@@ -11,7 +11,7 @@ import com.mongodb.ServerAddress
 import com.mongodb.MongoClientOptions
 import com.mongodb.MongoClientURI
 
-fun MongoDB(uri: MongoClientURI, schemas: Array<Schema>): MongoDB {
+fun MongoDB(uri: MongoClientURI, schemas: Array<AbstractSchema>): MongoDB {
     val seeds: Array<ServerAddress> = uri.getHosts()!!.map { host ->
         if (host.indexOf(':') > 0) {
             val tokens = host.split(':')
@@ -28,7 +28,7 @@ fun MongoDB(uri: MongoClientURI, schemas: Array<Schema>): MongoDB {
 
 class MongoDB(seeds: Array<ServerAddress> = array(ServerAddress()), val database: String = "test", val userName: String = "",
               val password: String = "", val options: MongoClientOptions = MongoClientOptions.Builder().build()!!,
-              schemas: Array<Schema>) : Database<MongoDBSession>(schemas) {
+              schemas: Array<AbstractSchema>) : Database<MongoDBSession>(schemas) {
     val seeds = seeds
 
     {
@@ -53,7 +53,7 @@ class MongoDB(seeds: Array<ServerAddress> = array(ServerAddress()), val database
         val fullColumnNames = ConcurrentHashMap<AbstractColumn<*, *, *>, String>()
     }
 
-    override fun invoke(statement: MongoDBSession.() -> Unit) {
+    override fun withSession(statement: MongoDBSession.() -> Unit) {
         val db = MongoClient(seeds.toList(), options).getDB(database)!!
         if (userName != "")
             db.authenticate(userName, password.toCharArray())

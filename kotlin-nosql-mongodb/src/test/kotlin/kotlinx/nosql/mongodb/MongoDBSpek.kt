@@ -6,65 +6,65 @@ import kotlinx.nosql.*
 import org.joda.time.LocalDate
 
 class MongoDBSpek : Spek() {
-    open class ProductSchema<V, T : Schema>(javaClass: Class<V>, discriminator: String) : MongoDBSchema<V>("products",
+    open class ProductSchema<D, S : AbstractSchema>(javaClass: Class<D>, discriminator: String) : Schema<D>("products",
             javaClass, discriminator = Discriminator(string("type"), discriminator)) {
-        val SKU = string<T>("sku")
-        val Title = string<T>("title")
-        val Description = string<T>("description")
-        val ASIN = string<T>("asin")
-        val Available = boolean<T>("available")
-        val CreatedAtDate = date<T>("createdAtDate")
-        val NullableBooleanNoValue = nullableBoolean<T>("nullableBooleanNoValue")
-        val NullableBooleanWithValue = nullableBoolean<T>("nullableBooleanWithValue")
-        val NullableDateNoValue = nullableDate<T>("nullableDateNoValue")
-        val NullableDateWithValue = nullableDate<T>("nullableDateWithValue")
-        val Cost = double<T>("cost")
-        val NullableDoubleNoValue = nullableDouble<T>("nullableDoubleNoValue")
-        val NullableDoubleWithValue = nullableDouble<T>("nullableDoubleWithValue")
+        val sku = string<S>("sku")
+        val title = string<S>("title")
+        val description = string<S>("description")
+        val asin = string<S>("asin")
+        val available = boolean<S>("available")
+        val createdAtDate = date<S>("createdAtDate")
+        val nullableBooleanNoValue = nullableBoolean<S>("nullableBooleanNoValue")
+        val nullableBooleanWithValue = nullableBoolean<S>("nullableBooleanWithValue")
+        val nullableDateNoValue = nullableDate<S>("nullableDateNoValue")
+        val nullableDateWithValue = nullableDate<S>("nullableDateWithValue")
+        val cost = double<S>("cost")
+        val nullableDoubleNoValue = nullableDouble<S>("nullableDoubleNoValue")
+        val nullableDoubleWithValue = nullableDouble<S>("nullableDoubleWithValue")
 
-        val Shipping = ShippingColumn<T>()
-        val Pricing = PricingColumn<T>()
+        val shipping = ShippingColumn<S>()
+        val pricing = PricingColumn<S>()
 
-        class ShippingColumn<T : Schema>() : Column<Shipping, T>("shipping", javaClass()) {
-            val Weight = integer<T>("weight")
-            val Dimensions = DimensionsColumn<T>()
+        class ShippingColumn<S : AbstractSchema>() : Column<Shipping, S>("shipping", javaClass()) {
+            val weight = integer<S>("weight")
+            val dimensions = DimensionsColumn<S>()
         }
 
-        class DimensionsColumn<T : Schema>() : Column<Dimensions, T>("dimensions", javaClass()) {
-            val Width = integer<T>("width")
-            val Height = integer<T>("height")
-            val Depth = integer<T>("depth")
+        class DimensionsColumn<S : AbstractSchema>() : Column<Dimensions, S>("dimensions", javaClass()) {
+            val width = integer<S>("width")
+            val height = integer<S>("height")
+            val depth = integer<S>("depth")
         }
 
-        class PricingColumn<T : Schema>() : Column<Pricing, T>("pricing", javaClass()) {
-            val List = integer<T>("list")
-            val Retail = integer<T>("retail")
-            val Savings = integer<T>("savings")
-            val PCTSavings = integer<T>("pct_savings")
+        class PricingColumn<T : AbstractSchema>() : Column<Pricing, T>("pricing", javaClass()) {
+            val list = integer<T>("list")
+            val retail = integer<T>("retail")
+            val savings = integer<T>("savings")
+            val pctSavings = integer<T>("pct_savings")
         }
     }
 
-    object Artists : MongoDBSchema<Artist>("artists", javaClass()) {
-        val Name = string("name")
+    object Artists : Schema<Artist>("artists", javaClass()) {
+        val name = string("name")
     }
 
     object Products : ProductSchema<Product, Products>(javaClass(), "") {
     }
 
     object Albums : ProductSchema<Album, Albums>(javaClass(), discriminator = "Audio Album") {
-        val Details = DetailsColumn()
+        val details = DetailsColumn()
 
         class DetailsColumn() : Column<Details, Albums>("details", javaClass()) {
-            val Title = string("title")
-            val ArtistId = id("artistId", Artists)
-            val Genre = setOfString("genre")
+            val title = string("title")
+            val artistId = id("artistId", Artists)
+            val genre = setOfString("genre")
 
-            val Tracks = TracksColumn()
+            val tracks = TracksColumn()
         }
 
         class TracksColumn() : ListColumn<Track, Albums>("tracks", javaClass()) {
-            val Title = string("title")
-            val Duration = integer("duration")
+            val title = string("title")
+            val duration = integer("duration")
         }
     }
 
@@ -75,7 +75,7 @@ class MongoDBSpek : Spek() {
                            val nullableDateNoValue: LocalDate?, val nullableDateWithValue: LocalDate?,
                            val nullableDoubleNoValue: Double?, val nullableDoubleWithValue: Double?,
                            val shipping: Shipping, val pricing: Pricing) {
-        val id: Id<String, Products>? = null
+        val id: Id<String, Products>? = null // How to define id for implementation classes?
     }
 
     class Shipping(val weight: Int, val dimensions: Dimensions) {
@@ -109,17 +109,17 @@ class MongoDBSpek : Spek() {
 
     {
         given("a polymorhpic schema") {
-            val db = MongoDB(schemas = array<Schema>(Artists, Products, Albums)) // Compiler failure
+            val db = MongoDB(schemas = array<AbstractSchema>(Artists, Products, Albums)) // Compiler failure
 
-            db {
+            db.withSession {
                 array(Products, Artists).forEach { it.drop() }
             }
             var artistId: Id<String, Artists>? = null
             var albumId: Id<String, Albums>? = null
 
             on("inserting a document") {
-                db {
-                    val arId: Id<String, Artists> = Artists insert Artist(name = "John Coltrane")
+                db.withSession {
+                    val arId: Id<String, Artists> = Artists.insert(Artist(name = "John Coltrane"))
                     it("should return a generated id for artist") {
                         assert(arId.value.length > 0)
                     }
@@ -143,8 +143,8 @@ class MongoDBSpek : Spek() {
             }
 
             on("filtering a non-inherited schema") {
-                db {
-                    val artists = Artists.filter { Name.equal("John Coltrane") }.toList()
+                db.withSession {
+                    val artists = Artists.findAll { name.equal("John Coltrane") }.toList()
                     it("should return a generated id for artist") {
                         assert(artists.size == 1)
                     }
@@ -191,8 +191,8 @@ class MongoDBSpek : Spek() {
             }
 
             on("filtering an abstract schema") {
-                db {
-                    val results = Products.filter { (SKU.equal("00e8da9b")).or(Shipping.Weight.equal(6)) }.toList()
+                db.withSession {
+                    val results = Products.findAll { (sku.equal("00e8da9b")).or(shipping.weight.equal(6)) }.toList()
                     it("should return a correct object") {
                         validate(results)
                     }
@@ -200,8 +200,8 @@ class MongoDBSpek : Spek() {
             }
 
             on("filtering a non-abstract schema") {
-                db {
-                    val results: List<Album> = Albums.filter { Details.ArtistId.equal(artistId!!) }.toList()
+                db.withSession {
+                    val results: List<Album> = Albums.findAll { details.artistId.equal(artistId!!) }.toList()
                     it("should return a correct object") {
                         validate(results)
                     }
@@ -209,8 +209,8 @@ class MongoDBSpek : Spek() {
             }
 
             on("filtering a non-abstract schema drop take") {
-                db {
-                    val results = Products.filter { (SKU.equal("00e8da9b")).or(Shipping.Weight.equal(6)) }.drop(1).take(1).toList()
+                db.withSession {
+                    val results = Products.findAll { (sku.equal("00e8da9b")).or(shipping.weight.equal(6)) }.drop(1).take(1).toList()
                     it("should return nothing") {
                         assert(results.isEmpty())
                     }
@@ -218,7 +218,7 @@ class MongoDBSpek : Spek() {
             }
 
             on("getting a document by id") {
-                db {
+                db.withSession {
                     val album = Albums.get(albumId!!)
                     it("should return a correct object") {
                         validate(listOf(album))
@@ -227,8 +227,8 @@ class MongoDBSpek : Spek() {
             }
 
             on("getting one column by id") {
-                db {
-                    val title = Albums.select { Details.Title }.get(albumId!!)
+                db.withSession {
+                    val title = Albums.select { details.title }.get(albumId!!)
                     it("returns correct values") {
                         assertEquals("A Love Supreme [Original Recording Reissued]", title)
                     }
@@ -236,8 +236,8 @@ class MongoDBSpek : Spek() {
             }
 
             on("getting two columns by id") {
-                db {
-                    val (title, pricing) = Albums.select { Details.Title + Pricing }.get(albumId!!)
+                db.withSession {
+                    val (title, pricing) = Albums.select { details.title + pricing }.get(albumId!!)
                     it("returns correct values") {
                         assertEquals("A Love Supreme [Original Recording Reissued]", title)
                         assertEquals(1200, pricing.list)
@@ -249,8 +249,8 @@ class MongoDBSpek : Spek() {
             }
 
             on("getting three columns by id") {
-                db {
-                    val (sku, title, pricing) = Albums.select { SKU + Details.Title + Pricing }.get(albumId!!)
+                db.withSession {
+                    val (sku, title, pricing) = Albums.select { sku + details.title + pricing }.get(albumId!!)
                     it("returns correct values") {
                         assertEquals("00e8da9b", sku)
                         assertEquals("A Love Supreme [Original Recording Reissued]", title)
@@ -263,8 +263,8 @@ class MongoDBSpek : Spek() {
             }
 
             on("getting four columns by id") {
-                db {
-                    val (sku, title, description, pricing) = Albums.select { SKU + Title + Description + Pricing }.get(albumId!!)
+                db.withSession {
+                    val (sku, title, description, pricing) = Albums.select { sku + title + description + pricing }.get(albumId!!)
                     it("returns correct values") {
                         assertEquals("00e8da9b", sku)
                         assertEquals("A Love Supreme", title)
@@ -278,8 +278,8 @@ class MongoDBSpek : Spek() {
             }
 
             on("getting five columns by id") {
-                db {
-                    val (sku, title, description, asin, pricing) = Albums.select { SKU + Title + Description + ASIN + Pricing }.get(albumId!!)
+                db.withSession {
+                    val (sku, title, description, asin, pricing) = Albums.select { sku + title + description + asin + pricing }.get(albumId!!)
                     it("returns correct values") {
                         assertEquals("00e8da9b", sku)
                         assertEquals("A Love Supreme", title)
@@ -294,9 +294,10 @@ class MongoDBSpek : Spek() {
             }
 
             on("getting six columns by id") {
-                db {
-                    val (sku, title, description, asin, list, retail) = Albums.select { SKU + Title +
-                        Description + ASIN + Pricing.List + Pricing.Retail }.get(albumId!!)
+                db.withSession {
+                    val (sku, title, description, asin, list, retail) = Albums.select { sku + title +
+                    description + asin + pricing.list + pricing.retail
+                    }.get(albumId!!)
                     it("returns correct values") {
                         assertEquals("00e8da9b", sku)
                         assertEquals("A Love Supreme", title)
@@ -309,9 +310,10 @@ class MongoDBSpek : Spek() {
             }
 
             on("getting seven columns by id") {
-                db {
-                    val (sku, title, description, asin, list, retail, savings) = Albums.select { SKU + Title +
-                        Description + ASIN + Pricing.List + Pricing.Retail + Pricing.Savings }.get(albumId!!)
+                db.withSession {
+                    val (sku, title, description, asin, list, retail, savings) = Albums.select { sku + title +
+                    description + asin + pricing.list + pricing.retail + pricing.savings
+                    }.get(albumId!!)
                     it("returns correct values") {
                         assertEquals("00e8da9b", sku)
                         assertEquals("A Love Supreme", title)
@@ -325,10 +327,10 @@ class MongoDBSpek : Spek() {
             }
 
             on("getting eight columns by id") {
-                db {
+                db.withSession {
                     val (sku, title, description, asin, list, retail, savings, pctSavings) = Albums.select {
-                        SKU + Title + Description + ASIN + Pricing.List + Pricing.Retail + Pricing.Savings +
-                        Pricing.PCTSavings
+                        sku + title + description + asin + pricing.list + pricing.retail + pricing.savings +
+                        pricing.pctSavings
                     }.get(albumId!!)
                     it("returns correct values") {
                         assertEquals("00e8da9b", sku)
@@ -344,10 +346,10 @@ class MongoDBSpek : Spek() {
             }
 
             on("getting nine columns by id") {
-                db {
+                db.withSession {
                     val (sku, title, description, asin, list, retail, savings, pctSavings, shipping) = Albums.select {
-                        SKU + Title + Description + ASIN + Pricing.List + Pricing.Retail + Pricing.Savings +
-                        Pricing.PCTSavings + Shipping
+                        sku + title + description + asin + pricing.list + pricing.retail + pricing.savings +
+                        pricing.pctSavings + shipping
                     }.get(albumId!!)
                     it("returns correct values") {
                         assertEquals("00e8da9b", sku)
@@ -367,10 +369,10 @@ class MongoDBSpek : Spek() {
             }
 
             on("getting ten columns by id") {
-                db {
+                db.withSession {
                     val (sku, title, description, asin, list, retail, savings, pctSavings, weight, dimensions) = Albums.select {
-                        SKU + Title + Description + ASIN + Pricing.List + Pricing.Retail + Pricing.Savings +
-                        Pricing.PCTSavings + Shipping.Weight + Shipping.Dimensions
+                        sku + title + description + asin + pricing.list + pricing.retail + pricing.savings +
+                        pricing.pctSavings + shipping.weight + shipping.dimensions
                     }.get(albumId!!)
                     it("returns correct values") {
                         assertEquals("00e8da9b", sku)
@@ -390,8 +392,8 @@ class MongoDBSpek : Spek() {
             }
 
             on("getting one column by filter expression") {
-                db {
-                    val title = Albums.select { Details.Title }.filter { SKU.equal("00e8da9b") }.first()
+                db.withSession {
+                    val title = Albums.select { details.title }.findAll { sku.equal("00e8da9b") }.first()
                     it("returns correct values") {
                         assertEquals("A Love Supreme [Original Recording Reissued]", title)
                     }
@@ -399,8 +401,8 @@ class MongoDBSpek : Spek() {
             }
 
             on("getting two columns by a filter expression") {
-                db {
-                    val (title, pricing) = Albums.select { Details.Title + Pricing }.filter { SKU.equal("00e8da9b") }.first()
+                db.withSession {
+                    val (title, pricing) = Albums.select { details.title + pricing }.findAll { sku.equal("00e8da9b") }.first()
                     it("returns correct values") {
                         assertEquals("A Love Supreme [Original Recording Reissued]", title)
                         assertEquals(1200, pricing.list)
@@ -412,8 +414,8 @@ class MongoDBSpek : Spek() {
             }
 
             on("getting three columns by a filter expression") {
-                db {
-                    val (sku, title, pricing) = Albums.select { SKU + Details.Title + Pricing }.filter { SKU.equal("00e8da9b") }.first()
+                db.withSession {
+                    val (sku, title, pricing) = Albums.select { sku + details.title + pricing }.findAll { sku.equal("00e8da9b") }.first()
                     it("returns correct values") {
                         assertEquals("00e8da9b", sku)
                         assertEquals("A Love Supreme [Original Recording Reissued]", title)
@@ -426,8 +428,8 @@ class MongoDBSpek : Spek() {
             }
 
             on("getting four columns by a filter expression") {
-                db {
-                    val (sku, title, description, pricing) = Products.select { SKU + Title + Description + Pricing }.filter { SKU.equal("00e8da9b") }.first()
+                db.withSession {
+                    val (sku, title, description, pricing) = Products.select { sku + title + description + pricing }.findAll { sku.equal("00e8da9b") }.first()
                     it("returns correct values") {
                         assertEquals("00e8da9b", sku)
                         assertEquals("A Love Supreme", title)
@@ -441,8 +443,8 @@ class MongoDBSpek : Spek() {
             }
 
             on("getting five columns by a filter expression") {
-                db {
-                    val (sku, title, description, asin, pricing) = Products.select { SKU + Title + Description + ASIN + Pricing }.filter { SKU.equal("00e8da9b") }.first()
+                db.withSession {
+                    val (sku, title, description, asin, pricing) = Products.select { sku + title + description + asin + pricing }.findAll { sku.equal("00e8da9b") }.first()
                     it("returns correct values") {
                         assertEquals("00e8da9b", sku)
                         assertEquals("A Love Supreme", title)
@@ -457,9 +459,10 @@ class MongoDBSpek : Spek() {
             }
 
             on("getting six columns by a filter expression") {
-                db {
-                    val (sku, title, description, asin, list, retail) = Products.select { SKU + Title +
-                        Description + ASIN + Pricing.List + Pricing.Retail }.filter { SKU.equal("00e8da9b") }.first()
+                db.withSession {
+                    val (sku, title, description, asin, list, retail) = Products.select { sku + title +
+                    description + asin + pricing.list + pricing.retail
+                    }.findAll { sku.equal("00e8da9b") }.first()
                     it("returns correct values") {
                         assertEquals("00e8da9b", sku)
                         assertEquals("A Love Supreme", title)
@@ -472,9 +475,10 @@ class MongoDBSpek : Spek() {
             }
 
             on("getting seven columns by a filter expression") {
-                db {
-                    val (sku, title, description, asin, list, retail, savings) = Products.select { SKU + Title +
-                        Description + ASIN + Pricing.List + Pricing.Retail + Pricing.Savings }.filter { SKU.equal("00e8da9b") }.first()
+                db.withSession {
+                    val (sku, title, description, asin, list, retail, savings) = Products.select { sku + title +
+                    description + asin + pricing.list + pricing.retail + pricing.savings
+                    }.findAll { sku.equal("00e8da9b") }.first()
                     it("returns correct values") {
                         assertEquals("00e8da9b", sku)
                         assertEquals("A Love Supreme", title)
@@ -488,11 +492,11 @@ class MongoDBSpek : Spek() {
             }
 
             on("getting eight columns by a filter expression") {
-                db {
+                db.withSession {
                     val (sku, title, description, asin, list, retail, savings, pctSavings) = Products.select {
-                        SKU + Title + Description + ASIN + Pricing.List + Pricing.Retail + Pricing.Savings +
-                        Pricing.PCTSavings
-                    }.filter { SKU.equal("00e8da9b") }.first()
+                        sku + title + description + asin + pricing.list + pricing.retail + pricing.savings +
+                        pricing.pctSavings
+                    }.findAll { sku.equal("00e8da9b") }.first()
                     it("returns correct values") {
                         assertEquals("00e8da9b", sku)
                         assertEquals("A Love Supreme", title)
@@ -507,11 +511,11 @@ class MongoDBSpek : Spek() {
             }
 
             on("getting nine columns by a filter expression") {
-                db {
+                db.withSession {
                     val (sku, title, description, asin, list, retail, savings, pctSavings, shipping) = Products.select {
-                        SKU + Title + Description + ASIN + Pricing.List + Pricing.Retail + Pricing.Savings +
-                        Pricing.PCTSavings + Shipping
-                    }.filter { SKU.equal("00e8da9b") }.first()
+                        sku + title + description + asin + pricing.list + pricing.retail + pricing.savings +
+                        pricing.pctSavings + shipping
+                    }.findAll { sku.equal("00e8da9b") }.first()
                     it("returns correct values") {
                         assertEquals("00e8da9b", sku)
                         assertEquals("A Love Supreme", title)
@@ -530,11 +534,11 @@ class MongoDBSpek : Spek() {
             }
 
             on("getting ten columns by a filter expression") {
-                db {
+                db.withSession {
                     val (sku, title, description, asin, list, retail, savings, pctSavings, weight, dimensions) = Products.select {
-                        SKU + Title + Description + ASIN + Pricing.List + Pricing.Retail + Pricing.Savings +
-                        Pricing.PCTSavings + Shipping.Weight + Shipping.Dimensions
-                    }.filter { SKU.equal("00e8da9b") }.first()
+                        sku + title + description + asin + pricing.list + pricing.retail + pricing.savings +
+                        pricing.pctSavings + shipping.weight + shipping.dimensions
+                    }.findAll { sku.equal("00e8da9b") }.first()
                     it("returns correct values") {
                         assertEquals("00e8da9b", sku)
                         assertEquals("A Love Supreme", title)
@@ -553,8 +557,8 @@ class MongoDBSpek : Spek() {
             }
 
             on("filtering an abstract schema by equal expression") {
-                db {
-                    val results = Products.filter { Shipping.Weight.equal(6) }.toList()
+                db.withSession {
+                    val results = Products.findAll { shipping.weight.equal(6) }.toList()
                     it("should return a correct object") {
                         validate(results)
                     }
@@ -562,8 +566,8 @@ class MongoDBSpek : Spek() {
             }
 
             on("filtering an abstract schema by equal expression") {
-                db {
-                    val results = Products.filter { Shipping.Weight.equal(7) }.toList()
+                db.withSession {
+                    val results = Products.findAll { shipping.weight.equal(7) }.toList()
                     it("should return nothing") {
                         assert(results.isEmpty())
                     }
@@ -571,8 +575,8 @@ class MongoDBSpek : Spek() {
             }
 
             on("filtering an abstract schema by notEqual expression") {
-                db {
-                    val results = Products.filter { Shipping.Weight.notEqual(7) }.toList()
+                db.withSession {
+                    val results = Products.findAll { shipping.weight.notEqual(7) }.toList()
                     it("should return a correct object") {
                         validate(results)
                     }
@@ -580,8 +584,8 @@ class MongoDBSpek : Spek() {
             }
 
             on("filtering an abstract schema by notEqual expression") {
-                db {
-                    val results = Products.filter { Shipping.Weight.notEqual(6) }.toList()
+                db.withSession {
+                    val results = Products.findAll { shipping.weight.notEqual(6) }.toList()
                     it("should return nothing") {
                         assert(results.isEmpty())
                     }
@@ -589,8 +593,8 @@ class MongoDBSpek : Spek() {
             }
 
             on("filtering an abstract schema by gt expression") {
-                db {
-                    val results = Products.filter { Shipping.Weight.gt(5) }.toList()
+                db.withSession {
+                    val results = Products.findAll { shipping.weight.gt(5) }.toList()
                     it("should return a correct object") {
                         validate(results)
                     }
@@ -598,8 +602,8 @@ class MongoDBSpek : Spek() {
             }
 
             on("filtering an abstract schema by gt expression") {
-                db {
-                    val results = Products.filter { Shipping.Weight.gt(6) }.toList()
+                db.withSession {
+                    val results = Products.findAll { shipping.weight.gt(6) }.toList()
                     it("should return nothing") {
                         assert(results.isEmpty())
                     }
@@ -607,8 +611,8 @@ class MongoDBSpek : Spek() {
             }
 
             on("filtering an abstract schema by lt expression") {
-                db {
-                    val results = Products.filter { Shipping.Weight.lt(7) }.toList()
+                db.withSession {
+                    val results = Products.findAll { shipping.weight.lt(7) }.toList()
                     it("should return a correct object") {
                         validate(results)
                     }
@@ -616,8 +620,8 @@ class MongoDBSpek : Spek() {
             }
 
             on("filtering an abstract schema by lt expression") {
-                db {
-                    val results = Products.filter { Shipping.Weight.lt(6) }.toList()
+                db.withSession {
+                    val results = Products.findAll { shipping.weight.lt(6) }.toList()
                     it("should return nothing") {
                         assert(results.isEmpty())
                     }
@@ -625,8 +629,8 @@ class MongoDBSpek : Spek() {
             }
 
             on("filtering an abstract schema by ge expression") {
-                db {
-                    val results = Products.filter { Shipping.Weight.ge(6) }.toList()
+                db.withSession {
+                    val results = Products.findAll { shipping.weight.ge(6) }.toList()
                     it("should return a correct object") {
                         validate(results)
                     }
@@ -634,8 +638,8 @@ class MongoDBSpek : Spek() {
             }
 
             on("filtering an abstract schema by ge expression") {
-                db {
-                    val results = Products.filter { Shipping.Weight.ge(5) }.toList()
+                db.withSession {
+                    val results = Products.findAll { shipping.weight.ge(5) }.toList()
                     it("should return a correct object") {
                         validate(results)
                     }
@@ -643,8 +647,8 @@ class MongoDBSpek : Spek() {
             }
 
             on("filtering an abstract schema by ge expression") {
-                db {
-                    val results = Products.filter { Shipping.Weight.ge(7) }.toList()
+                db.withSession {
+                    val results = Products.findAll { shipping.weight.ge(7) }.toList()
                     it("should return nothing") {
                         assert(results.isEmpty())
                     }
@@ -652,8 +656,8 @@ class MongoDBSpek : Spek() {
             }
 
             on("filtering an abstract schema by le expression") {
-                db {
-                    val results = Products.filter { Shipping.Weight.le(6) }.toList()
+                db.withSession {
+                    val results = Products.findAll { shipping.weight.le(6) }.toList()
                     it("should return a correct object") {
                         validate(results)
                     }
@@ -661,8 +665,8 @@ class MongoDBSpek : Spek() {
             }
 
             on("filtering an abstract schema by le expression") {
-                db {
-                    val results = Products.filter { Shipping.Weight.le(7) }.toList()
+                db.withSession {
+                    val results = Products.findAll { shipping.weight.le(7) }.toList()
                     it("should return a correct object") {
                         validate(results)
                     }
@@ -670,8 +674,8 @@ class MongoDBSpek : Spek() {
             }
 
             on("filtering an abstract schema by le expression") {
-                db {
-                    val results = Products.filter { Shipping.Weight.le(5) }.toList()
+                db.withSession {
+                    val results = Products.findAll { shipping.weight.le(5) }.toList()
                     it("should return nothing") {
                         assert(results.isEmpty())
                     }
@@ -679,8 +683,8 @@ class MongoDBSpek : Spek() {
             }
 
             on("filtering an abstract schema by mb expression") {
-                db {
-                    val results = Products.filter { Shipping.Weight.memberOf(array(5, 6)) }.toList()
+                db.withSession {
+                    val results = Products.findAll { shipping.weight.memberOf(array(5, 6)) }.toList()
                     it("should return a correct object") {
                         validate(results)
                     }
@@ -688,8 +692,8 @@ class MongoDBSpek : Spek() {
             }
 
             on("filtering an abstract schema by mb expression") {
-                db {
-                    val results = Products.filter { Shipping.Weight.memberOf(array(5, 7)) }.toList()
+                db.withSession {
+                    val results = Products.findAll { shipping.weight.memberOf(array(5, 7)) }.toList()
                     it("should return nothing") {
                         assert(results.isEmpty())
                     }
@@ -697,8 +701,8 @@ class MongoDBSpek : Spek() {
             }
 
             on("filtering an abstract schema by nm expression") {
-                db {
-                    val results = Products.filter { Shipping.Weight.notMemberOf(array(5, 7)) }.toList()
+                db.withSession {
+                    val results = Products.findAll { shipping.weight.notMemberOf(array(5, 7)) }.toList()
                     it("should return a correct object") {
                         validate(results)
                     }
@@ -706,8 +710,8 @@ class MongoDBSpek : Spek() {
             }
 
             on("filtering an abstract schema by nm expression") {
-                db {
-                    val results = Products.filter { Shipping.Weight.notMemberOf(array(5, 6)) }.toList()
+                db.withSession {
+                    val results = Products.findAll { shipping.weight.notMemberOf(array(5, 6)) }.toList()
                     it("should return nothing") {
                         assert(results.isEmpty())
                     }
@@ -715,8 +719,8 @@ class MongoDBSpek : Spek() {
             }
 
             on("filtering an abstract schema by equal expression - compare to a column") {
-                db {
-                    val results = Products.filter { with (Shipping.Dimensions) { Width.equal(Height) } }.toList()
+                db.withSession {
+                    val results = Products.findAll { with (shipping.dimensions) { width.equal(height) } }.toList()
                     it("should return a correct object") {
                         validate(results)
                     }
@@ -724,8 +728,8 @@ class MongoDBSpek : Spek() {
             }
 
             on("filtering an abstract schema by equal expression - compare to a column") {
-                db {
-                    val results = Products.filter { with (Shipping.Dimensions) { Width.equal(Depth) } }.toList()
+                db.withSession {
+                    val results = Products.findAll { with (shipping.dimensions) { width.equal(depth) } }.toList()
                     it("should return nothing") {
                         assert(results.isEmpty())
                     }
@@ -733,8 +737,8 @@ class MongoDBSpek : Spek() {
             }
 
             on("filtering an abstract schema by equal expression - compare to a column") {
-                db {
-                    val results = Products.filter { with (Shipping.Dimensions) { Width.notEqual(Depth) } }.toList()
+                db.withSession {
+                    val results = Products.findAll { with (shipping.dimensions) { width.notEqual(depth) } }.toList()
                     it("should return a correct object") {
                         validate(results)
                     }
@@ -742,8 +746,8 @@ class MongoDBSpek : Spek() {
             }
 
             on("filtering an abstract schema by equal expression - compare to a column") {
-                db {
-                    val results = Products.filter { with (Shipping.Dimensions) { Width.notEqual(Height) } }.toList()
+                db.withSession {
+                    val results = Products.findAll { with (shipping.dimensions) { width.notEqual(height) } }.toList()
                     it("should return nothing") {
                         assert(results.isEmpty())
                     }
@@ -753,8 +757,8 @@ class MongoDBSpek : Spek() {
             //
 
             on("filtering an abstract schema by gt expression - compare to a column") {
-                db {
-                    val results = Products.filter { Shipping.Dimensions.Width.gt(Shipping.Dimensions.Depth) }.toList()
+                db.withSession {
+                    val results = Products.findAll { shipping.dimensions.width.gt(shipping.dimensions.depth) }.toList()
                     it("should return a correct object") {
                         validate(results)
                     }
@@ -762,8 +766,8 @@ class MongoDBSpek : Spek() {
             }
 
             on("filtering an abstract schema by gt expression - compare to a column") {
-                db {
-                    val results = Products.filter { Shipping.Dimensions.Depth.gt(Shipping.Dimensions.Width) }.toList()
+                db.withSession {
+                    val results = Products.findAll { shipping.dimensions.depth.gt(shipping.dimensions.width) }.toList()
                     it("should return nothing") {
                         assert(results.isEmpty())
                     }
@@ -771,8 +775,8 @@ class MongoDBSpek : Spek() {
             }
 
             on("filtering an abstract schema by lt expression - compare to a column") {
-                db {
-                    val results = Products.filter { Shipping.Dimensions.Depth.lt(Shipping.Dimensions.Width) }.toList()
+                db.withSession {
+                    val results = Products.findAll { shipping.dimensions.depth.lt(shipping.dimensions.width) }.toList()
                     it("should return a correct object") {
                         validate(results)
                     }
@@ -780,8 +784,8 @@ class MongoDBSpek : Spek() {
             }
 
             on("filtering an abstract schema by lt expression - compare to a column") {
-                db {
-                    val results = Products.filter { Shipping.Dimensions.Width.lt(Shipping.Dimensions.Depth) }.toList()
+                db.withSession {
+                    val results = Products.findAll { shipping.dimensions.width.lt(shipping.dimensions.depth) }.toList()
                     it("should return nothing") {
                         assert(results.isEmpty())
                     }
@@ -789,8 +793,8 @@ class MongoDBSpek : Spek() {
             }
 
             on("filtering an abstract schema by ge expression - compare to a column") {
-                db {
-                    val results = Products.filter { Shipping.Dimensions.Width.ge(Shipping.Dimensions.Height) }.toList()
+                db.withSession {
+                    val results = Products.findAll { shipping.dimensions.width.ge(shipping.dimensions.height) }.toList()
                     it("should return a correct object") {
                         validate(results)
                     }
@@ -798,8 +802,8 @@ class MongoDBSpek : Spek() {
             }
 
             on("filtering an abstract schema by ge expression - compare to a column") {
-                db {
-                    val results = Products.filter { Shipping.Dimensions.Width.ge(Shipping.Dimensions.Depth) }.toList()
+                db.withSession {
+                    val results = Products.findAll { shipping.dimensions.width.ge(shipping.dimensions.depth) }.toList()
                     it("should return a correct object") {
                         validate(results)
                     }
@@ -807,8 +811,8 @@ class MongoDBSpek : Spek() {
             }
 
             on("filtering an abstract schema by ge expression - compare to a column") {
-                db {
-                    val results = Products.filter { Shipping.Dimensions.Depth.ge(Shipping.Dimensions.Width) }.toList()
+                db.withSession {
+                    val results = Products.findAll { shipping.dimensions.depth.ge(shipping.dimensions.width) }.toList()
                     it("should return nothing") {
                         assert(results.isEmpty())
                     }
@@ -816,8 +820,8 @@ class MongoDBSpek : Spek() {
             }
 
             on("filtering an abstract schema by le expression - compare to a column") {
-                db {
-                    val results = Products.filter { Shipping.Dimensions.Depth.le(Shipping.Dimensions.Width) }.toList()
+                db.withSession {
+                    val results = Products.findAll { shipping.dimensions.depth.le(shipping.dimensions.width) }.toList()
                     it("should return a correct object") {
                         validate(results)
                     }
@@ -825,8 +829,8 @@ class MongoDBSpek : Spek() {
             }
 
             on("filtering an abstract schema by le expression - compare to a column") {
-                db {
-                    val results = Products.filter { Shipping.Dimensions.Width.le(Shipping.Dimensions.Height) }.toList()
+                db.withSession {
+                    val results = Products.findAll { shipping.dimensions.width.le(shipping.dimensions.height) }.toList()
                     it("should return a correct object") {
                         validate(results)
                     }
@@ -834,8 +838,8 @@ class MongoDBSpek : Spek() {
             }
 
             on("filtering an abstract schema by le expression - compare to a column") {
-                db {
-                    val results = Products.filter { Shipping.Dimensions.Width.le(Shipping.Dimensions.Depth) }.toList()
+                db.withSession {
+                    val results = Products.findAll { shipping.dimensions.width.le(shipping.dimensions.depth) }.toList()
                     it("should return nothing") {
                         assert(results.isEmpty())
                     }
@@ -843,8 +847,8 @@ class MongoDBSpek : Spek() {
             }
 
             on("getting one column by regex filter expression") {
-                db {
-                    val results = Albums.filter { Details.Title.matches("Love Supreme".toRegex()) }.toList()
+                db.withSession {
+                    val results = Albums.findAll { details.title.matches("Love Supreme".toRegex()) }.toList()
                     it("returns correct values") {
                         validate(results)
                     }
@@ -852,8 +856,8 @@ class MongoDBSpek : Spek() {
             }
 
             on("getting one column by regex filter expression") {
-                db {
-                    val results = Albums.filter { Details.Title.matches("Love Supremex".toRegex()) }.toList()
+                db.withSession {
+                    val results = Albums.findAll { details.title.matches("Love Supremex".toRegex()) }.toList()
                     it("should return nothing") {
                         assert(results.isEmpty())
                     }
@@ -861,9 +865,9 @@ class MongoDBSpek : Spek() {
             }
 
             on("setting a new value to a string column on a non-abstract schema by id") {
-                db {
-                    Albums.select { Details.Title }.find(albumId!!).set("A Love Supreme. Original Recording Reissued")
-                    val title = Albums.select { Details.Title }.get(albumId!!)
+                db.withSession {
+                    Albums.select { details.title }.find(albumId!!).set("A Love Supreme. Original Recording Reissued")
+                    val title = Albums.select { details.title }.get(albumId!!)
                     it("takes effect") {
                         assertEquals("A Love Supreme. Original Recording Reissued", title)
                     }
@@ -871,9 +875,9 @@ class MongoDBSpek : Spek() {
             }
 
             on("setting a new value for a string column on a non-abstract schema by id") {
-                db {
-                    Albums.select { Details.Title }.find(albumId!!).set("A Love Supreme. Original Recording Reissued")
-                    val title = Albums.select { Details.Title }.get(albumId!!)
+                db.withSession {
+                    Albums.select { details.title }.find(albumId!!).set("A Love Supreme. Original Recording Reissued")
+                    val title = Albums.select { details.title }.get(albumId!!)
                     it("takes effect") {
                         assertEquals("A Love Supreme. Original Recording Reissued", title)
                     }
@@ -881,9 +885,9 @@ class MongoDBSpek : Spek() {
             }
 
             on("setting values for two integer columns on an abstract schema by a filter expression") {
-                db {
-                    Products.select { Pricing.Retail + Pricing.Savings }.filter { SKU.equal("00e8da9b") }.set(1150, 50)
-                    val (retail, savings)= Albums.select { Pricing.Retail + Pricing.Savings }.get(albumId!!)
+                db.withSession {
+                    Products.select { pricing.retail + pricing.savings }.findAll { sku.equal("00e8da9b") }.set(1150, 50)
+                    val (retail, savings)= Albums.select { pricing.retail + pricing.savings }.get(albumId!!)
                     it("takes effect") {
                         assertEquals(1150, retail)
                         assertEquals(50, savings)
@@ -892,9 +896,9 @@ class MongoDBSpek : Spek() {
             }
 
             on("setting values for three columns on an abstract schema by a filter expression") {
-                db {
-                    Products.select { Pricing.Retail + Pricing.Savings + Pricing.List }.filter { SKU.equal("00e8da9b") }.set(1150, 50, 1250)
-                    val (retail, savings, list)= Albums.select { Pricing.Retail + Pricing.Savings + Pricing.List }.get(albumId!!)
+                db.withSession {
+                    Products.select { pricing.retail + pricing.savings + pricing.list }.findAll { sku.equal("00e8da9b") }.set(1150, 50, 1250)
+                    val (retail, savings, list)= Albums.select { pricing.retail + pricing.savings + pricing.list }.get(albumId!!)
                     it("takes effect") {
                         assertEquals(1150, retail)
                         assertEquals(50, savings)
@@ -904,9 +908,9 @@ class MongoDBSpek : Spek() {
             }
 
             on("setting values for four columns on an abstract schema by a filter expression") {
-                db {
-                    Products.select { Pricing.Retail + Pricing.Savings + Pricing.List + Shipping.Dimensions.Width }.filter { SKU.equal("00e8da9b") }.set(1150, 50, 1250, 11)
-                    val (retail, savings, list, width)= Albums.select { Pricing.Retail + Pricing.Savings + Pricing.List + Shipping.Dimensions.Width }.get(albumId!!)
+                db.withSession {
+                    Products.select { pricing.retail + pricing.savings + pricing.list + shipping.dimensions.width }.findAll { sku.equal("00e8da9b") }.set(1150, 50, 1250, 11)
+                    val (retail, savings, list, width)= Albums.select { pricing.retail + pricing.savings + pricing.list + shipping.dimensions.width }.get(albumId!!)
                     it("takes effect") {
                         assertEquals(1150, retail)
                         assertEquals(50, savings)
@@ -917,9 +921,9 @@ class MongoDBSpek : Spek() {
             }
 
             on("setting values for five columns on an abstract schema by a filter expression") {
-                db {
-                    Products.select { Pricing.Retail + Pricing.Savings + Pricing.List + Shipping.Dimensions.Width + Shipping.Dimensions.Height }.filter { SKU.equal("00e8da9b") }.set(1150, 50, 1250, 11, 13)
-                    val (retail, savings, list, width, height)= Albums.select { Pricing.Retail + Pricing.Savings + Pricing.List + Shipping.Dimensions.Width + Shipping.Dimensions.Height }.get(albumId!!)
+                db.withSession {
+                    Products.select { pricing.retail + pricing.savings + pricing.list + shipping.dimensions.width + shipping.dimensions.height }.findAll { sku.equal("00e8da9b") }.set(1150, 50, 1250, 11, 13)
+                    val (retail, savings, list, width, height)= Albums.select { pricing.retail + pricing.savings + pricing.list + shipping.dimensions.width + shipping.dimensions.height }.get(albumId!!)
                     it("takes effect") {
                         assertEquals(1150, retail)
                         assertEquals(50, savings)
@@ -931,9 +935,9 @@ class MongoDBSpek : Spek() {
             }
 
             on("setting values for six columns on an abstract schema by a filter expression") {
-                db {
-                    Products.select { Pricing.Retail + Pricing.Savings + Pricing.List + Shipping.Dimensions.Width + Shipping.Dimensions.Height + Shipping.Dimensions.Depth }.filter { SKU.equal("00e8da9b") }.set(1150, 50, 1250, 11, 13, 2)
-                    val (retail, savings, list, width, height, depth)= Albums.select { Pricing.Retail + Pricing.Savings + Pricing.List + Shipping.Dimensions.Width + Shipping.Dimensions.Height + Shipping.Dimensions.Depth }.get(albumId!!)
+                db.withSession {
+                    Products.select { pricing.retail + pricing.savings + pricing.list + shipping.dimensions.width + shipping.dimensions.height + shipping.dimensions.depth }.findAll { sku.equal("00e8da9b") }.set(1150, 50, 1250, 11, 13, 2)
+                    val (retail, savings, list, width, height, depth)= Albums.select { pricing.retail + pricing.savings + pricing.list + shipping.dimensions.width + shipping.dimensions.height + shipping.dimensions.depth }.get(albumId!!)
                     it("takes effect") {
                         assertEquals(1150, retail)
                         assertEquals(50, savings)
@@ -946,9 +950,9 @@ class MongoDBSpek : Spek() {
             }
 
             on("setting values for seven columns on an abstract schema by a filter expression") {
-                db {
-                    Products.select { Pricing.Retail + Pricing.Savings + Pricing.List + Shipping.Dimensions.Width + Shipping.Dimensions.Height + Shipping.Dimensions.Depth + Shipping.Weight }.filter { SKU.equal("00e8da9b") }.set(1150, 50, 1250, 11, 13, 2, 7)
-                    val (retail, savings, list, width, height, depth, weight)= Albums.select { Pricing.Retail + Pricing.Savings + Pricing.List + Shipping.Dimensions.Width + Shipping.Dimensions.Height + Shipping.Dimensions.Depth + Shipping.Weight }.get(albumId!!)
+                db.withSession {
+                    Products.select { pricing.retail + pricing.savings + pricing.list + shipping.dimensions.width + shipping.dimensions.height + shipping.dimensions.depth + shipping.weight }.findAll { sku.equal("00e8da9b") }.set(1150, 50, 1250, 11, 13, 2, 7)
+                    val (retail, savings, list, width, height, depth, weight)= Albums.select { pricing.retail + pricing.savings + pricing.list + shipping.dimensions.width + shipping.dimensions.height + shipping.dimensions.depth + shipping.weight }.get(albumId!!)
                     it("takes effect") {
                         assertEquals(1150, retail)
                         assertEquals(50, savings)
@@ -962,9 +966,9 @@ class MongoDBSpek : Spek() {
             }
 
             on("setting values for eight columns on an abstract schema by a filter expression") {
-                db {
-                    Products.select { Pricing.Retail + Pricing.Savings + Pricing.List + Shipping.Dimensions.Width + Shipping.Dimensions.Height + Shipping.Dimensions.Depth + Shipping.Weight  + Cost }.filter { SKU.equal("00e8da9b") }.set(1150, 50, 1250, 11, 13, 2, 7, 1.25)
-                    val (retail, savings, list, width, height, depth, weight, cost)= Albums.select { Pricing.Retail + Pricing.Savings + Pricing.List + Shipping.Dimensions.Width + Shipping.Dimensions.Height + Shipping.Dimensions.Depth + Shipping.Weight + Cost }.get(albumId!!)
+                db.withSession {
+                    Products.select { pricing.retail + pricing.savings + pricing.list + shipping.dimensions.width + shipping.dimensions.height + shipping.dimensions.depth + shipping.weight + cost }.findAll { sku.equal("00e8da9b") }.set(1150, 50, 1250, 11, 13, 2, 7, 1.25)
+                    val (retail, savings, list, width, height, depth, weight, cost)= Albums.select { pricing.retail + pricing.savings + pricing.list + shipping.dimensions.width + shipping.dimensions.height + shipping.dimensions.depth + shipping.weight + cost }.get(albumId!!)
                     it("takes effect") {
                         assertEquals(1150, retail)
                         assertEquals(50, savings)
@@ -979,9 +983,9 @@ class MongoDBSpek : Spek() {
             }
 
             on("setting values for nine columns on an abstract schema by a filter expression") {
-                db {
-                    Products.select { Pricing.Retail + Pricing.Savings + Pricing.List + Shipping.Dimensions.Width + Shipping.Dimensions.Height + Shipping.Dimensions.Depth + Shipping.Weight + Cost  + Available }.filter { SKU.equal("00e8da9b") }.set(1150, 50, 1250, 11, 13, 2, 7, 1.25, false)
-                    val (retail, savings, list, width, height, depth, weight, cost, available)= Albums.select { Pricing.Retail + Pricing.Savings + Pricing.List + Shipping.Dimensions.Width + Shipping.Dimensions.Height + Shipping.Dimensions.Depth + Shipping.Weight + Cost + Available }.get(albumId!!)
+                db.withSession {
+                    Products.select { pricing.retail + pricing.savings + pricing.list + shipping.dimensions.width + shipping.dimensions.height + shipping.dimensions.depth + shipping.weight + cost + available }.findAll { sku.equal("00e8da9b") }.set(1150, 50, 1250, 11, 13, 2, 7, 1.25, false)
+                    val (retail, savings, list, width, height, depth, weight, cost, available)= Albums.select { pricing.retail + pricing.savings + pricing.list + shipping.dimensions.width + shipping.dimensions.height + shipping.dimensions.depth + shipping.weight + cost + available }.get(albumId!!)
                     it("takes effect") {
                         assertEquals(1150, retail)
                         assertEquals(50, savings)
@@ -997,9 +1001,9 @@ class MongoDBSpek : Spek() {
             }
 
             on("setting values for ten columns on an abstract schema by a filter expression") {
-                db {
-                    Products.select { Pricing.Retail + Pricing.Savings + Pricing.List + Shipping.Dimensions.Width + Shipping.Dimensions.Height + Shipping.Dimensions.Depth + Shipping.Weight + Cost + Available + NullableDoubleWithValue }.filter { SKU.equal("00e8da9b") }.set(1150, 50, 1250, 11, 13, 2, 7, 1.25, false, 10.1)
-                    val (retail, savings, list, width, height, depth, weight, cost, available, nullableDoubleWithValue) = Albums.select { Pricing.Retail + Pricing.Savings + Pricing.List + Shipping.Dimensions.Width + Shipping.Dimensions.Height + Shipping.Dimensions.Depth + Shipping.Weight + Cost + Available + NullableDoubleWithValue }.get(albumId!!)
+                db.withSession {
+                    Products.select { pricing.retail + pricing.savings + pricing.list + shipping.dimensions.width + shipping.dimensions.height + shipping.dimensions.depth + shipping.weight + cost + available + nullableDoubleWithValue }.findAll { sku.equal("00e8da9b") }.set(1150, 50, 1250, 11, 13, 2, 7, 1.25, false, 10.1)
+                    val (retail, savings, list, width, height, depth, weight, cost, available, nullableDoubleWithValue) = Albums.select { pricing.retail + pricing.savings + pricing.list + shipping.dimensions.width + shipping.dimensions.height + shipping.dimensions.depth + shipping.weight + cost + available + nullableDoubleWithValue }.get(albumId!!)
                     it("takes effect") {
                         assertEquals(1150, retail)
                         assertEquals(50, savings)
@@ -1016,9 +1020,9 @@ class MongoDBSpek : Spek() {
             }
 
             on("adding a new element to a list column on a non-abstract schema by id") {
-                db {
-                    Albums.select { Details.Tracks }.find(albumId!!).add(Track("A Love Supreme, Part IV-Psalm", 400))
-                    val tracks = Albums.select { Albums.Details.Tracks }.get(albumId!!)
+                db.withSession {
+                    Albums.select { details.tracks }.find(albumId!!).add(Track("A Love Supreme, Part IV-Psalm", 400))
+                    val tracks = Albums.select { Albums.details.tracks }.get(albumId!!)
                     it("takes effect") {
                         assertEquals(4, tracks.size)
                         assertEquals("A Love Supreme, Part IV-Psalm", tracks[3].title)
@@ -1030,7 +1034,7 @@ class MongoDBSpek : Spek() {
             // TODO TODO TODO
 /*
             on("getting range of values for a list column on a non-abstract schema by id") {
-                db {
+                db.withSession {
                     val tracks = Albums columns { Albums.Details.Tracks } at albumId!! range 1..2
                     it("takes effect") {
                         assertEquals(4, tracks.size)
@@ -1044,9 +1048,9 @@ class MongoDBSpek : Spek() {
 
 
             on("removing sn element from a collection column on a non-abstract schema by id") {
-                db {
-                    Albums.select { Details.Tracks }.find(albumId!!).delete { Duration.equal(100) }
-                    val tracks = Albums.select { Albums.Details.Tracks }.get(albumId!!)
+                db.withSession {
+                    Albums.select { details.tracks }.find(albumId!!).delete { duration.equal(100) }
+                    val tracks = Albums.select { Albums.details.tracks }.get(albumId!!)
                     it("takes effect") {
                         assertEquals(3, tracks.size)
                     }
@@ -1054,9 +1058,9 @@ class MongoDBSpek : Spek() {
             }
 
             on("removing an element from a collection column on a non-abstract schema by a filter expression") {
-                db {
-                    Albums.select { Details.Tracks }.filter { SKU.equal("00e8da9b") }.delete { Duration.equal(200) }
-                    val tracks = Albums.select { Albums.Details.Tracks } get albumId!!
+                db.withSession {
+                    Albums.select { details.tracks }.findAll { sku.equal("00e8da9b") }.delete { duration.equal(200) }
+                    val tracks = Albums.select { Albums.details.tracks } get albumId!!
                     it("takes effect") {
                         assertEquals(2, tracks.size)
                     }
@@ -1064,9 +1068,9 @@ class MongoDBSpek : Spek() {
             }
 
             on("removing an element from a set column on a non-abstract schema by id") {
-                db {
-                    Albums.select { Details.Genre }.find(albumId!!).delete("General")
-                    val genre = Albums.select { Albums.Details.Genre }.get(albumId!!)
+                db.withSession {
+                    Albums.select { details.genre }.find(albumId!!).delete("General")
+                    val genre = Albums.select { Albums.details.genre }.get(albumId!!)
                     it("takes effect") {
                         assertEquals(1, genre.size)
                     }
@@ -1074,10 +1078,10 @@ class MongoDBSpek : Spek() {
             }
 
             on("deleting a document") {
-                db {
-                    Albums.delete { Id.equal(albumId!!) }
+                db.withSession {
+                    Albums.delete { id.equal(albumId!!) }
                     it("deletes the document from database") {
-                        assert(Albums.filter { Id.equal(albumId!!) }.toList().isEmpty())
+                        assert(Albums.findAll { id.equal(albumId!!) }.toList().isEmpty())
                     }
                 }
             }

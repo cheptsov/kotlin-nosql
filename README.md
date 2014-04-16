@@ -13,7 +13,7 @@ Unlike to ORM frameworks with its object persistence strategy Kotlin NoSQL uses 
 queries. Each operation on data may be described via a statically-typed query:
 
 ```kotlin
-Albums.select { Details.Tracks }.filter { Details.ArtistId.eq(artistId) }.delete { Duration.lt(200) }
+Albums.select { details.tracks }.findAll { details.artistId.equal(artistId) }.delete { duration.lt(200) }
 ```
 
 #### Type-safety
@@ -21,7 +21,7 @@ Albums.select { Details.Tracks }.filter { Details.ArtistId.eq(artistId) }.delete
 Once you have a schema defined you can access documents with queries, always getting type-safe results:
 
 ```kotlin
-for (product in Products.filter { Pricing.Savings.ge(1000) }) {
+for (product in Products.findAll { pricing.savings.ge(1000) }) {
     when (product) {
         is Album -> // ...
         else -> // ...
@@ -30,8 +30,8 @@ for (product in Products.filter { Pricing.Savings.ge(1000) }) {
 ```
 
 ```kotlin
-for ((slug, fullSlug, posted, text, authorInfo) in Comments.select { Slug +
-    FullSlug + Posted + Text + AuthorInfo }.filter { DiscussionId.eq(discussionId) }) {
+for ((slug, fullSlug, posted, text, authorInfo) in Comments.select { slug +
+    fullSlug + posted + text + authorInfo }.findAll { discussionId.equal(id) }) {
 }
 ```
 
@@ -40,7 +40,7 @@ for ((slug, fullSlug, posted, text, authorInfo) in Comments.select { Slug +
 Queries enable you to access and modify any part of document(s), without loading and changing its state in memory:
 
 ```kotlin
-Products.select { Pricing.Retail + Pricing.Savings }.find(productId).set(newRetail, newSavings)
+Products.select { pricing.retail + pricing.savings }.find(productId).set(newRetail, newSavings)
 ```
 
 ## Status
@@ -91,28 +91,27 @@ dependencies {
 #### Define a schema
 
 ```kotlin
-object Comments: MongoDBSchema<Comment>("comments", javaClass()) {
-    val DiscussionId = id("discussion_id", Discussions)
-    val Slug = string("slug")
-    val FullSlug = string("full_slug")
-    val Posted = dateTime("posted")
-    val Text = string("text")
+object Comments: Schema<Comment>("comments", javaClass()) {
+    val discussionId = id("discussion_id", Discussions)
+    val slug = string("slug")
+    val fullSlug = string("full_slug")
+    val posted = dateTime("posted")
+    val text = string("text")
 
     val AuthorInfo = AuthorInfoColumn()
 
     class AuthorInfoColumn() : Column<AuthorInfo, Comments>("author", javaClass()) {
-        val Id = id("id", Authors)
-        val Name = string("name")
+        val authorId = id("id", Authors)
+        val name = string("name")
     }
 }
 
-class Comment(val id: Id<String, Comments>? = null,
-              val DiscussionId: Id<String, Discussions>, val slug: String,
+class Comment(val discussionId: Id<String, Discussions>, val slug: String,
               val fullSlug: String, posted: DateTime, text: String, authorInfo: AuthorInfo) {
-
+    val id: Id<String, Comments>? = null
 }
 
-class AuthorInfo(val id: Id<String, Authors>, val name: String)
+class AuthorInfo(val authorId: Id<String, Authors>, val name: String)
 ```
 
 #### Define a database
@@ -141,32 +140,32 @@ val comment = Comments.get(commentId)
 #### Get a list of documents by a filter expression
 
 ```kotlin
-for (comment in Comments.filter { AuthorInfo.Id eq authorId }.sortBy { Posted }. drop(10).take(5)) {
+for (comment in Comments.findAll { authorInfo.id.equal(authorId) }.sortBy { posted }. drop(10).take(5)) {
 }
 ```
 
 #### Get selected fields by document id
 
 ```kotlin
-val authorInfo = Comments.select { AuthorInfo }.get(commentId)
+val authorInfo = Comments.select { authorInfo }.get(id)
 ```
 
 #### Get selected fields by a filter expression
 
 ```kotlin
-for ((slug, fullSlug, posted, text, authorInfo) in Comments.select { Slug +
-    FullSlug + Posted + Text + AuthorInfo }.filter { DiscussionId.equal(discussionId) }) {
+for ((slug, fullSlug, posted, text, authorInfo) in Comments.select { slug +
+    fullSlug + posted + text + authorInfo }.findAll { discussionId.equal(id) }) {
 }
 ```
 
 #### Update selected fields by document id
 
 ```kotlin
-Comments.select { Posted }.find(commentId).set(newDate)
+Comments.select { posted }.find(commentId).set(newDate)
 ```
 
 ```kotlin
-Comments.select { Posted + Text }.find(commentId).set(newDate, newText)
+Comments.select { posted + text }.find(commentId).set(newDate, newText)
 ```
 
 ### Inheritance
@@ -174,32 +173,32 @@ Comments.select { Posted + Text }.find(commentId).set(newDate, newText)
 #### Define a base schema
 
 ```kotlin
-open class ProductSchema<V, T : Schema>(javaClass: Class<V>, discriminator: String) : MongoDBSchema<V>("products",
+open class ProductSchema<V, T : AbstractSchema>(javaClass: Class<V>, discriminator: String) : Schema<V>("products",
             discriminator = Discriminator(string("type"), discriminator)) {
-    val SKU = string<T>("sku")
-    val Title = string<T>("title")
-    val Description = string<T>("description")
-    val ASIN = string<T>("asin")
+    val sku = string<T>("sku")
+    val title = string<T>("title")
+    val description = string<T>("description")
+    val asin = string<T>("asin")
 
     val Shipping = ShippingColumn<T>()
     val Pricing = PricingColumn<T>()
 
-    class ShippingColumn<T : Schema>() : Column<Shipping, T>("shipping", javaClass()) {
-        val Weight = integer<T>("weight")
-        val Dimensions = DimensionsColumn<T>()
+    class ShippingColumn<T : AbstractSchema>() : Column<Shipping, T>("shipping", javaClass()) {
+        val weight = integer<T>("weight")
+        val dimensions = DimensionsColumn<T>()
     }
 
-    class DimensionsColumn<T : Schema>() : Column<Dimensions, T>("dimensions", javaClass()) {
-        val Width = integer<T>("width")
-        val Height = integer<T>("height")
-        val Depth = integer<T>("depth")
+    class DimensionsColumn<T : AbstractSchema>() : Column<Dimensions, T>("dimensions", javaClass()) {
+        val width = integer<T>("width")
+        val height = integer<T>("height")
+        val depth = integer<T>("depth")
     }
 
-    class PricingColumn<T : Schema>() : Column<Pricing, T>("pricing", javaClass()) {
-        val List = integer<T>("list")
-        val Retail = integer<T>("retail")
-        val Savings = integer<T>("savings")
-        val PCTSavings = integer<T>("pct_savings")
+    class PricingColumn<T : AbstractSchema>() : Column<Pricing, T>("pricing", javaClass()) {
+        val list = integer<T>("list")
+        val retail = integer<T>("retail")
+        val savings = integer<T>("savings")
+        val ptcSavings = integer<T>("pct_savings")
     }
 }
 
@@ -221,7 +220,7 @@ class Pricing(val list: Int, val retail: Int, val savings: Int, val pctSavings: 
 
 ```kotlin
 object Albums : ProductSchema<Album, Albums>(javaClass(), discriminator = "Audio Album") {
-    val Details = DetailsColumn()
+    val details = DetailsColumn()
 
     class DetailsColumn() : Column<Details, Albums>("details", javaClass()) {
         val Title = string("title")
@@ -269,7 +268,7 @@ val product = Products.get(productId)
 #### Access documents via an inherited schema
 
 ```kotlin
-for (albums in Albums.filter { Details.ArtistId.equal(artistId) }) {
+for (albums in Albums.findAll { details.artistId.equal(id) }) {
     // ...
 }
 ```
