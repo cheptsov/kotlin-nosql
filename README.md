@@ -119,7 +119,7 @@ class AuthorInfo(val authorId: Id<String, Authors>, val name: String)
 ```kotlin
 val db = MongoDB(database = "test", schemas = array(Comments))
 
-db {
+db.withSession {
     // ...
 }
 ```
