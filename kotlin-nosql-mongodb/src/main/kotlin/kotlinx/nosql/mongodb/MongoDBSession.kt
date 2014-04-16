@@ -483,7 +483,11 @@ class MongoDBSession(val db: DB) : Session() {
 
     private fun getDBValue(value: Any?, column: AbstractColumn<*, *, *>): Any? {
         return if (!column.columnType.custom)
-            value
+            when (value) {
+                is DateTime, is LocalDate, is LocalTime -> value.toString()
+                is Id<*, *> -> ObjectId(value.value.toString())
+                else -> value
+            }
         else if (column.columnType.custom && !column.columnType.iterable)
             if (value != null) getDBObject(value, column) else null
         else
@@ -645,8 +649,13 @@ class MongoDBSession(val db: DB) : Session() {
 
     private fun getColumnObject(doc: DBObject, column: AbstractColumn<*, *, *>): Any? {
         val columnObject = parse(doc, column.fullName.split("\\."))
-        return if (column.columnType.primitive) {
-            columnObject
+        return if (column.columnType.id) {
+            Id<String, TableSchema<String>>(columnObject.toString())
+        } else if (column.columnType.primitive) when (column.columnType) {
+            ColumnType.DATE -> LocalDate.parse(columnObject.toString())
+            ColumnType.TIME -> LocalTime.parse(columnObject.toString())
+            ColumnType.DATE_TIME -> DateTime.parse(columnObject.toString())
+            else -> columnObject
         } else if (!column.columnType.custom && column.columnType.set) {
             (columnObject as BasicDBList).toSet()
         } else if (!column.columnType.custom && column.columnType.list) {
