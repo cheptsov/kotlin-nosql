@@ -223,16 +223,16 @@ object Albums : ProductSchema<Album, Albums>(javaClass(), discriminator = "Audio
     val details = DetailsColumn()
 
     class DetailsColumn() : Column<Details, Albums>("details", javaClass()) {
-        val Title = string("title")
-        val ArtistId = id("artistId", Artists)
-        val Genre = setOfString("genre")
+        val title = string("title")
+        val artistId = id("artistId", Artists)
+        val genre = setOfString("genre")
 
-        val Tracks = TracksColumn()
+        val tracks = TracksColumn()
     }
 
     class TracksColumn() : ListColumn<Track, Albums>("tracks", javaClass()) {
-        val Title = string("title")
-        val Duration = integer("duration")
+        val title = string("title")
+        val duration = integer("duration")
     }
 }
 
