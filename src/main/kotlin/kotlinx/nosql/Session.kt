@@ -2,6 +2,24 @@ package kotlinx.nosql
 
 import java.util.ArrayList
 
+class PaginatedStream<X>(val callback: (drop: Int?, take: Int?) -> Iterator<X>) : Stream<X> {
+    var drop: Int? = null
+    var take: Int? = null
+
+    override fun iterator(): Iterator<X> {
+        return callback(drop, take)
+    }
+
+    fun drop(n: Int) : PaginatedStream<X> {
+        drop = n
+        return this
+    }
+    fun take(n: Int) : PaginatedStream<X> {
+        take = n
+        return this
+    }
+}
+
 abstract class Session () {
     abstract fun <T : AbstractTableSchema>T.create()
 
@@ -139,8 +157,11 @@ abstract class Session () {
         return this.findAll({ id equal _id }).first()
     }
 
-    abstract fun <T: DocumentSchema<P, C>, P, C> T.findAll(op: T.() -> Op): Stream<C>
+    abstract fun <T: DocumentSchema<P, C>, P, C> T.findAll(op: T.() -> Op): PaginatedStream<C>
 
+    fun <T : DocumentSchema<P, C>, P, C> T.findAll(): PaginatedStream<C> {
+        return this.findAll { NoOp }
+    }
 
     abstract fun <T : AbstractTableSchema, A: AbstractColumn<CC, T, out Any?>, CC: Collection<C>, C> Query1<T, A, CC>.add(c: C)
     abstract  fun <T : AbstractTableSchema, A: AbstractColumn<CC, T, out Any?>, CC: Collection<C>, C> Query1<T, A, CC>.delete(c: A.() -> Op)

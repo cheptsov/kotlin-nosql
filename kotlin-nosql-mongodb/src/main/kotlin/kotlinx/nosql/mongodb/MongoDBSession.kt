@@ -19,24 +19,6 @@ import org.joda.time.format.ISODateTimeFormat
 import org.joda.time.LocalDate
 import org.joda.time.LocalTime
 
-class PaginatedStream<X>(val callback: (drop: Int?, take: Int?) -> Iterator<X>) : Stream<X> {
-    var drop: Int? = null
-    var take: Int? = null
-
-    override fun iterator(): Iterator<X> {
-        return callback(drop, take)
-    }
-
-    fun drop(n: Int) : PaginatedStream<X> {
-        drop = n
-        return this
-    }
-    fun take(n: Int) : PaginatedStream<X> {
-        take = n
-        return this
-    }
-}
-
 class MongoDBSession(val db: DB) : Session() {
     override fun <T : AbstractTableSchema> T.create() {
         throw UnsupportedOperationException()
@@ -107,7 +89,7 @@ class MongoDBSession(val db: DB) : Session() {
         return doc
     }
 
-    // TODO TODO TODO Real iterator instead of list
+        // TODO TODO TODO Real iterator instead of list
     override fun <T : DocumentSchema<P, C>, P, C> T.findAll(op: T.() -> Op): PaginatedStream<C> {
         val collection = db.getCollection(this.schemaName)!!
         val query = getQuery(op())
@@ -311,6 +293,9 @@ class MongoDBSession(val db: DB) : Session() {
             }
             is OrOp -> {
                 query.append("\$or", Arrays.asList(getQuery(op.expr1), getQuery(op.expr2)))
+            }
+            is NoOp -> {
+                // Do nothing
             }
             else -> {
                 throw UnsupportedOperationException()

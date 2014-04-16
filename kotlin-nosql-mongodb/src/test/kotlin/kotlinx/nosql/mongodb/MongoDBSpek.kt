@@ -217,6 +217,15 @@ class MongoDBSpek : Spek() {
                 }
             }
 
+            on("getting all elements from a non-abstract schema") {
+                db.withSession {
+                    val results = Products.findAll().toList()
+                    it("should return a correct object") {
+                        validate(results)
+                    }
+                }
+            }
+
             on("getting a document by id") {
                 db.withSession {
                     val album = Albums.get(albumId!!)
@@ -392,8 +401,8 @@ class MongoDBSpek : Spek() {
             }
 
             on("getting one id-column by another id") {
-                db {
-                    val aId = Albums.select { Details.ArtistId }.get(albumId!!)
+                db.withSession {
+                    val aId = Albums.select { details.artistId }.get(albumId!!)
                     it("returns correct values") {
                         assertEquals(artistId, aId)
                     }
@@ -1029,9 +1038,9 @@ class MongoDBSpek : Spek() {
             }
 
             on("setting a new value to a date column on a non-abstract schema by id") {
-                db {
-                    Albums.select { NullableDateNoValue }.find(albumId!!).set(LocalDate(2014, 3, 20))
-                    val nullableDateNoValue = Albums.select { NullableDateNoValue }.get(albumId!!)
+                db.withSession {
+                    Albums.select { nullableDateNoValue }.find(albumId!!).set(LocalDate(2014, 3, 20))
+                    val nullableDateNoValue = Albums.select { nullableDateNoValue }.get(albumId!!)
                     it("takes effect") {
                         assertEquals(LocalDate(2014, 3, 20), nullableDateNoValue!!)
                     }

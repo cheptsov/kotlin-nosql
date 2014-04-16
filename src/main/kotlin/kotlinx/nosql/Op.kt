@@ -10,6 +10,9 @@ abstract class Op() {
     }
 }
 
+object NoOp : Op() {
+}
+
 class NullOp(val column: AbstractColumn<*, *, *>): Op() {
 }
 
