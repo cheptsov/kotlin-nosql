@@ -3,15 +3,19 @@ package kotlinx.nosql.mongodb
 import kotlinx.nosql.Database
 import kotlinx.nosql.Session
 import com.mongodb.MongoClient
-import kotlinx.nosql.AbstractSchema
 import kotlinx.nosql.AbstractColumn
 import kotlinx.nosql.util.*
 import java.util.concurrent.ConcurrentHashMap
 import com.mongodb.ServerAddress
 import com.mongodb.MongoClientOptions
 import com.mongodb.MongoClientURI
+import kotlinx.nosql.DatabaseInitialization
+import kotlinx.nosql.Create
+import kotlinx.nosql.CreateDrop
+import kotlinx.nosql.Validate
+import kotlinx.nosql.Update
 
-fun MongoDB(uri: MongoClientURI, schemas: Array<AbstractSchema>): MongoDB {
+fun MongoDB(uri: MongoClientURI, schemas: Array<out Schema<*>>, initialization: DatabaseInitialization<MongoDBSession> = Validate()): MongoDB {
     val seeds: Array<ServerAddress> = uri.getHosts()!!.map { host ->
         if (host.indexOf(':') > 0) {
             val tokens = host.split(':')
@@ -23,17 +27,44 @@ fun MongoDB(uri: MongoClientURI, schemas: Array<AbstractSchema>): MongoDB {
     val username: String = if (uri.getUsername() != null) uri.getUsername()!! else ""
     val password: String = if (uri.getPassword() != null) uri.getPassword().toString() else ""
     val options: MongoClientOptions = uri.getOptions()!!
-    return MongoDB(seeds, database, username, password, options, schemas)
+    return MongoDB(seeds, database, username, password, options, schemas, initialization)
 }
 
 class MongoDB(seeds: Array<ServerAddress> = array(ServerAddress()), val database: String = "test", val userName: String = "",
               val password: String = "", val options: MongoClientOptions = MongoClientOptions.Builder().build()!!,
-              schemas: Array<AbstractSchema>) : Database<MongoDBSession>(schemas) {
+              schemas: Array<out Schema<*>>, initialization: DatabaseInitialization<MongoDBSession> = Validate()) : Database<MongoDBSession>(schemas, initialization) {
     val seeds = seeds
 
     {
         for (schema in schemas) {
             buildFullColumnNames(schema)
+            when (initialization) {
+                // TODO: implement validation
+                is Create, is CreateDrop -> {
+                    withSession {
+                        schema.drop()
+                        schema.create()
+                        for (index in schema.indices)
+                            ensureIndex(schema, index)
+                        if (initialization is Create) {
+                            with (schema) {
+                                initialization.create()
+                            }
+                        } else if (initialization is CreateDrop) {
+                            with (schema) {
+                                initialization.create();
+                            }
+                        }
+                    }
+                }
+                is Update -> {
+                    withSession {
+                        for (index in schema.indices)
+                            ensureIndex(schema, index)
+                    }
+                }
+                // TODO: implement drop after exit
+            }
         }
     }
 

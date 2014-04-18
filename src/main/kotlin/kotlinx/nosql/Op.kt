@@ -16,6 +16,9 @@ object NoOp : Op() {
 class NullOp(val column: AbstractColumn<*, *, *>): Op() {
 }
 
+class SearchOp(val text: String): Op() {
+}
+
 class NotNullOp(val column: AbstractColumn<*, *, *>): Op() {
 }
 

@@ -21,6 +21,10 @@ fun <T : AbstractSchema, C> AbstractColumn<C?, T, C>.isNull(): Op {
     return NullOp(this)
 }
 
+fun search(text: String): Op {
+    return SearchOp(text)
+}
+
 fun <T : AbstractSchema, C> AbstractColumn<C?, T, C>.notNull(): Op {
     return NotNullOp(this)
 }

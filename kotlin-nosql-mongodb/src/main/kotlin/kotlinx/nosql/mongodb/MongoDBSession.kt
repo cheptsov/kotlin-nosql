@@ -20,8 +20,26 @@ import org.joda.time.LocalDate
 import org.joda.time.LocalTime
 
 class MongoDBSession(val db: DB) : Session() {
+    fun ensureIndex(schema: Schema<*>, index: Index) {
+        val collection = db.getCollection(schema.schemaName)!!
+        val dbObject = BasicDBObject()
+        for (column in index.ascending) {
+            dbObject.append(column.name, 1)
+        }
+        for (column in index.descending) {
+            dbObject.append(column.name, -1)
+        }
+        for (column in index.text) {
+            dbObject.append(column.name, "text")
+        }
+        if (index.name.isNotEmpty())
+            collection.ensureIndex(dbObject, index.name)
+        else
+            collection.ensureIndex(dbObject)
+    }
+
     override fun <T : AbstractTableSchema> T.create() {
-        throw UnsupportedOperationException()
+        db.createCollection(this.schemaName, null)
     }
 
     override fun <T : AbstractTableSchema> T.drop() {
@@ -293,6 +311,9 @@ class MongoDBSession(val db: DB) : Session() {
             }
             is OrOp -> {
                 query.append("\$or", Arrays.asList(getQuery(op.expr1), getQuery(op.expr2)))
+            }
+            is SearchOp -> {
+                query.append("\$text", BasicDBObject().append("\$search", op.text))
             }
             is NoOp -> {
                 // Do nothing
