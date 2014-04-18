@@ -177,30 +177,30 @@ Comments.select { posted + text }.find(commentId).set(newDate, newText)
 ```kotlin
 open class ProductSchema<D, S : Schema<D>(javaClass: Class<V>, discriminator: String) : Schema<V>("products",
             discriminator = Discriminator(string("type"), discriminator)) {
-    val sku = string<T>("sku")
-    val title = string<T>("title")
-    val description = string<T>("description")
-    val asin = string<T>("asin")
+    val sku = string<S>("sku")
+    val title = string<S>("title")
+    val description = string<S>("description")
+    val asin = string<S>("asin")
 
-    val Shipping = ShippingColumn<T>()
-    val Pricing = PricingColumn<T>()
+    val Shipping = ShippingColumn<S>()
+    val Pricing = PricingColumn<S>()
 
-    inner class ShippingColumn<T : Schema<D>>() : Column<Shipping, T>("shipping", javaClass()) {
-        val weight = integer<T>("weight")
-        val dimensions = DimensionsColumn<T>()
+    inner class ShippingColumn<S : Schema<D>>() : Column<Shipping, S>("shipping", javaClass()) {
+        val weight = integer<S>("weight")
+        val dimensions = DimensionsColumn<S>()
     }
 
-    inner class DimensionsColumn<T : Schema<D>>() : Column<Dimensions, T>("dimensions", javaClass()) {
-        val width = integer<T>("width")
-        val height = integer<T>("height")
-        val depth = integer<T>("depth")
+    inner class DimensionsColumn<S : Schema<D>>() : Column<Dimensions, S>("dimensions", javaClass()) {
+        val width = integer<S>("width")
+        val height = integer<S>("height")
+        val depth = integer<S>("depth")
     }
 
-    inner class PricingColumn<T : Schema<D>>() : Column<Pricing, T>("pricing", javaClass()) {
-        val list = integer<T>("list")
-        val retail = integer<T>("retail")
-        val savings = integer<T>("savings")
-        val ptcSavings = integer<T>("pct_savings")
+    inner class PricingColumn<S : Schema<D>>() : Column<Pricing, S>("pricing", javaClass()) {
+        val list = integer<S>("list")
+        val retail = integer<S>("retail")
+        val savings = integer<S>("savings")
+        val ptcSavings = integer<S>("pct_savings")
     }
 }
 
