@@ -175,7 +175,7 @@ Comments.select { posted + text }.find(commentId).set(newDate, newText)
 #### Define a base schema
 
 ```kotlin
-open class ProductSchema<V, T : AbstractSchema>(javaClass: Class<V>, discriminator: String) : Schema<V>("products",
+open class ProductSchema<D, S : Schema<D>(javaClass: Class<V>, discriminator: String) : Schema<V>("products",
             discriminator = Discriminator(string("type"), discriminator)) {
     val sku = string<T>("sku")
     val title = string<T>("title")
@@ -185,18 +185,18 @@ open class ProductSchema<V, T : AbstractSchema>(javaClass: Class<V>, discriminat
     val Shipping = ShippingColumn<T>()
     val Pricing = PricingColumn<T>()
 
-    class ShippingColumn<T : AbstractSchema>() : Column<Shipping, T>("shipping", javaClass()) {
+    inner class ShippingColumn<T : Schema<D>>() : Column<Shipping, T>("shipping", javaClass()) {
         val weight = integer<T>("weight")
         val dimensions = DimensionsColumn<T>()
     }
 
-    class DimensionsColumn<T : AbstractSchema>() : Column<Dimensions, T>("dimensions", javaClass()) {
+    inner class DimensionsColumn<T : Schema<D>>() : Column<Dimensions, T>("dimensions", javaClass()) {
         val width = integer<T>("width")
         val height = integer<T>("height")
         val depth = integer<T>("depth")
     }
 
-    class PricingColumn<T : AbstractSchema>() : Column<Pricing, T>("pricing", javaClass()) {
+    inner class PricingColumn<T : Schema<D>>() : Column<Pricing, T>("pricing", javaClass()) {
         val list = integer<T>("list")
         val retail = integer<T>("retail")
         val savings = integer<T>("savings")
