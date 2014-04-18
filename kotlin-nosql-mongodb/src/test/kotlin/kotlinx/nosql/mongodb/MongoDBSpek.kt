@@ -114,38 +114,27 @@ class MongoDBSpek : Spek() {
 
     {
         given("a polymorhpic schema") {
-            val db = MongoDB(schemas = array(Artists, Products, Albums), initialization = CreateDrop())
-
-            db.withSession {
-                array(Products, Artists).forEach { it.drop() }
-            }
             var artistId: Id<String, Artists>? = null
             var albumId: Id<String, Albums>? = null
 
-            on("inserting a document") {
-                db.withSession {
-                    val arId: Id<String, Artists> = Artists.insert(Artist(name = "John Coltrane"))
-                    it("should return a generated id for artist") {
-                        assert(arId.value.length > 0)
-                    }
-                    val aId = Albums.insert(Album(sku = "00e8da9b", title = "A Love Supreme", description = "by John Coltrane",
-                            asin = "B0000A118M", available = true, cost = 1.23, createdAtDate = LocalDate(2014, 3, 8), nullableBooleanNoValue = null,
-                            nullableBooleanWithValue = false, nullableDateNoValue = null, nullableDateWithValue = LocalDate(2014, 3, 7),
-                            nullableDoubleNoValue = null, nullableDoubleWithValue = 1.24,
-                            shipping = Shipping(weight = 6, dimensions = Dimensions(10, 10, 1)),
-                            pricing = Pricing(list = 1200, retail = 1100, savings = 100, pctSavings = 8),
-                            details = Details(title = "A Love Supreme [Original Recording Reissued]",
-                                    artistId = arId, genre = setOf("Jazz", "General"),
-                                    tracks = listOf(Track("A Love Supreme Part I: Acknowledgement", 100),
-                                            Track("A Love Supreme Part II - Resolution", 200),
-                                            Track("A Love Supreme, Part III: Pursuance", 300)))))
-                    it("should return a generated id for album") {
-                        assert(aId.value.length > 0)
-                    }
-                    albumId = aId
-                    artistId = arId
-                }
-            }
+            val db = MongoDB(schemas = array(Artists, Products, Albums), initialization = CreateDrop(onCreate = {
+                val arId: Id<String, Artists> = Artists.insert(Artist(name = "John Coltrane"))
+                assert(arId.value.length > 0)
+                val aId = Albums.insert(Album(sku = "00e8da9b", title = "A Love Supreme", description = "by John Coltrane",
+                        asin = "B0000A118M", available = true, cost = 1.23, createdAtDate = LocalDate(2014, 3, 8), nullableBooleanNoValue = null,
+                        nullableBooleanWithValue = false, nullableDateNoValue = null, nullableDateWithValue = LocalDate(2014, 3, 7),
+                        nullableDoubleNoValue = null, nullableDoubleWithValue = 1.24,
+                        shipping = Shipping(weight = 6, dimensions = Dimensions(10, 10, 1)),
+                        pricing = Pricing(list = 1200, retail = 1100, savings = 100, pctSavings = 8),
+                        details = Details(title = "A Love Supreme [Original Recording Reissued]",
+                                artistId = arId, genre = setOf("Jazz", "General"),
+                                tracks = listOf(Track("A Love Supreme Part I: Acknowledgement", 100),
+                                        Track("A Love Supreme Part II - Resolution", 200),
+                                        Track("A Love Supreme, Part III: Pursuance", 300)))))
+                assert(aId.value.length > 0)
+                albumId = aId
+                artistId = arId
+            }))
 
             on("filtering a non-inherited schema") {
                 db.withSession {

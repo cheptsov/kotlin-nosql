@@ -46,15 +46,6 @@ class MongoDB(seeds: Array<ServerAddress> = array(ServerAddress()), val database
                         schema.create()
                         for (index in schema.indices)
                             ensureIndex(schema, index)
-                        if (initialization is Create) {
-                            with (schema) {
-                                initialization.create()
-                            }
-                        } else if (initialization is CreateDrop) {
-                            with (schema) {
-                                initialization.create();
-                            }
-                        }
                     }
                 }
                 is Update -> {
@@ -64,6 +55,13 @@ class MongoDB(seeds: Array<ServerAddress> = array(ServerAddress()), val database
                     }
                 }
                 // TODO: implement drop after exit
+            }
+        }
+        withSession {
+            if (initialization is Create) {
+                initialization.onCreate()
+            } else if (initialization is CreateDrop) {
+                initialization.onCreate();
             }
         }
     }

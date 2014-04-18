@@ -117,7 +117,9 @@ class AuthorInfo(val authorId: Id<String, Authors>, val name: String)
 #### Define a database
 
 ```kotlin
-val db = MongoDB(database = "test", schemas = array(Comments))
+val db = MongoDB(database = "test", schemas = array(Comments), initialization = CreateDrop(onCreate = {
+    // ...
+}))
 
 db.withSession {
     // ...
