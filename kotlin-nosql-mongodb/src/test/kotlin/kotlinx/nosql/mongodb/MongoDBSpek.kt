@@ -574,16 +574,25 @@ class MongoDBSpek : Spek() {
 
             on("filtering an abstract schema by search expression") {
                 db.withSession {
-                    val results = Products.findAll { search("Love") }.toList()
+                    val results = Products.findAll { text("Love") }.toList()
                     it("should return a correct object") {
                         validate(results)
                     }
                 }
             }
 
+            on("filtering an abstract schema by search expression") {
+                db.withSession {
+                    val results = Products.findAll { text("Love") and shipping.weight.equal(16) }.toList()
+                    it("should return nothing") {
+                        assert(results.isEmpty())
+                    }
+                }
+            }
+
             on("filtering an abstract schema by search expression (returns nothing)") {
                 db.withSession {
-                    val results = Products.findAll { search("Love1") }.toList()
+                    val results = Products.findAll { text("Love1") }.toList()
                     it("should return nothing") {
                         assert(results.isEmpty())
                     }

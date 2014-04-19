@@ -34,8 +34,13 @@ class MongoDB(seeds: Array<ServerAddress> = array(ServerAddress()), val database
               val password: CharArray = CharArray(0), val options: MongoClientOptions = MongoClientOptions.Builder().build()!!,
               schemas: Array<out Schema<*>>, initialization: DatabaseInitialization<MongoDBSession> = Validate()) : Database<MongoDBSession>(schemas, initialization) {
     val seeds = seeds
+    val db = MongoClient(seeds.toList(), options).getDB(database)!!
+    var session = MongoDBSession(db);
 
     {
+        if (userName != "")
+            db.authenticate(userName, password)
+
         for (schema in schemas) {
             buildFullColumnNames(schema)
             when (initialization) {
@@ -82,11 +87,8 @@ class MongoDB(seeds: Array<ServerAddress> = array(ServerAddress()), val database
         val fullColumnNames = ConcurrentHashMap<AbstractColumn<*, *, *>, String>()
     }
 
+    // TODO: Use session pool
     override fun withSession(statement: MongoDBSession.() -> Unit) {
-        val db = MongoClient(seeds.toList(), options).getDB(database)!!
-        if (userName != "")
-            db.authenticate(userName, password)
-        val session = MongoDBSession(db)
         Session.threadLocale.set(session)
         session.statement()
         Session.threadLocale.set(null)

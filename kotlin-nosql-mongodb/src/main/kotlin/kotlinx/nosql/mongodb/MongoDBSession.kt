@@ -20,6 +20,16 @@ import org.joda.time.LocalDate
 import org.joda.time.LocalTime
 
 class MongoDBSession(val db: DB) : Session() {
+    val dbVersion : String
+    val searchOperatorSupported: Boolean
+
+    {
+        val results = db.command("buildInfo")
+        dbVersion = results!!.get("version")!!.toString()
+        val versions = dbVersion.split('.')
+        searchOperatorSupported = versions[0].toInt() >= 2 && versions[1].toInt() >= 6
+    }
+
     fun ensureIndex(schema: Schema<*>, index: Index) {
         val collection = db.getCollection(schema.schemaName)!!
         val dbObject = BasicDBObject()
@@ -107,28 +117,67 @@ class MongoDBSession(val db: DB) : Session() {
         return doc
     }
 
-        // TODO TODO TODO Real iterator instead of list
-    override fun <T : DocumentSchema<P, C>, P, C> T.findAll(op: T.() -> Op): PaginatedStream<C> {
-        val collection = db.getCollection(this.schemaName)!!
-        val query = getQuery(op())
-        return PaginatedStream({ drop, take ->
-            val cursor = collection.find(query)!!
-            if (drop != null) {
-                cursor.skip(drop)
-            }
-            val docs = ArrayList<C>()
-            try {
-                while (cursor.hasNext()) {
-                    val doc = cursor.next()
-                    val obj = getObject(doc, this)
-                    docs.add(obj)
-                    if (take != null && docs.size == take) break
+    override fun <T : DocumentSchema<P, C>, P, C> T.findAll(opSt: T.() -> Op): PaginatedStream<C> {
+        val op = opSt()
+        if (searchOperatorSupported && op.usesSearch()) {
+            return this.runCommandText(op)
+        } else {
+            val collection = db.getCollection(this.schemaName)!!
+            val query = getQuery(op)
+            return PaginatedStream({ drop, take ->
+                val cursor = collection.find(query)!!
+                if (drop != null) {
+                    cursor.skip(drop)
                 }
-                docs.iterator()
-            } finally {
-                cursor.close();
-            }
+                try {
+                    var size = 0
+                    val schema = this
+                    object : Iterator<C> {
+                        override fun next(): C {
+                            size++
+                            return getObject(cursor.next(), schema) as C
+                        }
+                        override fun hasNext(): Boolean {
+                            return (take == null || size < take) && cursor.hasNext()
+                        }
+                    }
+                } finally {
+                    cursor.close();
+                }
+            })
+        }
+    }
+
+    private fun <T : DocumentSchema<P, C>, P, C> T.runCommandText(op: Op): PaginatedStream<C> {
+        val searchCmd = BasicDBObject()
+        searchCmd.append("text", this.schemaName)
+        // TODO: Only supports text(...) and other condition
+        searchCmd.append("search", when (op) {
+            is TextOp -> op.search
+            is AndOp -> if (op.expr1 is TextOp) op.expr1.search else throw UnsupportedOperationException()
+            else -> throw UnsupportedOperationException()
         })
+        val schema = this
+        if (op is AndOp) {
+            searchCmd.append("filter", getQuery(op.expr2))
+        }
+        val result = db.command(searchCmd)!!
+        return PaginatedStream({ drop, take ->
+            val objects = ArrayList<C>()
+            for (doc in result.get("results") as BasicDBList) {
+                objects.add(getObject((doc as DBObject).get("obj") as DBObject, schema))
+            }
+            objects.iterator()
+        })
+    }
+
+    private fun Op.usesSearch(): Boolean {
+        return when (this) {
+            is TextOp -> true
+            is OrOp -> this.expr1.usesSearch() || this.expr2.usesSearch()
+            is AndOp -> this.expr1.usesSearch() || this.expr2.usesSearch()
+            else -> false
+        }
     }
 
     /*override fun <T: AbstractTableSchema, A: AbstractColumn<List<C>, T, C>, C>iterator(rangeQuery: RangeQuery<T, A, C>): Iterator<C> {
@@ -312,8 +361,8 @@ class MongoDBSession(val db: DB) : Session() {
             is OrOp -> {
                 query.append("\$or", Arrays.asList(getQuery(op.expr1), getQuery(op.expr2)))
             }
-            is SearchOp -> {
-                query.append("\$text", BasicDBObject().append("\$search", op.text))
+            is TextOp -> {
+                query.append("\$text", BasicDBObject().append("\$search", op.search))
             }
             is NoOp -> {
                 // Do nothing
