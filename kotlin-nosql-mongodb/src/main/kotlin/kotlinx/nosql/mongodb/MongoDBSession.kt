@@ -119,7 +119,7 @@ class MongoDBSession(val db: DB) : Session() {
 
     override fun <T : DocumentSchema<P, C>, P, C> T.findAll(opSt: T.() -> Op): PaginatedStream<C> {
         val op = opSt()
-        if (searchOperatorSupported && op.usesSearch()) {
+        if (!searchOperatorSupported && op.usesSearch()) {
             return this.runCommandText(op)
         } else {
             val collection = db.getCollection(this.schemaName)!!
