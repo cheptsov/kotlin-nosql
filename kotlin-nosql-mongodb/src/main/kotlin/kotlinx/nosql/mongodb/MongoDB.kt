@@ -25,13 +25,13 @@ fun MongoDB(uri: MongoClientURI, schemas: Array<out Schema<*>>, initialization: 
     }.copyToArray()
     val database: String = if (uri.getDatabase() != null) uri.getDatabase()!! else "test"
     val username: String = if (uri.getUsername() != null) uri.getUsername()!! else ""
-    val password: String = if (uri.getPassword() != null) uri.getPassword().toString() else ""
+    val password: CharArray = if (uri.getPassword() != null) uri.getPassword()!! else CharArray(0)
     val options: MongoClientOptions = uri.getOptions()!!
     return MongoDB(seeds, database, username, password, options, schemas, initialization)
 }
 
 class MongoDB(seeds: Array<ServerAddress> = array(ServerAddress()), val database: String = "test", val userName: String = "",
-              val password: String = "", val options: MongoClientOptions = MongoClientOptions.Builder().build()!!,
+              val password: CharArray = CharArray(0), val options: MongoClientOptions = MongoClientOptions.Builder().build()!!,
               schemas: Array<out Schema<*>>, initialization: DatabaseInitialization<MongoDBSession> = Validate()) : Database<MongoDBSession>(schemas, initialization) {
     val seeds = seeds
 
@@ -85,7 +85,7 @@ class MongoDB(seeds: Array<ServerAddress> = array(ServerAddress()), val database
     override fun withSession(statement: MongoDBSession.() -> Unit) {
         val db = MongoClient(seeds.toList(), options).getDB(database)!!
         if (userName != "")
-            db.authenticate(userName, password.toCharArray())
+            db.authenticate(userName, password)
         val session = MongoDBSession(db)
         Session.threadLocale.set(session)
         session.statement()
