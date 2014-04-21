@@ -21,6 +21,7 @@ class MongoDBSpek : Spek() {
         val cost = double<S>("cost")
         val nullableDoubleNoValue = nullableDouble<S>("nullableDoubleNoValue")
         val nullableDoubleWithValue = nullableDouble<S>("nullableDoubleWithValue")
+        val setOfStrings = setOfString<S>("setOfStrings")
 
         val shipping = ShippingColumn<S>()
         val pricing = PricingColumn<S>()
@@ -79,7 +80,7 @@ class MongoDBSpek : Spek() {
                            val nullableBooleanWithValue: Boolean?,
                            val nullableDateNoValue: LocalDate?, val nullableDateWithValue: LocalDate?,
                            val nullableDoubleNoValue: Double?, val nullableDoubleWithValue: Double?,
-                           val shipping: Shipping, val pricing: Pricing) {
+                           val setOfStrings: Set<String>, val shipping: Shipping, val pricing: Pricing) {
         val id: Id<String, Products>? = null // How to define id for implementation classes?
     }
 
@@ -96,10 +97,11 @@ class MongoDBSpek : Spek() {
                 cost: Double, createdAtDate: LocalDate,
                 nullableBooleanNoValue: Boolean?, nullableBooleanWithValue: Boolean?,
                 nullableDateNoValue: LocalDate?, nullableDateWithValue: LocalDate?,
-                nullableDoubleNoValue: Double?, nullableDoubleWithValue: Double?, shipping: Shipping, pricing: Pricing,
+                nullableDoubleNoValue: Double?, nullableDoubleWithValue: Double?,
+                setOfStrings: Set<String>, shipping: Shipping, pricing: Pricing,
                 val details: Details) : Product(sku, title, description, asin, available, cost, createdAtDate,
             nullableBooleanNoValue, nullableBooleanWithValue, nullableDateNoValue, nullableDateWithValue,
-            nullableDoubleNoValue, nullableDoubleWithValue, shipping, pricing) {
+            nullableDoubleNoValue, nullableDoubleWithValue, setOfStrings, shipping, pricing) {
     }
 
     class Artist(val name: String) {
@@ -124,7 +126,7 @@ class MongoDBSpek : Spek() {
                         asin = "B0000A118M", available = true, cost = 1.23, createdAtDate = LocalDate(2014, 3, 8), nullableBooleanNoValue = null,
                         nullableBooleanWithValue = false, nullableDateNoValue = null, nullableDateWithValue = LocalDate(2014, 3, 7),
                         nullableDoubleNoValue = null, nullableDoubleWithValue = 1.24,
-                        shipping = Shipping(weight = 6, dimensions = Dimensions(10, 10, 1)),
+                        setOfStrings = setOf("Something"), shipping = Shipping(weight = 6, dimensions = Dimensions(10, 10, 1)),
                         pricing = Pricing(list = 1200, retail = 1100, savings = 100, pctSavings = 8),
                         details = Details(title = "A Love Supreme [Original Recording Reissued]",
                                 artistId = arId, genre = setOf("Jazz", "General"),
@@ -162,6 +164,7 @@ class MongoDBSpek : Spek() {
                 assertEquals("A Love Supreme", results[0].title)
                 assertEquals("by John Coltrane", results[0].description)
                 assertEquals("B0000A118M", results[0].asin)
+                assert(album.setOfStrings.contains("Something"))
                 assertEquals(6, results[0].shipping.weight)
                 assertEquals(10, results[0].shipping.dimensions.width)
                 assertEquals(10, results[0].shipping.dimensions.height)

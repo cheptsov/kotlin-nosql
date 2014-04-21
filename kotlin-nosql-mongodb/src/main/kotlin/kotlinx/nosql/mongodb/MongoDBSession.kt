@@ -413,6 +413,16 @@ class MongoDBSession(val db: DB) : Session() {
                             ColumnType.DATE_TIME -> DateTime(value.toString())
                             else -> doc.get(column.name)
                         }
+                    } else if (column.columnType.list && !column.columnType.custom) {
+                        (doc.get(column.name) as BasicDBList).toList()
+                    } else if (column.columnType.set && !column.columnType.custom) {
+                        (doc.get(column.name) as BasicDBList).toSet()
+                    } else if (column.columnType.custom && column.columnType.set) {
+                        val list = doc.get(column.name) as BasicDBList
+                        list.map { getObject(it as DBObject, column as ListColumn<*, out AbstractSchema>) }.toList()
+                    } else if (column.columnType.custom && column.columnType.list) {
+                        val list = doc.get(column.name) as BasicDBList
+                        list.map { getObject(it as DBObject, column as ListColumn<*, out AbstractSchema>) }.toSet()
                     } else {
                         getObject(doc.get(column.name) as DBObject, column as Column<Any?, T>)
                     }
@@ -469,8 +479,8 @@ class MongoDBSession(val db: DB) : Session() {
                     else if (column.columnType.set && !column.columnType.custom) (doc.get(column.name) as BasicDBList).toSet()
                     else if (column.columnType.custom && column.columnType.list) {
                         val list = doc.get(column.name) as BasicDBList
-                        list.map { getObject(it as DBObject, column as ListColumn<*, out AbstractSchema>) }
-                    } else if (column.columnType.custom && column.columnType.list) {
+                        list.map { getObject(it as DBObject, column as ListColumn<*, out AbstractSchema>) }.toList()
+                    } else if (column.columnType.custom && column.columnType.set) {
                         val list = doc.get(column.name) as BasicDBList
                         list.map { getObject(it as DBObject, column as ListColumn<*, out AbstractSchema>) }.toSet()
                     } else {
