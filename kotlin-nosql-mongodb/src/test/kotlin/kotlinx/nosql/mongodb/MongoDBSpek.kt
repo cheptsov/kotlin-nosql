@@ -144,12 +144,14 @@ class MongoDBSpek : Spek() {
             }))
 
             on("filtering a non-inherited schema") {
-                db.withSession {
+                val a = db.withSession {
                     val artists = Artists.findAll { name.equal("John Coltrane") }.toList()
                     it("should return a generated id for artist") {
                         assert(artists.size == 1)
                     }
+                    "a"
                 }
+                assertEquals("a", a)
             }
 
             fun validate(results: List<Product>) {

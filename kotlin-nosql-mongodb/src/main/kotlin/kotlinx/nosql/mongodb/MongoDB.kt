@@ -88,10 +88,11 @@ class MongoDB(seeds: Array<ServerAddress> = array(ServerAddress()), val database
     }
 
     // TODO: Use session pool
-    override fun withSession(statement: MongoDBSession.() -> Unit) {
+    override fun <R> withSession(statement: MongoDBSession.() -> R): R {
         Session.threadLocale.set(session)
-        session.statement()
+        val r = session.statement()
         Session.threadLocale.set(null)
+        return r
     }
 }
 
