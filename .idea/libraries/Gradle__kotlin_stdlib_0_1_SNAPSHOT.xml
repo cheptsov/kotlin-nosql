@@ -1,11 +1,13 @@
 <component name="libraryTable">
   <library name="Gradle: kotlin-stdlib-0.1-SNAPSHOT">
     <CLASSES>
-      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib/0.1-SNAPSHOT/b77f513d2a970a199ba1c8a3db75644ec6c8c5e8/kotlin-stdlib-0.1-SNAPSHOT.jar!/" />
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib/0.1-SNAPSHOT/3a795151353a8abd875261df1c39d0d707de724a/kotlin-stdlib-0.1-SNAPSHOT.jar!/" />
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib/0.1-SNAPSHOT/96bbb5ff0fa2b0885fb5d210e8dd523838a824a7/kotlin-stdlib-0.1-SNAPSHOT.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib/0.1-SNAPSHOT/91c7105ea3afdd1c321b81582d66ee123b9981dc/kotlin-stdlib-0.1-SNAPSHOT-sources.jar!/" />
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib/0.1-SNAPSHOT/af02ab305e67ac68c457bab23b9dc678ebb6e657/kotlin-stdlib-0.1-SNAPSHOT-sources.jar!/" />
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib/0.1-SNAPSHOT/2c1abcc158631c414805b1314525dd0a1d298198/kotlin-stdlib-0.1-SNAPSHOT-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

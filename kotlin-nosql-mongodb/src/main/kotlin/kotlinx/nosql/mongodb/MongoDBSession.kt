@@ -107,7 +107,8 @@ class MongoDBSession(val db: DB) : Session() {
                     } else if (column.columnType.iterable) {
                         val list = BasicDBList()
                         for (v in (value as Iterable<Any>)) {
-                            list.add(if (column.columnType.custom) getDBObject(v, column) else v)
+                            list.add(if (column.columnType.custom) getDBObject(v, column) else
+                                (if (v is Id<*, *>) ObjectId(v.toString()) else v))
                         }
                         doc.append(column.name, list)
                     } else doc.append(column.name, getDBObject(value, column))
@@ -404,7 +405,7 @@ class MongoDBSession(val db: DB) : Session() {
                     val value = doc.get(column.name)
                     val columnValue: Any? = if (value == null) {
                         null
-                    } else if (column.columnType.id)
+                    } else if (column.columnType.id && !column.columnType.iterable)
                         Id<P, T>(value.toString() as P)
                     else if (column.columnType.primitive) {
                         when (column.columnType) {
@@ -415,8 +416,11 @@ class MongoDBSession(val db: DB) : Session() {
                         }
                     } else if (column.columnType.list && !column.columnType.custom) {
                         (doc.get(column.name) as BasicDBList).toList()
-                    } else if (column.columnType.set && !column.columnType.custom) {
+                    } else if (column.columnType.set && !column.columnType.custom && !column.columnType.id) {
                         (doc.get(column.name) as BasicDBList).toSet()
+                    } else if (column.columnType.id && column.columnType.set) {
+                        val list = doc.get(column.name) as BasicDBList
+                        list.map { Id<String, TableSchema<String>>(it.toString()) }.toList()
                     } else if (column.columnType.custom && column.columnType.set) {
                         val list = doc.get(column.name) as BasicDBList
                         list.map { getObject(it as DBObject, column as ListColumn<*, out AbstractSchema>) }.toList()
@@ -473,13 +477,16 @@ class MongoDBSession(val db: DB) : Session() {
                     columnField.setAccessible(true)
                     valueField.setAccessible(true)
                     val column = columnField.asColumn(column)
-                    val columnValue: Any? = if (column.columnType.id) Id<String, TableSchema<String>>(doc.get(column.name).toString())
+                    val columnValue: Any? = if (column.columnType.id && !column.columnType.iterable) Id<String, TableSchema<String>>(doc.get(column.name).toString())
                     else if (column.columnType.primitive) doc.get(column.name)
                     else if (column.columnType.list && !column.columnType.custom) (doc.get(column.name) as BasicDBList).toList()
-                    else if (column.columnType.set && !column.columnType.custom) (doc.get(column.name) as BasicDBList).toSet()
+                    else if (column.columnType.set && !column.columnType.custom && !column.columnType.id) (doc.get(column.name) as BasicDBList).toSet()
                     else if (column.columnType.custom && column.columnType.list) {
                         val list = doc.get(column.name) as BasicDBList
                         list.map { getObject(it as DBObject, column as ListColumn<*, out AbstractSchema>) }.toList()
+                    } else if (column.columnType.id && column.columnType.set) {
+                        val list = doc.get(column.name) as BasicDBList
+                        list.map { Id<String, TableSchema<String>>(it.toString()) }.toSet()
                     } else if (column.columnType.custom && column.columnType.set) {
                         val list = doc.get(column.name) as BasicDBList
                         list.map { getObject(it as DBObject, column as ListColumn<*, out AbstractSchema>) }.toSet()

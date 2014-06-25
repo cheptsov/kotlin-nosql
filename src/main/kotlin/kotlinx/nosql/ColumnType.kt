@@ -21,6 +21,7 @@ enum class ColumnType(val primitive: Boolean = false,
     public SHORT : ColumnType(primitive = true)
     public BYTE : ColumnType(primitive = true)
     public INTEGER_SET : ColumnType(iterable = true, set = true)
+    public ID_SET : ColumnType(iterable = true, set = true, id = true)
     public STRING_SET : ColumnType(iterable = true, set = true)
     public INTEGER_LIST : ColumnType(iterable = true, list = true)
     public STRING_LIST : ColumnType(iterable = true, list = true)

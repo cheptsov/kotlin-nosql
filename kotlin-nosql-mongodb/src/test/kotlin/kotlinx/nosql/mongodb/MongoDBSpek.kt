@@ -63,6 +63,7 @@ class MongoDBSpek : Spek() {
         class DetailsColumn() : Column<Details, Albums>("details", javaClass()) {
             val title = string("title")
             val artistId = id("artistId", Artists)
+            val artistIds = setOfId("artistIds", Artists)
             val genre = setOfString("genre")
 
             val tracks = TracksColumn()
@@ -108,7 +109,8 @@ class MongoDBSpek : Spek() {
         val id: Id<String, Artists>? = null
     }
 
-    class Details(val title: String, val artistId: Id<String, Artists>, val genre: Set<String>, val tracks: List<Track>) {
+    class Details(val title: String, val artistId: Id<String, Artists>, val artistIds: Set<Id<String, Artists>>,
+                  val genre: Set<String>, val tracks: List<Track>) {
     }
 
     class Track(val title: String, val duration: Int) {
@@ -117,10 +119,12 @@ class MongoDBSpek : Spek() {
     {
         given("a polymorhpic schema") {
             var artistId: Id<String, Artists>? = null
+            var artistId2: Id<String, Artists>? = null
             var albumId: Id<String, Albums>? = null
 
             val db = MongoDB(schemas = array(Artists, Products, Albums), initialization = CreateDrop(onCreate = {
                 val arId: Id<String, Artists> = Artists.insert(Artist(name = "John Coltrane"))
+                val arId2: Id<String, Artists> = Artists.insert(Artist(name = "Andrey Cheptsov"))
                 assert(arId.value.length > 0)
                 val aId = Albums.insert(Album(sku = "00e8da9b", title = "A Love Supreme", description = "by John Coltrane",
                         asin = "B0000A118M", available = true, cost = 1.23, createdAtDate = LocalDate(2014, 3, 8), nullableBooleanNoValue = null,
@@ -129,13 +133,14 @@ class MongoDBSpek : Spek() {
                         setOfStrings = setOf("Something"), shipping = Shipping(weight = 6, dimensions = Dimensions(10, 10, 1)),
                         pricing = Pricing(list = 1200, retail = 1100, savings = 100, pctSavings = 8),
                         details = Details(title = "A Love Supreme [Original Recording Reissued]",
-                                artistId = arId, genre = setOf("Jazz", "General"),
-                                tracks = listOf(Track("A Love Supreme Part I: Acknowledgement", 100),
+                                artistId = arId, artistIds = setOf(arId, arId2),
+                                genre = setOf("Jazz", "General"), tracks = listOf(Track("A Love Supreme Part I: Acknowledgement", 100),
                                         Track("A Love Supreme Part II - Resolution", 200),
                                         Track("A Love Supreme, Part III: Pursuance", 300)))))
                 assert(aId.value.length > 0)
                 albumId = aId
                 artistId = arId
+                artistId2 = arId2
             }))
 
             on("filtering a non-inherited schema") {
@@ -175,6 +180,9 @@ class MongoDBSpek : Spek() {
                 assertEquals(8, results[0].pricing.pctSavings)
                 assertEquals("A Love Supreme [Original Recording Reissued]", album.details.title)
                 assertEquals(artistId!!, album.details.artistId)
+                assert(album.details.artistIds.size == 2)
+                assert(album.details.artistIds.contains(artistId))
+                assert(album.details.artistIds.contains(artistId2))
                 assert(album.details.genre.size == 2)
                 assert(album.details.genre.contains("Jazz"))
                 assert(album.details.genre.contains("General"))
