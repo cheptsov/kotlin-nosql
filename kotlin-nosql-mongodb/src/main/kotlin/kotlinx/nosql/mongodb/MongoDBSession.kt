@@ -420,13 +420,13 @@ class MongoDBSession(val db: DB) : Session() {
                         (doc.get(column.name) as BasicDBList).toSet()
                     } else if (column.columnType.id && column.columnType.set) {
                         val list = doc.get(column.name) as BasicDBList
-                        list.map { Id<String, TableSchema<String>>(it.toString()) }.toList()
+                        list.map { Id<String, TableSchema<String>>(it.toString()) }.toSet()
                     } else if (column.columnType.custom && column.columnType.set) {
                         val list = doc.get(column.name) as BasicDBList
-                        list.map { getObject(it as DBObject, column as ListColumn<*, out AbstractSchema>) }.toList()
+                        list.map { getObject(it as DBObject, column as ListColumn<*, out AbstractSchema>) }.toSet()
                     } else if (column.columnType.custom && column.columnType.list) {
                         val list = doc.get(column.name) as BasicDBList
-                        list.map { getObject(it as DBObject, column as ListColumn<*, out AbstractSchema>) }.toSet()
+                        list.map { getObject(it as DBObject, column as ListColumn<*, out AbstractSchema>) }.toList()
                     } else {
                         getObject(doc.get(column.name) as DBObject, column as Column<Any?, T>)
                     }
