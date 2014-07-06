@@ -18,6 +18,15 @@ import org.joda.time.DateTime
 import org.joda.time.format.ISODateTimeFormat
 import org.joda.time.LocalDate
 import org.joda.time.LocalTime
+import rx.Observable
+import rx.Observable.OnSubscribeFunc
+import rx.subscriptions.Subscriptions
+import rx.observables.BlockingObservable
+import rx.Subscription
+import kotlinx.nosql.Session.DocumentSchemaQueryObservable
+import rx.Observer
+import kotlinx.nosql.Session.DocumentSchemaQueryObservableParams
+import kotlinx.nosql.Session.TableSchemaProjectionQueryObservableParams
 
 class MongoDBSession(val db: DB) : Session() {
     val dbVersion : String
@@ -57,20 +66,28 @@ class MongoDBSession(val db: DB) : Session() {
         collection.remove(BasicDBObject())
     }
 
-    override fun <T : DocumentSchema<P, V>, P, V> T.insert(v: V): Id<P, T> {
-        val collection = db.getCollection(this.schemaName)!!
-        val doc = getDBObject(v, this)
-        if (discriminator != null) {
-            var dominatorValue: Any? = null
-            for (entry in DocumentSchema.discriminatorClasses.entrySet()) {
-                if (entry.value.equals(v.javaClass)) {
-                    dominatorValue = entry.key.value
+    override fun <T : DocumentSchema<P, V>, P, V> T.insert(v: V): Observable<Id<P, T>> {
+        return Observable.create(OnSubscribeFunc<Id<P, T>> { observer ->
+            try {
+                val collection = db.getCollection(this.schemaName)!!
+                val doc = getDBObject(v, this)
+                if (discriminator != null) {
+                    var dominatorValue: Any? = null
+                    for (entry in DocumentSchema.discriminatorClasses.entrySet()) {
+                        if (entry.value.equals(v.javaClass)) {
+                            dominatorValue = entry.key.value
+                        }
+                    }
+                    doc.set(this.discriminator.column.name, dominatorValue!!)
                 }
+                collection.insert(doc)
+                observer.onNext(Id<P, T>(doc.get("_id").toString() as P))
+                observer.onCompleted()
+            } catch(e: Throwable) {
+                observer.onError(e)
             }
-            doc.set(this.discriminator.column.name, dominatorValue!!)
-        }
-        collection.insert(doc)
-        return Id<P, T>(doc.get("_id").toString() as P)
+            Subscriptions.empty()!!
+        })
     }
 
     private fun getDBObject(o: Any, schema: Any): BasicDBObject {
@@ -118,7 +135,76 @@ class MongoDBSession(val db: DB) : Session() {
         return doc
     }
 
-    override fun <T : DocumentSchema<P, C>, P, C> T.findAll(opSt: T.() -> Op): PaginatedStream<C> {
+    override fun <T : DocumentSchema<P, C>, P, C> onSubscribe(params: DocumentSchemaQueryObservableParams<T, P, C>,
+                                                              observer: Observer<in C>): Subscription {
+        val collection = db.getCollection(params.schema.schemaName)!!
+        val cursor = collection.find(if (params.query != null) getQuery(params.query) else BasicDBObject())
+        if (params.skip != null) {
+            cursor.skip(params.skip!!)
+        }
+        try {
+            var size = 0
+            while (cursor.hasNext()) {
+                observer.onNext(getObject(cursor.next(), params.schema) as C)
+                if (params.take != null && ++size == params.take!!) {
+                    break;
+                }
+            }
+            observer.onCompleted()
+        } catch (e: Throwable) {
+            observer.onError(e)
+        } finally {
+            cursor.close();
+        }
+        return Subscriptions.empty()!!
+    }
+
+    override fun <T : TableSchema<P>, P, V> onSubscribe2(params: TableSchemaProjectionQueryObservableParams<T, P, V>,
+                                                        observer: Observer<in V>): Subscription {
+        val collection = db.getCollection(params.table.schemaName)!!
+        val fields = BasicDBObject()
+        params.projection.forEach {
+            fields.append(it.fullName, "1")
+        }
+        val cursor = collection.find(if (params.query != null) getQuery(params.query) else BasicDBObject(), fields)
+        if (params.skip != null) {
+            cursor.skip(params.skip!!)
+        }
+        try {
+            var size = 0
+            while (cursor.hasNext()) {
+                val doc = cursor.next()
+                val values = ArrayList<Any?>()
+                params.projection.forEach {
+                    values.add(getColumnObject(doc, it))
+                }
+                when (values.size) {
+                    1 -> observer.onNext(values[0] as V)
+                    2 -> observer.onNext(Pair(values[0], values[1]) as V)
+                    3 -> observer.onNext(Triple(values[0], values[1], values[2]) as V)
+                    4 -> observer.onNext(Quadruple(values[0], values[1], values[2], values[3]) as V)
+                    5 -> observer.onNext(Quintuple(values[0], values[1], values[2], values[3], values[4]) as V)
+                    6 -> observer.onNext(Sextuple(values[0], values[1], values[2], values[3], values[4], values[5]) as V)
+                    7 -> observer.onNext(Septuple(values[0], values[1], values[2], values[3], values[4], values[5], values[6]) as V)
+                    8 -> observer.onNext(Octuple(values[0], values[1], values[2], values[3], values[4], values[5], values[6], values[7]) as V)
+                    9 -> observer.onNext(Nonuple(values[0], values[1], values[2], values[3], values[4], values[5], values[6], values[7], values[8]) as V)
+                    10 -> observer.onNext(Decuple(values[0], values[1], values[2], values[3], values[4], values[5], values[6], values[7], values[8], values[9]) as V)
+                }
+                if (params.take != null && ++size == params.take!!) {
+                    break;
+                }
+            }
+            observer.onCompleted()
+        } catch (e: Throwable) {
+            observer.onError(e)
+        } finally {
+            cursor.close();
+        }
+        return Subscriptions.empty()!!
+    }
+
+    /*
+    PaginatedStream<C> {
         val op = opSt()
         if (!searchOperatorSupported && op.usesSearch()) {
             return this.runCommandText(op)
@@ -148,6 +234,7 @@ class MongoDBSession(val db: DB) : Session() {
             })
         }
     }
+     */
 
     private fun <T : DocumentSchema<P, C>, P, C> T.runCommandText(op: Op): PaginatedStream<C> {
         val searchCmd = BasicDBObject()
@@ -507,16 +594,17 @@ class MongoDBSession(val db: DB) : Session() {
     override fun <T : AbstractSchema> insert(columns: Array<Pair<AbstractColumn<out Any?, T, out Any?>, Any?>>) {
         throw UnsupportedOperationException()
     }
-    override fun <T : AbstractSchema> delete(table: T, op: Op) {
+    override fun <T : AbstractSchema> delete(table: T, op: Op): Int {
         val collection = db.getCollection(table.schemaName)!!
         val query = getQuery(op)
-        collection.remove(query)
+        return collection.remove(query)!!.getN()
     }
-    override fun <T : AbstractTableSchema, A: AbstractColumn<C, T, out Any?>, C> Query1<T, A, C>.set(c: C) {
-        update(array(Pair(a, c)), op, "\$set")
+    /*
+    override fun <T : AbstractTableSchema, A: AbstractColumn<C, T, out Any?>, C> Query1<T, A, C>.set(c: C): Int {
+        return update(array(Pair(a, c)), op, "\$set")
     }
-    override fun <T : AbstractTableSchema, A, B> Query2<T, A, B>.set(av: A, bv: B) {
-        update(array(Pair(a, av), Pair(b, bv)), op, "\$set")
+    override fun <T : AbstractTableSchema, A, B> Query2<T, A, B>.set(av: A, bv: B): Int {
+        return update(array(Pair(a, av), Pair(b, bv)), op, "\$set")
     }
     override fun <T : AbstractTableSchema, A, B, C> Query3<T, A, B, C>.set(av: A, bv: B, cv: C) {
         update(array(Pair(a, av), Pair(b, bv), Pair(c, cv)), op, "\$set")
@@ -541,16 +629,16 @@ class MongoDBSession(val db: DB) : Session() {
     }
     override fun <T : AbstractTableSchema, A, B, C, D, E, F, G, H, I, J> Query10<T, A, B, C, D, E, F, G, H, I, J>.set(av: A, bv: B, cv: C, dv: D, ev: E, fv: F, gv: G, hv: H, iv: I, jv: J) {
         update(array(Pair(a, av), Pair(b, bv), Pair(c, cv), Pair(d, dv), Pair(e, ev), Pair(f, fv), Pair(g, gv), Pair(h, hv), Pair(i, iv), Pair(j, jv)), op, "\$set")
-    }
+    }*/
 
-    private fun update(columnValues: Array<Pair<AbstractColumn<*, *, *>, *>>, op: Op, operator: String) {
-        val collection = db.getCollection(AbstractSchema.current<AbstractSchema>().schemaName)!!
+    override fun update(schema: AbstractSchema, columnValues: Array<Pair<AbstractColumn<*, *, *>, *>>, op: Op): Int {
+        val collection = db.getCollection(schema.schemaName)!!
         val statement = BasicDBObject()
-        val doc = BasicDBObject().append(operator, statement)
+        val doc = BasicDBObject().append("\$set", statement)
         for ((column, value) in columnValues) {
             statement.append(column.fullName, getDBValue(value, column))
         }
-        collection.update(getQuery(op), doc)
+        return collection.update(getQuery(op), doc)!!.getN()
     }
 
     private fun getDBValue(value: Any?, column: AbstractColumn<*, *, *>): Any? {
@@ -752,10 +840,10 @@ class MongoDBSession(val db: DB) : Session() {
         }
     }
 
-    override fun <T : AbstractTableSchema, A: AbstractColumn<CC, T, out Any?>, CC: Collection<C>, C> Query1<T, A, CC>.add(c: C) {
+    /*override fun <T : AbstractTableSchema, A: AbstractColumn<CC, T, out Any?>, CC: Collection<C>, C> Query1<T, A, CC>.add(c: C) {
         // TODO TODO TODO
         update(array(Pair(a, listOf(c))), op!!, "\$pushAll")
-    }
+    }*/
     override fun <T : AbstractTableSchema, A: AbstractColumn<CC, T, out Any?>, CC: Collection<C>, C> Query1<T, A, CC>.delete(c: A.() -> Op) {
         val cOp = a.c()
         val collection = db.getCollection(AbstractSchema.current<AbstractSchema>().schemaName)!!
@@ -768,9 +856,9 @@ class MongoDBSession(val db: DB) : Session() {
         collection.update(getQuery(op), fields)
     }
 
-    override fun <T : AbstractTableSchema, A: AbstractColumn<Int, T, Int>> Query1<T, A, Int>.add(c: Int): Int {
+    /*override fun <T : AbstractTableSchema, A: AbstractColumn<Int, T, Int>> Query1<T, A, Int>.add(c: Int): Int {
         throw UnsupportedOperationException()
-    }
+    }*/
     override fun <T : KeyValueSchema, C> T.get(c: T.() -> AbstractColumn<C, T, out Any?>): C {
         throw UnsupportedOperationException()
     }

@@ -1,5 +1,8 @@
 <component name="libraryTable">
   <library name="Gradle: mongo-java-driver-2.10.1">
+    <ANNOTATIONS>
+      <root url="file://$PROJECT_DIR$/annotations/Gradle_ mongo-java-driver-2.10.1" />
+    </ANNOTATIONS>
     <CLASSES>
       <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.mongodb/mongo-java-driver/2.10.1/9e2c2835b0126a48183ed42129e53b6eb6e259b/mongo-java-driver-2.10.1.jar!/" />
     </CLASSES>

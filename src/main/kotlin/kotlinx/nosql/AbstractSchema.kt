@@ -6,6 +6,9 @@ import java.util.concurrent.CopyOnWriteArrayList
 import org.joda.time.LocalDate
 import org.joda.time.LocalTime
 import org.joda.time.DateTime
+import rx.Observable
+import rx.Observable.OnSubscribeFunc
+import rx.subscriptions.Subscriptions
 
 abstract class AbstractSchema(val schemaName: String) {
     // TODO TODO TODO
@@ -183,15 +186,13 @@ fun <S : AbstractSchema> S.listOfString(name: String): AbstractColumn<List<Strin
 
 fun <S : AbstractSchema> S.listOfInteger(name: String): AbstractColumn<List<Int>, S, Int> = AbstractColumn<List<Int>, S, Int>(name, javaClass<Int>(), ColumnType.INTEGER_LIST)
 
-fun <S : AbstractTableSchema> S.delete(body: S.() -> Op) {
-    FilterQuery(this, body()) delete { }
-}
-
+/*
 // TODO TODO TODO
 fun <S : AbstractTableSchema, X> S.select(selector: S.() -> X): X {
     AbstractSchema.set(this)
     return selector();
 }
+*/
 
 fun <S : AbstractTableSchema, B> FilterQuery<S>.map(statement: S.(Map<Any, Any>) -> B): List<B> {
     val results = ArrayList<B>()
@@ -279,13 +280,13 @@ fun <S : AbstractTableSchema, A, B> S.template(a: AbstractColumn<A, S, *>, b: Ab
     return Template2(a, b)
 }
 
-class Template2<S : AbstractSchema, A, B>(val a: AbstractColumn<A, S, *>, val b: AbstractColumn<B, S, *>) {
+class Template2<S : AbstractSchema, A, B>(val a: AbstractColumn<A, S, *>, val b: AbstractColumn<B, S, *>): ColumnObservable<Pair<A, B>>() {
     fun <C> plus(c: AbstractColumn<C, S, *>): Template3<S, A, B, C> {
         return Template3(a, b, c)
     }
 }
 
-class Template3<S : AbstractSchema, A, B, C>(val a: AbstractColumn<A, S, *>, val b: AbstractColumn<B, S, *>, val c: AbstractColumn<C, S, *>) {
+class Template3<S : AbstractSchema, A, B, C>(val a: AbstractColumn<A, S, *>, val b: AbstractColumn<B, S, *>, val c: AbstractColumn<C, S, *>): ColumnObservable<Triple<A, B, C>>() {
     fun <D> plus(d: AbstractColumn<D, S, *>): Template4<S, A, B, C, D> {
         return Template4(a, b, c, d)
     }
@@ -302,7 +303,7 @@ fun <T : TableSchema<P>, P, C> AbstractColumn<C, T, *>.insert(statement: () -> P
     Session.current().insert(array(Pair(id, tt.component1()), Pair(this, tt.component2())))
 }*/
 
-class Template4<S : AbstractSchema, A, B, C, D>(val a: AbstractColumn<A, S, *>, val b: AbstractColumn<B, S, *>, val c: AbstractColumn<C, S, *>, val d: AbstractColumn<D, S, *>) {
+class Template4<S : AbstractSchema, A, B, C, D>(val a: AbstractColumn<A, S, *>, val b: AbstractColumn<B, S, *>, val c: AbstractColumn<C, S, *>, val d: AbstractColumn<D, S, *>): ColumnObservable<Quadruple<A, B, C, D>>() {
     fun <E> plus(e: AbstractColumn<E, S, *>): Template5<S, A, B, C, D, E> {
         return Template5(a, b, c, d, e)
     }
@@ -315,7 +316,7 @@ class Template4<S : AbstractSchema, A, B, C, D>(val a: AbstractColumn<A, S, *>, 
 
 class Template5<S : AbstractSchema, A, B, C, D, E>(val a: AbstractColumn<A, S, *>, val b: AbstractColumn<B, S, *>,
                                           val c: AbstractColumn<C, S, *>, val d: AbstractColumn<D, S, *>,
-                                          val e: AbstractColumn<E, S, *>) {
+                                          val e: AbstractColumn<E, S, *>): ColumnObservable<Quintuple<A, B, C, D, E>>() {
     fun <F> plus(f: AbstractColumn<F, S, *>): Template6<S, A, B, C, D, E, F> {
         return Template6(a, b, c, d, e, f)
     }
@@ -323,7 +324,7 @@ class Template5<S : AbstractSchema, A, B, C, D, E>(val a: AbstractColumn<A, S, *
 
 class Template6<S : AbstractSchema, A, B, C, D, E, F>(val a: AbstractColumn<A, S, *>, val b: AbstractColumn<B, S, *>,
                                           val c: AbstractColumn<C, S, *>, val d: AbstractColumn<D, S, *>,
-                                          val e: AbstractColumn<E, S, *>, val f: AbstractColumn<F, S, *>) {
+                                          val e: AbstractColumn<E, S, *>, val f: AbstractColumn<F, S, *>): ColumnObservable<Sextuple<A, B, C, D, E, F>>() {
     fun <G> plus(g: AbstractColumn<G, S, *>): Template7<S, A, B, C, D, E, F, G> {
         return Template7(a, b, c, d, e, f, g)
     }
@@ -332,7 +333,7 @@ class Template6<S : AbstractSchema, A, B, C, D, E, F>(val a: AbstractColumn<A, S
 class Template7<S : AbstractSchema, A, B, C, D, E, F, G>(val a: AbstractColumn<A, S, *>, val b: AbstractColumn<B, S, *>,
                                              val c: AbstractColumn<C, S, *>, val d: AbstractColumn<D, S, *>,
                                              val e: AbstractColumn<E, S, *>, val f: AbstractColumn<F, S, *>,
-                                             val g: AbstractColumn<G, S, *>) {
+                                             val g: AbstractColumn<G, S, *>): ColumnObservable<Septuple<A, B, C, D, E, F, G>>() {
     fun <H> plus(h: AbstractColumn<H, S, *>): Template8<S, A, B, C, D, E, F, G, H> {
         return Template8(a, b, c, d, e, f, g, h)
     }
@@ -341,7 +342,7 @@ class Template7<S : AbstractSchema, A, B, C, D, E, F, G>(val a: AbstractColumn<A
 class Template8<S : AbstractSchema, A, B, C, D, E, F, G, H>(val a: AbstractColumn<A, S, *>, val b: AbstractColumn<B, S, *>,
                                                 val c: AbstractColumn<C, S, *>, val d: AbstractColumn<D, S, *>,
                                                 val e: AbstractColumn<E, S, *>, val f: AbstractColumn<F, S, *>,
-                                                val g: AbstractColumn<G, S, *>, val h: AbstractColumn<H, S, *>) {
+                                                val g: AbstractColumn<G, S, *>, val h: AbstractColumn<H, S, *>): ColumnObservable<Octuple<A, B, C, D, E, F, G, H>>() {
     fun <J> plus(j: AbstractColumn<J, S, *>): Template9<S, A, B, C, D, E, F, G, H, J> {
         return Template9(a, b, c, d, e, f, g, h, j)
     }
@@ -351,7 +352,7 @@ class Template9<S : AbstractSchema, A, B, C, D, E, F, G, H, J>(val a: AbstractCo
                                                    val c: AbstractColumn<C, S, *>, val d: AbstractColumn<D, S, *>,
                                                    val e: AbstractColumn<E, S, *>, val f: AbstractColumn<F, S, *>,
                                                    val g: AbstractColumn<G, S, *>, val h: AbstractColumn<H, S, *>,
-                                                   val j: AbstractColumn<J, S, *>) {
+                                                   val j: AbstractColumn<J, S, *>): ColumnObservable<Nonuple<A, B, C, D, E, F, G, H, J>>() {
     fun <K> plus(k: AbstractColumn<K, S, *>): Template10<S, A, B, C, D, E, F, G, H, J, K> {
         return Template10(a, b, c, d, e, f, g, h, j, k)
     }
@@ -361,5 +362,5 @@ class Template10<S : AbstractSchema, A, B, C, D, E, F, G, H, J, K>(val a: Abstra
                                                       val c: AbstractColumn<C, S, *>, val d: AbstractColumn<D, S, *>,
                                                       val e: AbstractColumn<E, S, *>, val f: AbstractColumn<F, S, *>,
                                                       val g: AbstractColumn<G, S, *>, val h: AbstractColumn<H, S, *>,
-                                                      val i: AbstractColumn<J, S, *>, val j: AbstractColumn<K, S, *>) {
+                                                      val i: AbstractColumn<J, S, *>, val j: AbstractColumn<K, S, *>): ColumnObservable<Decuple<A, B, C, D, E, F, G, H, J, K>>() {
 }

@@ -1,47 +1,6 @@
 # Kotlin NoSQL
 
-Kotlin NoSQL is a NoSQL database query and access library for [Kotlin](http://github.com/JetBrains/Kotlin) language.
-It offers a powerful and type-safe DSL for working with key-value, column and document NoSQL databases.
-
-## Principles
-
-The following key principles lie behind Kotlin NoSQL:
-
-#### First-class query
-
-Unlike to ORM frameworks with its object persistence strategy Kotlin NoSQL uses another approach: immutability and
-queries. Each operation on data may be described via a statically-typed query:
-
-```kotlin
-Albums.select { details.tracks }.findAll { details.artistId.equal(artistId) }.delete { duration.lt(200) }
-```
-
-#### Type-safety
-
-Once you have a schema defined you can access documents with queries, always getting type-safe results:
-
-```kotlin
-for (product in Products.findAll { pricing.savings.ge(1000) }) {
-    when (product) {
-        is Album -> // ...
-        else -> // ...
-    }
-}
-```
-
-```kotlin
-for ((slug, fullSlug, posted, text, authorInfo) in Comments.select { slug +
-    fullSlug + posted + text + authorInfo }.findAll { discussionId.equal(id) }) {
-}
-```
-
-#### Immutability
-
-Queries enable you to access and modify any part of document(s), without loading and changing its state in memory:
-
-```kotlin
-Products.select { pricing.retail + pricing.savings }.find(productId).set(newRetail, newSavings)
-```
+Kotlin NoSQL is a reactive and type-safe DSL for working with NoSQL databases.
 
 ## Status
 
@@ -129,45 +88,49 @@ db.withSession {
 #### Insert a document
 
 ```kotlin
-val commentId = Comments.insert(Comment(DiscussionId, slug, fullSlug, posted,
-    text, AuthorInfo(author.id, author.name)))
+Comments.insert(Comment(DiscussionId, slug, fullSlug, posted, text, AuthorInfo(author.id, author.name))).subscribe ( commentId ->
+}
 ```
 
 #### Get a document by id
 
 ```kotlin
-val comment = Comments.get(commentId)
+Comments.find { id.equal(commentId) }.subscribe { comment ->
+}
 ```
 
 #### Get a list of documents by a filter expression
 
 ```kotlin
-for (comment in Comments.findAll { authorInfo.id.equal(authorId) }.sortBy { posted }. drop(10).take(5)) {
+Comments.find { authorInfo.id.equal(authorId) }.sortBy { posted }.skip(10).take(5).subscribe { comment ->
 }
 ```
 
 #### Get selected fields by document id
 
 ```kotlin
-val authorInfo = Comments.select { authorInfo }.get(id)
+Comments.find { id.equal(commentId) }.projection { authorInfo }.subscribe { authorInfo
+}
 ```
 
 #### Get selected fields by a filter expression
 
 ```kotlin
-for ((slug, fullSlug, posted, text, authorInfo) in Comments.select { slug +
-    fullSlug + posted + text + authorInfo }.findAll { discussionId.equal(id) }) {
+Comments.find { discussionId.equal(id) }).projection { slug + fullSlug + posted + text + authorInfo }.subscribe {
+    val (slug, fullSlug, posted, text, authorInfo) = it
 }
 ```
 
 #### Update selected fields by document id
 
 ```kotlin
-Comments.select { posted }.find(commentId).set(newDate)
+Comments.find { id.equal(commentId) }.projection { posted }.update(newDate).subscribe {
+}
 ```
 
 ```kotlin
-Comments.select { posted + text }.find(commentId).set(newDate, newText)
+Comments.find { id.equal(commentId) }.projection { posted + text }.update(newDate, newText).subscribe {
+}
 ```
 
 ### Inheritance
@@ -247,22 +210,22 @@ class Details(val title: String, val artistId: Id<String, Artists>, val genre: S
 #### Insert a document
 
 ```kotlin
-val productId = Products.insert(Album(sku = "00e8da9b", title = "A Love Supreme", description = "by John Coltrane",
+Products.insert(Album(sku = "00e8da9b", title = "A Love Supreme", description = "by John Coltrane",
     asin = "B0000A118M", shipping = Shipping(weight = 6, dimensions = Dimensions(10, 10, 1)),
     pricing = Pricing(list = 1200, retail = 1100, savings = 100, pctSavings = 8),
     details = Details(title = "A Love Supreme [Original Recording Reissued]",
             artistId = artistId, genre = setOf("Jazz", "General"),
             tracks = listOf(Track("A Love Supreme Part I: Acknowledgement", 100),
                     Track("A Love Supreme Part II: Resolution", 200),
-                    Track("A Love Supreme, Part III: Pursuance", 300)))))
+                    Track("A Love Supreme, Part III: Pursuance", 300))))).subscribe { productId ->
+}
 ```
 
 #### Access documents via an abstract schema
 
 ```kotlin
-val product = Products.get(productId)
+Products.find { id.equal(productId) }.subscribe { product ->
     if (product is Album) {
-        // ...
     }
 }
 ```
@@ -270,7 +233,7 @@ val product = Products.get(productId)
 #### Access documents via an inherited schema
 
 ```kotlin
-for (albums in Albums.findAll { details.artistId.equal(id) }) {
-    // ...
+
+Albums.find { details.artistId.equal(artistId) }.subscribe { album ->
 }
 ```

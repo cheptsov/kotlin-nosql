@@ -16,12 +16,13 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="kotlin-nosql" exported="" />
     <orderEntry type="library" exported="" name="Gradle: joda-time-2.3" level="project" />
-    <orderEntry type="library" exported="" name="Gradle: kotlin-stdlib-0.1-SNAPSHOT" level="project" />
     <orderEntry type="library" exported="" name="Gradle: mongo-java-driver-2.10.1" level="project" />
-    <orderEntry type="library" exported="" name="Gradle: kotlin-runtime-0.1-SNAPSHOT" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: spek-0.1-SNAPSHOT" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: hamcrest-core-1.3" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: junit-4.11" level="project" />
+    <orderEntry type="library" exported="" name="Gradle: kotlin-stdlib-0.8.11" level="project" />
+    <orderEntry type="library" exported="" name="Gradle: kotlin-runtime-0.8.11" level="project" />
+    <orderEntry type="library" exported="" name="Gradle: rxjava-core-0.14.2" level="project" />
   </component>
 </module>
 

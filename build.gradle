@@ -4,7 +4,7 @@ configurations.all {
 }
 
 buildscript {
-    kotlin_version = '0.1-SNAPSHOT'
+    kotlin_version = '0.8.11'
     repositories {
         mavenCentral()
         maven {
@@ -36,6 +36,7 @@ allprojects {
 
     dependencies {
         compile 'joda-time:joda-time:2.3'
+        compile 'com.netflix.rxjava:rxjava-core:0.14.2'
         compile group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib', version: kotlin_version, changing: true
         compile 'org.mongodb:mongo-java-driver:2.10.1'
         testCompile group: 'org.spek', name: 'spek', version: '0.1-SNAPSHOT', changing: true
