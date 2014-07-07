@@ -139,7 +139,6 @@ fun <C> AbstractColumn<out Collection<C>, *, *>.remove(value: C): Observable<Int
 fun <C: AbstractColumn<out Collection<*>, *, *>> C.remove(removeOp: C.() -> Op): Observable<Int> {
     val tableSchemaProjectionQueryObservable = tableSchemaProjectionObservableThreadLocale.get()!!
     return Observable.create(OnSubscribeFunc { observer ->
-        val tableSchemaProjectionQueryObservable = tableSchemaProjectionObservableThreadLocale.get()!!
         val removeOpValue = with (tableSchemaProjectionQueryObservable.params.projection.get(0)) {
             removeOp()
         }
@@ -435,13 +434,3 @@ open class SetColumn<C, S : AbstractSchema> (name: String, valueClass: Class<C>)
 
 open class ListColumn<C, S : AbstractSchema> (name: String, valueClass: Class<C>) : AbstractColumn<List<C>, S, C>(name, valueClass, ColumnType.CUSTOM_CLASS_LIST) {
 }
-
-/*
-TODO TODO TODO
-class AggregatingFunction<C, T: Schema> (name: String, valueClass: Class<C>, columnType: ColumnType, val function: String) : AbstractColumn<C, T, C>(name, valueClass, columnType) {
-}
-
-fun <T: Schema> Count(column: AbstractColumn<*, T, *>): AggregatingFunction<Int, T> {
-    return AggregatingFunction(column.name, javaClass<Int>(), ColumnType.INTEGER, "count")
-}
-*/
