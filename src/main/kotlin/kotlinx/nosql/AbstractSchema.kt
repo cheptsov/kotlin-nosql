@@ -194,12 +194,6 @@ fun <S : AbstractTableSchema, X> S.select(selector: S.() -> X): X {
 }
 */
 
-fun <S : AbstractTableSchema, B> FilterQuery<S>.map(statement: S.(Map<Any, Any>) -> B): List<B> {
-    val results = ArrayList<B>()
-    //Query
-    return results
-}
-
 class Template1<S : AbstractTableSchema, A>(val table: S, val a: AbstractColumn<A, S, *>) {
     fun invoke(av: A): Array<Pair<AbstractColumn<*, S, *>, *>> {
         return array(Pair(a, av))

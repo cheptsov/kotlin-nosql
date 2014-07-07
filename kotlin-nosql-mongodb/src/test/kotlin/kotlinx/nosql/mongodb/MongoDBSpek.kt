@@ -1058,33 +1058,19 @@ class MongoDBSpek : Spek() {
                 }
             }
 
-            /*on("adding a new element to a list column on a non-abstract schema by id") {
+            on("adding a new element to a list column on a non-abstract schema by id") {
                 db.withSession {
                     Albums.find { id.equal(albumId!!) }.projection { details.tracks }.add(Track("A Love Supreme, Part IV-Psalm", 400)).toBlockingObservable().single()
-                    val tracks = Albums.find { id.equal(albumId!!) }.projection { Albums.details.tracks }.toBlockingObservable().single()
+                    val tracks = Albums.find { id.equal(albumId!!) }.projection { Albums.details.tracks }.toBlockingObservable().single()!!
                     it("takes effect") {
                         assertEquals(4, tracks.size)
                         assertEquals("A Love Supreme, Part IV-Psalm", tracks[3].title)
                         assertEquals(400, tracks[3].duration)
                     }
                 }
-            }*/
+            }
 
-            // TODO TODO TODO
-            /*
-                        on("getting range of values for a list column on a non-abstract schema by id") {
-                            db.withSession {
-                                val tracks = Albums columns { Albums.Details.Tracks } at albumId!! range 1..2
-                                it("takes effect") {
-                                    assertEquals(4, tracks.size)
-                                    assertEquals("A Love Supreme, Part IV-Psalm", tracks[3].title)
-                                    assertEquals(400, tracks[3].duration)
-                                }
-                            }
-                        }
-            */
-
-            /*on("removing sn element from a collection column on a non-abstract schema by id") {
+            on("removing sn element from a collection column on a non-abstract schema by id") {
                 db.withSession {
                     Albums.find { id.equal(albumId!!) }.projection { details.tracks }.remove { duration.equal(100) }.toBlockingObservable().toIterable().single()
                     val tracks = Albums.find { id.equal(albumId!!) }.projection { details.tracks }.toBlockingObservable().toIterable().single()
@@ -1112,7 +1098,7 @@ class MongoDBSpek : Spek() {
                         assertEquals(1, genre.size)
                     }
                 }
-            }*/
+            }
 
             on("deleting a document") {
                 db.withSession {
@@ -1124,18 +1110,5 @@ class MongoDBSpek : Spek() {
             }
         }
     }
-
-    /*
-
-    TODO: Update DSL
-
-    Do something with
-    .toBlockingObservable().single()!! -> .single
-
-    ???
-    .projection.subscribe { a, b, c ->
-
-    Schema.save()
-    */
 }
 

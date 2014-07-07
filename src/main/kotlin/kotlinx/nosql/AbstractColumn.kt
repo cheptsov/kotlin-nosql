@@ -27,7 +27,7 @@ abstract class ColumnObservable<C>: Observable<C>(OnSubscribeFunc<C> { observer 
 }) {
 }
 
-fun <C> ColumnObservable<C>.update(value: C): Observable<Int> {
+fun <C, T: AbstractSchema> AbstractColumn<C, T, *>.update(value: C): Observable<Int> {
     return Observable.create(OnSubscribeFunc { observer ->
         val tableSchemaProjectionQueryObservable = tableSchemaProjectionObservableThreadLocale.get()!!
         with (Session.current()) {
@@ -50,6 +50,104 @@ fun <A, B> ColumnObservable<Pair<A, B>>.update(a: A, b: B): Observable<Int> {
             try {
                 observer.onNext(update(tableSchemaProjectionQueryObservable.params.table, array(tableSchemaProjectionQueryObservable.params.projection.get(0) to a,
                         tableSchemaProjectionQueryObservable.params.projection.get(1) to b),
+                        tableSchemaProjectionQueryObservable.params.query!!))
+                observer.onCompleted();
+            } catch (e: Throwable) {
+                observer.onError(e)
+            }
+        }
+        Subscriptions.empty()!!
+    });
+}
+
+fun <C, S: Collection<C>> AbstractColumn<S, *, *>.addAll(values: S): Observable<Int> {
+    return Observable.create(OnSubscribeFunc { observer ->
+        val tableSchemaProjectionQueryObservable = tableSchemaProjectionObservableThreadLocale.get()!!
+        with (Session.current()) {
+            try {
+                observer.onNext(addAll(tableSchemaProjectionQueryObservable.params.table,
+                        tableSchemaProjectionQueryObservable.params.projection.get(0)
+                                as AbstractColumn<Collection<C>, out AbstractSchema, out Any?>, values,
+                        tableSchemaProjectionQueryObservable.params.query!!))
+                observer.onCompleted();
+            } catch (e: Throwable) {
+                observer.onError(e)
+            }
+        }
+        Subscriptions.empty()!!
+    });
+}
+
+fun <C, S: Collection<C>> AbstractColumn<S, *, *>.add(value: C): Observable<Int> {
+    val tableSchemaProjectionQueryObservable = tableSchemaProjectionObservableThreadLocale.get()!!
+    val values: Collection<C> = if (tableSchemaProjectionQueryObservable.params.projection.get(0).columnType.list) listOf(value) else setOf(value)
+    return Observable.create(OnSubscribeFunc { observer ->
+        val tableSchemaProjectionQueryObservable = tableSchemaProjectionObservableThreadLocale.get()!!
+        with (Session.current()) {
+            try {
+                observer.onNext(addAll(tableSchemaProjectionQueryObservable.params.table,
+                        tableSchemaProjectionQueryObservable.params.projection.get(0)
+                                as AbstractColumn<Collection<C>, out AbstractSchema, out Any?>, values,
+                        tableSchemaProjectionQueryObservable.params.query!!))
+                observer.onCompleted();
+            } catch (e: Throwable) {
+                observer.onError(e)
+            }
+        }
+        Subscriptions.empty()!!
+    });
+}
+
+fun <C, S: Collection<C>> AbstractColumn<S, *, *>.removeAll(values: S): Observable<Int> {
+    return Observable.create(OnSubscribeFunc { observer ->
+        val tableSchemaProjectionQueryObservable = tableSchemaProjectionObservableThreadLocale.get()!!
+        with (Session.current()) {
+            try {
+                observer.onNext(removeAll(tableSchemaProjectionQueryObservable.params.table,
+                        tableSchemaProjectionQueryObservable.params.projection.get(0)
+                                as AbstractColumn<Collection<C>, out AbstractSchema, out Any?>, values,
+                        tableSchemaProjectionQueryObservable.params.query!!))
+                observer.onCompleted();
+            } catch (e: Throwable) {
+                observer.onError(e)
+            }
+        }
+        Subscriptions.empty()!!
+    });
+}
+
+fun <C> AbstractColumn<out Collection<C>, *, *>.remove(value: C): Observable<Int> {
+    val tableSchemaProjectionQueryObservable = tableSchemaProjectionObservableThreadLocale.get()!!
+    val values: Collection<C> = if (tableSchemaProjectionQueryObservable.params.projection.get(0).columnType.list) listOf(value) else setOf(value)
+    return Observable.create(OnSubscribeFunc { observer ->
+        val tableSchemaProjectionQueryObservable = tableSchemaProjectionObservableThreadLocale.get()!!
+        with (Session.current()) {
+            try {
+                observer.onNext(removeAll(tableSchemaProjectionQueryObservable.params.table,
+                        tableSchemaProjectionQueryObservable.params.projection.get(0)
+                                as AbstractColumn<Collection<C>, out AbstractSchema, out Any?>, values,
+                        tableSchemaProjectionQueryObservable.params.query!!))
+                observer.onCompleted();
+            } catch (e: Throwable) {
+                observer.onError(e)
+            }
+        }
+        Subscriptions.empty()!!
+    });
+}
+
+fun <C: AbstractColumn<out Collection<*>, *, *>> C.remove(removeOp: C.() -> Op): Observable<Int> {
+    val tableSchemaProjectionQueryObservable = tableSchemaProjectionObservableThreadLocale.get()!!
+    return Observable.create(OnSubscribeFunc { observer ->
+        val tableSchemaProjectionQueryObservable = tableSchemaProjectionObservableThreadLocale.get()!!
+        val removeOpValue = with (tableSchemaProjectionQueryObservable.params.projection.get(0)) {
+            removeOp()
+        }
+        with (Session.current()) {
+            try {
+                observer.onNext(removeAll(tableSchemaProjectionQueryObservable.params.table,
+                        tableSchemaProjectionQueryObservable.params.projection.get(0)
+                                as AbstractColumn<Collection<C>, out AbstractSchema, out Any?>, removeOpValue,
                         tableSchemaProjectionQueryObservable.params.query!!))
                 observer.onCompleted();
             } catch (e: Throwable) {
