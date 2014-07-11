@@ -233,4 +233,4 @@ val album = Albums.find { details.artistId.equal(artistId) }.single()
 
 ## Example
 
-- [PetClinic Sample Application](kotlin-nosql-mongodb-petclinic.herokuapp.com) ([GitHub](https://github.com/cheptsov/kotlin-nosql-mongodb-petclinic))
+- [PetClinic Sample Application](http://kotlin-nosql-mongodb-petclinic.herokuapp.com) ([GitHub](https://github.com/cheptsov/kotlin-nosql-mongodb-petclinic))
