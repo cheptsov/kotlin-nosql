@@ -88,35 +88,31 @@ db.withSession {
 #### Insert a document
 
 ```kotlin
-Comments.insert(Comment(DiscussionId, slug, fullSlug, posted, text, AuthorInfo(author.id, author.name))).subscribe ( commentId ->
-}
+Comments.insert(Comment(DiscussionId, slug, fullSlug, posted, text, AuthorInfo(author.id, author.name)))
 ```
 
 #### Get a document by id
 
 ```kotlin
-Comments.find { id.equal(commentId) }.subscribe { comment ->
-}
+val comment = Comments.find { id.equal(commentId) }.single()
 ```
 
 #### Get a list of documents by a filter expression
 
 ```kotlin
-Comments.find { authorInfo.id.equal(authorId) }.sortBy { posted }.skip(10).take(5).subscribe { comment ->
-}
+val comments = Comments.find { authorInfo.id.equal(authorId) }.sortBy { posted }.skip(10).take(5).toList()
 ```
 
 #### Get selected fields by document id
 
 ```kotlin
-Comments.find { id.equal(commentId) }.projection { authorInfo }.subscribe { authorInfo
-}
+val authorInfo = Comments.find { id.equal(commentId) }.projection { authorInfo }.single()
 ```
 
 #### Get selected fields by a filter expression
 
 ```kotlin
-Comments.find { discussionId.equal(id) }).projection { slug + fullSlug + posted + text + authorInfo }.subscribe {
+Comments.find { discussionId.equal(id) }).projection { slug + fullSlug + posted + text + authorInfo }.forEach {
     val (slug, fullSlug, posted, text, authorInfo) = it
 }
 ```
@@ -124,13 +120,11 @@ Comments.find { discussionId.equal(id) }).projection { slug + fullSlug + posted 
 #### Update selected fields by document id
 
 ```kotlin
-Comments.find { id.equal(commentId) }.projection { posted }.update(newDate).subscribe {
-}
+Comments.find { id.equal(commentId) }.projection { posted }.update(newDate)
 ```
 
 ```kotlin
-Comments.find { id.equal(commentId) }.projection { posted + text }.update(newDate, newText).subscribe {
-}
+Comments.find { id.equal(commentId) }.projection { posted + text }.update(newDate, newText)
 ```
 
 ### Inheritance
