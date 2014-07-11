@@ -230,3 +230,7 @@ for (product in Products.find { id.equal(productId) }) {
 
 val album = Albums.find { details.artistId.equal(artistId) }.single()
 ```
+
+## Example
+
+- [PetClinic Sample Application](kotlin-nosql-mongodb-petclinic.herokuapp.com) ([GitHub](https://github.com/cheptsov/kotlin-nosql-mongodb-petclinic))
