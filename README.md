@@ -210,21 +210,21 @@ class Details(val title: String, val artistId: Id<String, Artists>, val genre: S
 #### Insert a document
 
 ```kotlin
-Products.insert(Album(sku = "00e8da9b", title = "A Love Supreme", description = "by John Coltrane",
+val productId = Products.insert(Album(sku = "00e8da9b", title = "A Love Supreme", description = "by John Coltrane",
     asin = "B0000A118M", shipping = Shipping(weight = 6, dimensions = Dimensions(10, 10, 1)),
     pricing = Pricing(list = 1200, retail = 1100, savings = 100, pctSavings = 8),
     details = Details(title = "A Love Supreme [Original Recording Reissued]",
             artistId = artistId, genre = setOf("Jazz", "General"),
             tracks = listOf(Track("A Love Supreme Part I: Acknowledgement", 100),
                     Track("A Love Supreme Part II: Resolution", 200),
-                    Track("A Love Supreme, Part III: Pursuance", 300))))).subscribe { productId ->
+                    Track("A Love Supreme, Part III: Pursuance", 300)))))
 }
 ```
 
 #### Access documents via an abstract schema
 
 ```kotlin
-Products.find { id.equal(productId) }.subscribe { product ->
+for (product in Products.find { id.equal(productId) }) {
     if (product is Album) {
     }
 }
@@ -234,6 +234,5 @@ Products.find { id.equal(productId) }.subscribe { product ->
 
 ```kotlin
 
-Albums.find { details.artistId.equal(artistId) }.subscribe { album ->
-}
+val album = Albums.find { details.artistId.equal(artistId) }.single()
 ```

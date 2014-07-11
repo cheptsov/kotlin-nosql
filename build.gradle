@@ -4,7 +4,6 @@ configurations.all {
 }
 
 buildscript {
-    kotlin_version = '0.8.11'
     repositories {
         mavenCentral()
         maven {
@@ -12,7 +11,7 @@ buildscript {
         }
     }
     dependencies {
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:0.1-SNAPSHOT"
     }
 }
 
@@ -36,9 +35,8 @@ allprojects {
 
     dependencies {
         compile 'joda-time:joda-time:2.3'
-        compile 'com.netflix.rxjava:rxjava-core:0.14.2'
-        compile group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib', version: kotlin_version, changing: true
-        compile 'org.mongodb:mongo-java-driver:2.10.1'
+        compile group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib', version: '0.1-SNAPSHOT', changing: true
+        compile 'org.mongodb:mongo-java-driver:2.12.2'
         testCompile group: 'org.spek', name: 'spek', version: '0.1-SNAPSHOT', changing: true
     }
 

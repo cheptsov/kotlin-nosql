@@ -2,9 +2,6 @@ package kotlinx.nosql
 
 import java.util.ArrayList
 import java.util.regex.Pattern
-import rx.Observable
-import rx.Observable.OnSubscribeFunc
-import rx.subscriptions.Subscriptions
 
 open class AbstractColumn<C, T : AbstractSchema, S>(val name: String, val valueClass: Class<S>, val columnType: ColumnType) : ColumnObservable<C>(), Expression<C> {
     fun matches(other: Pattern): Op {
@@ -20,313 +17,161 @@ open class AbstractColumn<C, T : AbstractSchema, S>(val name: String, val valueC
     }
 }
 
-abstract class ColumnObservable<C>: Observable<C>(OnSubscribeFunc<C> { observer ->
+abstract class ColumnObservable<C> : Iterable<C> {
+    override fun iterator(): Iterator<C> {
+        val tableSchemaProjectionQueryObservable = tableSchemaProjectionObservableThreadLocale.get()!!
+        return tableSchemaProjectionQueryObservable.iterator() as Iterator<C>
+    }
+}
+
+fun <C, T: AbstractSchema> AbstractColumn<C, T, *>.update(value: C): Int {
     val tableSchemaProjectionQueryObservable = tableSchemaProjectionObservableThreadLocale.get()!!
-    tableSchemaProjectionQueryObservable.subscribe(onNext = { observer.onNext(it as C) }, onError = { observer.onError(it) }, onComplete = { observer.onCompleted() })
-    Subscriptions.empty()!!
-}) {
+    return Session.current().update(tableSchemaProjectionQueryObservable.params.table, array(tableSchemaProjectionQueryObservable.params.projection.get(0) to value),
+            tableSchemaProjectionQueryObservable.params.query!!)
 }
 
-fun <C, T: AbstractSchema> AbstractColumn<C, T, *>.update(value: C): Observable<Int> {
-    return Observable.create(OnSubscribeFunc { observer ->
-        val tableSchemaProjectionQueryObservable = tableSchemaProjectionObservableThreadLocale.get()!!
-        with (Session.current()) {
-            try {
-                observer.onNext(update(tableSchemaProjectionQueryObservable.params.table, array(tableSchemaProjectionQueryObservable.params.projection.get(0) to value),
-                        tableSchemaProjectionQueryObservable.params.query!!))
-                observer.onCompleted();
-            } catch (e: Throwable) {
-                observer.onError(e)
-            }
-        }
-        Subscriptions.empty()!!
-    });
+fun <A, B> ColumnObservable<Pair<A, B>>.update(a: A, b: B): Int {
+    val tableSchemaProjectionQueryObservable = tableSchemaProjectionObservableThreadLocale.get()!!
+    return Session.current().update(tableSchemaProjectionQueryObservable.params.table, array(tableSchemaProjectionQueryObservable.params.projection.get(0) to a,
+            tableSchemaProjectionQueryObservable.params.projection.get(1) to b),
+            tableSchemaProjectionQueryObservable.params.query!!)
 }
 
-fun <A, B> ColumnObservable<Pair<A, B>>.update(a: A, b: B): Observable<Int> {
-    return Observable.create(OnSubscribeFunc { observer ->
-        val tableSchemaProjectionQueryObservable = tableSchemaProjectionObservableThreadLocale.get()!!
-        with (Session.current()) {
-            try {
-                observer.onNext(update(tableSchemaProjectionQueryObservable.params.table, array(tableSchemaProjectionQueryObservable.params.projection.get(0) to a,
-                        tableSchemaProjectionQueryObservable.params.projection.get(1) to b),
-                        tableSchemaProjectionQueryObservable.params.query!!))
-                observer.onCompleted();
-            } catch (e: Throwable) {
-                observer.onError(e)
-            }
-        }
-        Subscriptions.empty()!!
-    });
+fun <C, S: Collection<C>> AbstractColumn<S, *, *>.addAll(values: S): Int {
+    val tableSchemaProjectionQueryObservable = tableSchemaProjectionObservableThreadLocale.get()!!
+    return Session.current().addAll(tableSchemaProjectionQueryObservable.params.table,
+            tableSchemaProjectionQueryObservable.params.projection.get(0)
+                    as AbstractColumn<Collection<C>, out AbstractSchema, out Any?>, values,
+            tableSchemaProjectionQueryObservable.params.query!!)
 }
 
-fun <C, S: Collection<C>> AbstractColumn<S, *, *>.addAll(values: S): Observable<Int> {
-    return Observable.create(OnSubscribeFunc { observer ->
-        val tableSchemaProjectionQueryObservable = tableSchemaProjectionObservableThreadLocale.get()!!
-        with (Session.current()) {
-            try {
-                observer.onNext(addAll(tableSchemaProjectionQueryObservable.params.table,
-                        tableSchemaProjectionQueryObservable.params.projection.get(0)
-                                as AbstractColumn<Collection<C>, out AbstractSchema, out Any?>, values,
-                        tableSchemaProjectionQueryObservable.params.query!!))
-                observer.onCompleted();
-            } catch (e: Throwable) {
-                observer.onError(e)
-            }
-        }
-        Subscriptions.empty()!!
-    });
-}
-
-fun <C, S: Collection<C>> AbstractColumn<S, *, *>.add(value: C): Observable<Int> {
+fun <C, S: Collection<C>> AbstractColumn<S, *, *>.add(value: C): Int {
     val tableSchemaProjectionQueryObservable = tableSchemaProjectionObservableThreadLocale.get()!!
     val values: Collection<C> = if (tableSchemaProjectionQueryObservable.params.projection.get(0).columnType.list) listOf(value) else setOf(value)
-    return Observable.create(OnSubscribeFunc { observer ->
-        val tableSchemaProjectionQueryObservable = tableSchemaProjectionObservableThreadLocale.get()!!
-        with (Session.current()) {
-            try {
-                observer.onNext(addAll(tableSchemaProjectionQueryObservable.params.table,
-                        tableSchemaProjectionQueryObservable.params.projection.get(0)
-                                as AbstractColumn<Collection<C>, out AbstractSchema, out Any?>, values,
-                        tableSchemaProjectionQueryObservable.params.query!!))
-                observer.onCompleted();
-            } catch (e: Throwable) {
-                observer.onError(e)
-            }
-        }
-        Subscriptions.empty()!!
-    });
+    return Session.current().addAll(tableSchemaProjectionQueryObservable.params.table,
+                    tableSchemaProjectionQueryObservable.params.projection.get(0)
+                            as AbstractColumn<Collection<C>, out AbstractSchema, out Any?>, values,
+                    tableSchemaProjectionQueryObservable.params.query!!)
 }
 
-fun <C, S: Collection<C>> AbstractColumn<S, *, *>.removeAll(values: S): Observable<Int> {
-    return Observable.create(OnSubscribeFunc { observer ->
-        val tableSchemaProjectionQueryObservable = tableSchemaProjectionObservableThreadLocale.get()!!
-        with (Session.current()) {
-            try {
-                observer.onNext(removeAll(tableSchemaProjectionQueryObservable.params.table,
-                        tableSchemaProjectionQueryObservable.params.projection.get(0)
-                                as AbstractColumn<Collection<C>, out AbstractSchema, out Any?>, values,
-                        tableSchemaProjectionQueryObservable.params.query!!))
-                observer.onCompleted();
-            } catch (e: Throwable) {
-                observer.onError(e)
-            }
-        }
-        Subscriptions.empty()!!
-    });
+fun <C, S: Collection<C>> AbstractColumn<S, *, *>.removeAll(values: S): Int {
+    val tableSchemaProjectionQueryObservable = tableSchemaProjectionObservableThreadLocale.get()!!
+    return Session.current().removeAll(tableSchemaProjectionQueryObservable.params.table,
+            tableSchemaProjectionQueryObservable.params.projection.get(0)
+                    as AbstractColumn<Collection<C>, out AbstractSchema, out Any?>, values,
+            tableSchemaProjectionQueryObservable.params.query!!)
 }
 
-fun <C> AbstractColumn<out Collection<C>, *, *>.remove(value: C): Observable<Int> {
+fun <C> AbstractColumn<out Collection<C>, *, *>.remove(value: C): Int {
     val tableSchemaProjectionQueryObservable = tableSchemaProjectionObservableThreadLocale.get()!!
     val values: Collection<C> = if (tableSchemaProjectionQueryObservable.params.projection.get(0).columnType.list) listOf(value) else setOf(value)
-    return Observable.create(OnSubscribeFunc { observer ->
-        val tableSchemaProjectionQueryObservable = tableSchemaProjectionObservableThreadLocale.get()!!
-        with (Session.current()) {
-            try {
-                observer.onNext(removeAll(tableSchemaProjectionQueryObservable.params.table,
-                        tableSchemaProjectionQueryObservable.params.projection.get(0)
-                                as AbstractColumn<Collection<C>, out AbstractSchema, out Any?>, values,
-                        tableSchemaProjectionQueryObservable.params.query!!))
-                observer.onCompleted();
-            } catch (e: Throwable) {
-                observer.onError(e)
-            }
-        }
-        Subscriptions.empty()!!
-    });
+    return Session.current().removeAll(tableSchemaProjectionQueryObservable.params.table,
+            tableSchemaProjectionQueryObservable.params.projection.get(0)
+                    as AbstractColumn<Collection<C>, out AbstractSchema, out Any?>, values,
+            tableSchemaProjectionQueryObservable.params.query!!)
 }
 
-fun <C: AbstractColumn<out Collection<*>, *, *>> C.remove(removeOp: C.() -> Op): Observable<Int> {
+fun <C: AbstractColumn<out Collection<*>, *, *>> C.remove(removeOp: C.() -> Op): Int {
     val tableSchemaProjectionQueryObservable = tableSchemaProjectionObservableThreadLocale.get()!!
-    return Observable.create(OnSubscribeFunc { observer ->
         val removeOpValue = with (tableSchemaProjectionQueryObservable.params.projection.get(0)) {
             removeOp()
         }
-        with (Session.current()) {
-            try {
-                observer.onNext(removeAll(tableSchemaProjectionQueryObservable.params.table,
-                        tableSchemaProjectionQueryObservable.params.projection.get(0)
-                                as AbstractColumn<Collection<C>, out AbstractSchema, out Any?>, removeOpValue,
-                        tableSchemaProjectionQueryObservable.params.query!!))
-                observer.onCompleted();
-            } catch (e: Throwable) {
-                observer.onError(e)
-            }
-        }
-        Subscriptions.empty()!!
-    });
+    return Session.current().removeAll(tableSchemaProjectionQueryObservable.params.table,
+            tableSchemaProjectionQueryObservable.params.projection.get(0)
+                    as AbstractColumn<Collection<C>, out AbstractSchema, out Any?>, removeOpValue,
+            tableSchemaProjectionQueryObservable.params.query!!)
 }
 
-fun <A, B, C> ColumnObservable<Triple<A, B, C>>.update(a: A, b: B, c: C): Observable<Int> {
-    return Observable.create(OnSubscribeFunc { observer ->
-        val tableSchemaProjectionQueryObservable = tableSchemaProjectionObservableThreadLocale.get()!!
-        with (Session.current()) {
-            try {
-                observer.onNext(update(tableSchemaProjectionQueryObservable.params.table, array(tableSchemaProjectionQueryObservable.params.projection.get(0) to a,
-                        tableSchemaProjectionQueryObservable.params.projection.get(1) to b,
-                        tableSchemaProjectionQueryObservable.params.projection.get(2) to c),
-                        tableSchemaProjectionQueryObservable.params.query!!))
-                observer.onCompleted();
-            } catch (e: Throwable) {
-                observer.onError(e)
-            }
-        }
-        Subscriptions.empty()!!
-    });
+fun <A, B, C> ColumnObservable<Triple<A, B, C>>.update(a: A, b: B, c: C): Int {
+    val tableSchemaProjectionQueryObservable = tableSchemaProjectionObservableThreadLocale.get()!!
+    return Session.current().update(tableSchemaProjectionQueryObservable.params.table, array(tableSchemaProjectionQueryObservable.params.projection.get(0) to a,
+            tableSchemaProjectionQueryObservable.params.projection.get(1) to b,
+            tableSchemaProjectionQueryObservable.params.projection.get(2) to c),
+            tableSchemaProjectionQueryObservable.params.query!!)
 }
 
-fun <A, B, C, D> ColumnObservable<Quadruple<A, B, C, D>>.update(a: A, b: B, c: C, d: D): Observable<Int> {
-    return Observable.create(OnSubscribeFunc { observer ->
-        val tableSchemaProjectionQueryObservable = tableSchemaProjectionObservableThreadLocale.get()!!
-        with (Session.current()) {
-            try {
-                observer.onNext(update(tableSchemaProjectionQueryObservable.params.table, array(tableSchemaProjectionQueryObservable.params.projection.get(0) to a,
-                        tableSchemaProjectionQueryObservable.params.projection.get(1) to b,
-                        tableSchemaProjectionQueryObservable.params.projection.get(2) to c,
-                        tableSchemaProjectionQueryObservable.params.projection.get(3) to d),
-                        tableSchemaProjectionQueryObservable.params.query!!))
-                observer.onCompleted();
-            } catch (e: Throwable) {
-                observer.onError(e)
-            }
-        }
-        Subscriptions.empty()!!
-    });
+fun <A, B, C, D> ColumnObservable<Quadruple<A, B, C, D>>.update(a: A, b: B, c: C, d: D): Int {
+    val tableSchemaProjectionQueryObservable = tableSchemaProjectionObservableThreadLocale.get()!!
+    return Session.current().update(tableSchemaProjectionQueryObservable.params.table, array(tableSchemaProjectionQueryObservable.params.projection.get(0) to a,
+            tableSchemaProjectionQueryObservable.params.projection.get(1) to b,
+            tableSchemaProjectionQueryObservable.params.projection.get(2) to c,
+            tableSchemaProjectionQueryObservable.params.projection.get(3) to d),
+            tableSchemaProjectionQueryObservable.params.query!!)
 }
 
-fun <A, B, C, D, E> ColumnObservable<Quintuple<A, B, C, D, E>>.update(a: A, b: B, c: C, d: D, e: E): Observable<Int> {
-    return Observable.create(OnSubscribeFunc { observer ->
-        val tableSchemaProjectionQueryObservable = tableSchemaProjectionObservableThreadLocale.get()!!
-        with (Session.current()) {
-            try {
-                observer.onNext(update(tableSchemaProjectionQueryObservable.params.table, array(tableSchemaProjectionQueryObservable.params.projection.get(0) to a,
-                        tableSchemaProjectionQueryObservable.params.projection.get(1) to b,
-                        tableSchemaProjectionQueryObservable.params.projection.get(2) to c,
-                        tableSchemaProjectionQueryObservable.params.projection.get(3) to d,
-                        tableSchemaProjectionQueryObservable.params.projection.get(4) to e),
-                        tableSchemaProjectionQueryObservable.params.query!!))
-                observer.onCompleted();
-            } catch (e: Throwable) {
-                observer.onError(e)
-            }
-        }
-        Subscriptions.empty()!!
-    });
+fun <A, B, C, D, E> ColumnObservable<Quintuple<A, B, C, D, E>>.update(a: A, b: B, c: C, d: D, e: E): Int {
+    val tableSchemaProjectionQueryObservable = tableSchemaProjectionObservableThreadLocale.get()!!
+    return Session.current().update(tableSchemaProjectionQueryObservable.params.table, array(tableSchemaProjectionQueryObservable.params.projection.get(0) to a,
+            tableSchemaProjectionQueryObservable.params.projection.get(1) to b,
+            tableSchemaProjectionQueryObservable.params.projection.get(2) to c,
+            tableSchemaProjectionQueryObservable.params.projection.get(3) to d,
+            tableSchemaProjectionQueryObservable.params.projection.get(4) to e),
+            tableSchemaProjectionQueryObservable.params.query!!)
 }
 
-fun <A, B, C, D, E, F> ColumnObservable<Sextuple<A, B, C, D, E, F>>.update(a: A, b: B, c: C, d: D, e: E, f: F): Observable<Int> {
-    return Observable.create(OnSubscribeFunc { observer ->
-        val tableSchemaProjectionQueryObservable = tableSchemaProjectionObservableThreadLocale.get()!!
-        with (Session.current()) {
-            try {
-                observer.onNext(update(tableSchemaProjectionQueryObservable.params.table, array(tableSchemaProjectionQueryObservable.params.projection.get(0) to a,
-                        tableSchemaProjectionQueryObservable.params.projection.get(1) to b,
-                        tableSchemaProjectionQueryObservable.params.projection.get(2) to c,
-                        tableSchemaProjectionQueryObservable.params.projection.get(3) to d,
-                        tableSchemaProjectionQueryObservable.params.projection.get(4) to e,
-                        tableSchemaProjectionQueryObservable.params.projection.get(5) to f),
-                        tableSchemaProjectionQueryObservable.params.query!!))
-                observer.onCompleted();
-            } catch (e: Throwable) {
-                observer.onError(e)
-            }
-        }
-        Subscriptions.empty()!!
-    });
+fun <A, B, C, D, E, F> ColumnObservable<Sextuple<A, B, C, D, E, F>>.update(a: A, b: B, c: C, d: D, e: E, f: F): Int {
+    val tableSchemaProjectionQueryObservable = tableSchemaProjectionObservableThreadLocale.get()!!
+    return Session.current().update(tableSchemaProjectionQueryObservable.params.table, array(tableSchemaProjectionQueryObservable.params.projection.get(0) to a,
+            tableSchemaProjectionQueryObservable.params.projection.get(1) to b,
+            tableSchemaProjectionQueryObservable.params.projection.get(2) to c,
+            tableSchemaProjectionQueryObservable.params.projection.get(3) to d,
+            tableSchemaProjectionQueryObservable.params.projection.get(4) to e,
+            tableSchemaProjectionQueryObservable.params.projection.get(5) to f),
+            tableSchemaProjectionQueryObservable.params.query!!)
 }
 
-fun <A, B, C, D, E, F, G> ColumnObservable<Septuple<A, B, C, D, E, F, G>>.update(a: A, b: B, c: C, d: D, e: E, f: F, g: G): Observable<Int> {
-    return Observable.create(OnSubscribeFunc { observer ->
-        val tableSchemaProjectionQueryObservable = tableSchemaProjectionObservableThreadLocale.get()!!
-        with (Session.current()) {
-            try {
-                observer.onNext(update(tableSchemaProjectionQueryObservable.params.table, array(tableSchemaProjectionQueryObservable.params.projection.get(0) to a,
-                        tableSchemaProjectionQueryObservable.params.projection.get(1) to b,
-                        tableSchemaProjectionQueryObservable.params.projection.get(2) to c,
-                        tableSchemaProjectionQueryObservable.params.projection.get(3) to d,
-                        tableSchemaProjectionQueryObservable.params.projection.get(4) to e,
-                        tableSchemaProjectionQueryObservable.params.projection.get(5) to f,
-                        tableSchemaProjectionQueryObservable.params.projection.get(6) to g),
-                        tableSchemaProjectionQueryObservable.params.query!!))
-                observer.onCompleted();
-            } catch (e: Throwable) {
-                observer.onError(e)
-            }
-        }
-        Subscriptions.empty()!!
-    });
+fun <A, B, C, D, E, F, G> ColumnObservable<Septuple<A, B, C, D, E, F, G>>.update(a: A, b: B, c: C, d: D, e: E, f: F, g: G): Int {
+    val tableSchemaProjectionQueryObservable = tableSchemaProjectionObservableThreadLocale.get()!!
+    return Session.current().update(tableSchemaProjectionQueryObservable.params.table, array(tableSchemaProjectionQueryObservable.params.projection.get(0) to a,
+            tableSchemaProjectionQueryObservable.params.projection.get(1) to b,
+            tableSchemaProjectionQueryObservable.params.projection.get(2) to c,
+            tableSchemaProjectionQueryObservable.params.projection.get(3) to d,
+            tableSchemaProjectionQueryObservable.params.projection.get(4) to e,
+            tableSchemaProjectionQueryObservable.params.projection.get(5) to f,
+            tableSchemaProjectionQueryObservable.params.projection.get(6) to g),
+            tableSchemaProjectionQueryObservable.params.query!!)
 }
 
-fun <A, B, C, D, E, F, G, H> ColumnObservable<Octuple<A, B, C, D, E, F, G, H>>.update(a: A, b: B, c: C, d: D, e: E, f: F, g: G, h: H): Observable<Int> {
-    return Observable.create(OnSubscribeFunc { observer ->
-        val tableSchemaProjectionQueryObservable = tableSchemaProjectionObservableThreadLocale.get()!!
-        with (Session.current()) {
-            try {
-                observer.onNext(update(tableSchemaProjectionQueryObservable.params.table, array(tableSchemaProjectionQueryObservable.params.projection.get(0) to a,
-                        tableSchemaProjectionQueryObservable.params.projection.get(1) to b,
-                        tableSchemaProjectionQueryObservable.params.projection.get(2) to c,
-                        tableSchemaProjectionQueryObservable.params.projection.get(3) to d,
-                        tableSchemaProjectionQueryObservable.params.projection.get(4) to e,
-                        tableSchemaProjectionQueryObservable.params.projection.get(5) to f,
-                        tableSchemaProjectionQueryObservable.params.projection.get(6) to g,
-                        tableSchemaProjectionQueryObservable.params.projection.get(7) to h),
-                        tableSchemaProjectionQueryObservable.params.query!!))
-                observer.onCompleted();
-            } catch (e: Throwable) {
-                observer.onError(e)
-            }
-        }
-        Subscriptions.empty()!!
-    });
+fun <A, B, C, D, E, F, G, H> ColumnObservable<Octuple<A, B, C, D, E, F, G, H>>.update(a: A, b: B, c: C, d: D, e: E, f: F, g: G, h: H): Int {
+    val tableSchemaProjectionQueryObservable = tableSchemaProjectionObservableThreadLocale.get()!!
+    return Session.current().update(tableSchemaProjectionQueryObservable.params.table, array(tableSchemaProjectionQueryObservable.params.projection.get(0) to a,
+            tableSchemaProjectionQueryObservable.params.projection.get(1) to b,
+            tableSchemaProjectionQueryObservable.params.projection.get(2) to c,
+            tableSchemaProjectionQueryObservable.params.projection.get(3) to d,
+            tableSchemaProjectionQueryObservable.params.projection.get(4) to e,
+            tableSchemaProjectionQueryObservable.params.projection.get(5) to f,
+            tableSchemaProjectionQueryObservable.params.projection.get(6) to g,
+            tableSchemaProjectionQueryObservable.params.projection.get(7) to h),
+            tableSchemaProjectionQueryObservable.params.query!!)
 }
 
-fun <A, B, C, D, E, F, G, H, J> ColumnObservable<Nonuple<A, B, C, D, E, F, G, H, J>>.update(a: A, b: B, c: C, d: D, e: E, f: F, g: G, h: H, j: J): Observable<Int> {
-    return Observable.create(OnSubscribeFunc { observer ->
+fun <A, B, C, D, E, F, G, H, J> ColumnObservable<Nonuple<A, B, C, D, E, F, G, H, J>>.update(a: A, b: B, c: C, d: D, e: E, f: F, g: G, h: H, j: J): Int {
         val tableSchemaProjectionQueryObservable = tableSchemaProjectionObservableThreadLocale.get()!!
-        with (Session.current()) {
-            try {
-                observer.onNext(update(tableSchemaProjectionQueryObservable.params.table, array(tableSchemaProjectionQueryObservable.params.projection.get(0) to a,
-                        tableSchemaProjectionQueryObservable.params.projection.get(1) to b,
-                        tableSchemaProjectionQueryObservable.params.projection.get(2) to c,
-                        tableSchemaProjectionQueryObservable.params.projection.get(3) to d,
-                        tableSchemaProjectionQueryObservable.params.projection.get(4) to e,
-                        tableSchemaProjectionQueryObservable.params.projection.get(5) to f,
-                        tableSchemaProjectionQueryObservable.params.projection.get(6) to g,
-                        tableSchemaProjectionQueryObservable.params.projection.get(7) to h,
-                        tableSchemaProjectionQueryObservable.params.projection.get(8) to j),
-                        tableSchemaProjectionQueryObservable.params.query!!))
-                observer.onCompleted();
-            } catch (e: Throwable) {
-                observer.onError(e)
-            }
-        }
-        Subscriptions.empty()!!
-    });
+    return Session.current().update(tableSchemaProjectionQueryObservable.params.table, array(tableSchemaProjectionQueryObservable.params.projection.get(0) to a,
+            tableSchemaProjectionQueryObservable.params.projection.get(1) to b,
+            tableSchemaProjectionQueryObservable.params.projection.get(2) to c,
+            tableSchemaProjectionQueryObservable.params.projection.get(3) to d,
+            tableSchemaProjectionQueryObservable.params.projection.get(4) to e,
+            tableSchemaProjectionQueryObservable.params.projection.get(5) to f,
+            tableSchemaProjectionQueryObservable.params.projection.get(6) to g,
+            tableSchemaProjectionQueryObservable.params.projection.get(7) to h,
+            tableSchemaProjectionQueryObservable.params.projection.get(8) to j),
+            tableSchemaProjectionQueryObservable.params.query!!)
 }
 
-fun <A, B, C, D, E, F, G, H, J, K> ColumnObservable<Decuple<A, B, C, D, E, F, G, H, J, K>>.update(a: A, b: B, c: C, d: D, e: E, f: F, g: G, h: H, j: J, k: K): Observable<Int> {
-    return Observable.create(OnSubscribeFunc { observer ->
-        val tableSchemaProjectionQueryObservable = tableSchemaProjectionObservableThreadLocale.get()!!
-        with (Session.current()) {
-            try {
-                observer.onNext(update(tableSchemaProjectionQueryObservable.params.table, array(tableSchemaProjectionQueryObservable.params.projection.get(0) to a,
-                        tableSchemaProjectionQueryObservable.params.projection.get(1) to b,
-                        tableSchemaProjectionQueryObservable.params.projection.get(2) to c,
-                        tableSchemaProjectionQueryObservable.params.projection.get(3) to d,
-                        tableSchemaProjectionQueryObservable.params.projection.get(4) to e,
-                        tableSchemaProjectionQueryObservable.params.projection.get(5) to f,
-                        tableSchemaProjectionQueryObservable.params.projection.get(6) to g,
-                        tableSchemaProjectionQueryObservable.params.projection.get(7) to h,
-                        tableSchemaProjectionQueryObservable.params.projection.get(8) to j,
-                        tableSchemaProjectionQueryObservable.params.projection.get(9) to k),
-                        tableSchemaProjectionQueryObservable.params.query!!))
-                observer.onCompleted();
-            } catch (e: Throwable) {
-                observer.onError(e)
-            }
-        }
-        Subscriptions.empty()!!
-    });
+fun <A, B, C, D, E, F, G, H, J, K> ColumnObservable<Decuple<A, B, C, D, E, F, G, H, J, K>>.update(a: A, b: B, c: C, d: D, e: E, f: F, g: G, h: H, j: J, k: K): Int {
+    val tableSchemaProjectionQueryObservable = tableSchemaProjectionObservableThreadLocale.get()!!
+    return Session.current().update(tableSchemaProjectionQueryObservable.params.table, array(tableSchemaProjectionQueryObservable.params.projection.get(0) to a,
+            tableSchemaProjectionQueryObservable.params.projection.get(1) to b,
+            tableSchemaProjectionQueryObservable.params.projection.get(2) to c,
+            tableSchemaProjectionQueryObservable.params.projection.get(3) to d,
+            tableSchemaProjectionQueryObservable.params.projection.get(4) to e,
+            tableSchemaProjectionQueryObservable.params.projection.get(5) to f,
+            tableSchemaProjectionQueryObservable.params.projection.get(6) to g,
+            tableSchemaProjectionQueryObservable.params.projection.get(7) to h,
+            tableSchemaProjectionQueryObservable.params.projection.get(8) to j,
+            tableSchemaProjectionQueryObservable.params.projection.get(9) to k),
+            tableSchemaProjectionQueryObservable.params.query!!)
 }
 
 

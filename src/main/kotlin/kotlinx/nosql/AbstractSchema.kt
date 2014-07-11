@@ -6,9 +6,6 @@ import java.util.concurrent.CopyOnWriteArrayList
 import org.joda.time.LocalDate
 import org.joda.time.LocalTime
 import org.joda.time.DateTime
-import rx.Observable
-import rx.Observable.OnSubscribeFunc
-import rx.subscriptions.Subscriptions
 
 abstract class AbstractSchema(val schemaName: String) {
     // TODO TODO TODO
@@ -193,12 +190,6 @@ fun <S : AbstractTableSchema, X> S.select(selector: S.() -> X): X {
     return selector();
 }
 */
-
-class Template1<S : AbstractTableSchema, A>(val table: S, val a: AbstractColumn<A, S, *>) {
-    fun invoke(av: A): Array<Pair<AbstractColumn<*, S, *>, *>> {
-        return array(Pair(a, av))
-    }
-}
 
 class Quadruple<A1, A2, A3, A4>(val a1: A1, val a2: A2, val a3: A3, val a4: A4) {
     public fun component1(): A1 = a1

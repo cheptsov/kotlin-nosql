@@ -1,22 +1,17 @@
 package kotlinx.nosql
 
 import java.util.ArrayList
-import rx.Observable
-import rx.Observable.OnSubscribeFunc
 import com.mongodb.BasicDBObject
-import rx.subscriptions.Subscriptions
-import rx.Subscription
-import rx.Observer
-import kotlinx.nosql.Session.TableSchemaProjectionQueryObservable
+import kotlinx.nosql.Session.TableSchemaProjectionQueryWrapper
 
-val tableSchemaProjectionObservableThreadLocale = ThreadLocal<TableSchemaProjectionQueryObservable<out TableSchema<*>, *, *>>()
+val tableSchemaProjectionObservableThreadLocale = ThreadLocal<TableSchemaProjectionQueryWrapper<out TableSchema<*>, *, *>>()
 
 abstract class Session () {
     abstract fun <T : AbstractTableSchema>T.create()
 
     abstract fun <T : AbstractTableSchema>T.drop()
 
-    abstract fun <T : DocumentSchema<P, V>, P, V> T.insert(v: V): Observable<Id<P, T>>
+    abstract fun <T : DocumentSchema<P, V>, P, V> T.insert(v: V): Id<P, T>
 
     abstract fun <T : AbstractSchema> insert(columns: Array<Pair<AbstractColumn<*, T, *>, *>>)
 
@@ -38,44 +33,32 @@ abstract class Session () {
         }
     }
 
-    class DocumentSchemaQueryObservableParams<T : DocumentSchema<P, C>, P, C>(val schema: T, val query: Op? = null,
+    class DocumentSchemaQueryParams<T : DocumentSchema<P, C>, P, C>(val schema: T, val query: Op? = null,
                                       var skip: Int? = null, var take: Int? = null, var subscribed: Boolean = false)
 
 
-    inner class DocumentSchemaQueryObservable<T : DocumentSchema<P, C>, P, C>(val params: DocumentSchemaQueryObservableParams<T, P, C>,
-                                                          onSubscribe: OnSubscribeFunc<C>) : Observable<C>(onSubscribe) {
-        override fun skip(num: Int): Observable<C> {
-            if (params.subscribed) {
-                return super<Observable>.skip(num)
-            } else {
-                params.skip = num
-                return this
-            }
-        }
-        override fun take(num: Int): Observable<C> {
-            if (params.subscribed) {
-                return super<Observable>.take(num)
-            } else {
-                params.take = num
-                return this
-            }
+    inner class DocumentSchemaQueryWrapper<T : DocumentSchema<P, C>, P, C>(val params: DocumentSchemaQueryParams<T, P, C>): Iterable<C> {
+        override fun iterator(): Iterator<C> {
+            return find(params)
         }
 
-        fun remove(): Observable<Int> {
-            return Observable.create(OnSubscribeFunc<Int> { observer ->
-                try {
-                    observer.onNext(delete(params.schema, params.query!!))
-                    observer.onCompleted()
-                } catch (e: Throwable) {
-                    observer.onError(e)
-                }
-                Subscriptions.empty()!!
-            })
+        fun skip(num: Int): DocumentSchemaQueryWrapper<T, P, C> {
+            params.skip = num
+            return this
+        }
+
+        fun take(num: Int): DocumentSchemaQueryWrapper<T, P, C> {
+            params.take = num
+            return this
+        }
+
+        fun remove(): Int {
+            return delete(params.schema, params.query!!)
         }
 
         fun <X> projection(x: T.() -> X): X {
             val xx = params.schema.x()
-            val projectionParams = TableSchemaProjectionQueryObservableParams<TableSchema<Any?>, Any?, Any?>(params.schema as TableSchema<Any?>,
+            val projectionParams = TableSchemaProjectionQueryParams<TableSchema<Any?>, Any?, Any?>(params.schema as TableSchema<Any?>,
                     when (xx) {
                         is AbstractColumn<*, *, *> -> listOf(xx)
                         is Template2<*, *, *> -> listOf(xx.a, xx.b)
@@ -89,47 +72,37 @@ abstract class Session () {
                         is Template10<*, *, *, *, *, *, *, *, *, *, *> -> listOf(xx.a, xx.b, xx.c, xx.d, xx.e, xx.f, xx.g, xx.h, xx.i, xx.j)
                         else -> throw UnsupportedOperationException()
                     }, params.query)
-            tableSchemaProjectionObservableThreadLocale.set(TableSchemaProjectionQueryObservable(projectionParams, OnSubscribeFunc<Any?> { observer ->
-                onSubscribe2(projectionParams, observer)
-            }))
+            tableSchemaProjectionObservableThreadLocale.set(TableSchemaProjectionQueryWrapper(projectionParams))
             return params.schema.x()
         }
     }
 
-    class TableSchemaProjectionQueryObservableParams<T : TableSchema<P>, P, V>(val table: T, val projection: List<AbstractColumn<*, *, *>>, val query: Op? = null,
-                                                                var skip: Int? = null, var take: Int? = null, var subscribed: Boolean = false)
+    class TableSchemaProjectionQueryParams<T : TableSchema<P>, P, V>(val table: T, val projection: List<AbstractColumn<*, *, *>>, val query: Op? = null,
+                                                                var skip: Int? = null, var take: Int? = null)
 
-    class TableSchemaProjectionQueryObservable<T : TableSchema<P>, P, V>(val params: TableSchemaProjectionQueryObservableParams<T, P, V>,
-                                                          onSubscribe: OnSubscribeFunc<V>) : Observable<V>(onSubscribe) {
-        override fun skip(num: Int): Observable<V> {
-            if (params.subscribed) {
-                return super<Observable>.skip(num)
-            } else {
-                params.skip = num
-                return this
-            }
+    inner class TableSchemaProjectionQueryWrapper<T : TableSchema<P>, P, V>(val params: TableSchemaProjectionQueryParams<T, P, V>): Iterable<V> {
+        override fun iterator(): Iterator<V> {
+            return find(params)
         }
-        override fun take(num: Int): Observable<V> {
-            if (params.subscribed) {
-                return super<Observable>.take(num)
-            } else {
-                params.take = num
-                return this
-            }
+
+        fun skip(num: Int): TableSchemaProjectionQueryWrapper<T, P, V> {
+            params.skip = num
+            return this
+        }
+
+        fun take(num: Int): TableSchemaProjectionQueryWrapper<T, P, V> {
+            params.take = num
+            return this
         }
     }
 
-    abstract fun <T : DocumentSchema<P, C>, P, C> onSubscribe(params: DocumentSchemaQueryObservableParams<T, P, C>,
-                                                              observer: Observer<in C>): Subscription
+    abstract fun <T : DocumentSchema<P, C>, P, C> find(params: DocumentSchemaQueryParams<T, P, C>): Iterator<C>
 
-    abstract fun <T : TableSchema<P>, P, V> onSubscribe2(params: TableSchemaProjectionQueryObservableParams<T, P, V>,
-                                                              observer: Observer<in V>): Subscription
+    abstract fun <T : TableSchema<P>, P, V> find(params: TableSchemaProjectionQueryParams<T, P, V>): Iterator<V>
 
-    fun <T: DocumentSchema<P, C>, P, C> T.find(query: T.() -> Op = { NoOp }): DocumentSchemaQueryObservable<T, P, C> {
-        val params = DocumentSchemaQueryObservableParams<T, P, C>(this, query())
-        return DocumentSchemaQueryObservable(params, OnSubscribeFunc<C> { observer ->
-            onSubscribe(params, observer)
-        })
+    fun <T: DocumentSchema<P, C>, P, C> T.find(query: T.() -> Op = { NoOp }): DocumentSchemaQueryWrapper<T, P, C> {
+        val params = DocumentSchemaQueryParams<T, P, C>(this, query())
+        return DocumentSchemaQueryWrapper(params)
     }
 
     abstract fun <T : KeyValueSchema, C> T.get(c: T.() -> AbstractColumn<C, T, *>): C

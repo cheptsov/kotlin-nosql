@@ -18,15 +18,11 @@ import org.joda.time.DateTime
 import org.joda.time.format.ISODateTimeFormat
 import org.joda.time.LocalDate
 import org.joda.time.LocalTime
-import rx.Observable
-import rx.Observable.OnSubscribeFunc
-import rx.subscriptions.Subscriptions
-import rx.observables.BlockingObservable
-import rx.Subscription
-import kotlinx.nosql.Session.DocumentSchemaQueryObservable
-import rx.Observer
-import kotlinx.nosql.Session.DocumentSchemaQueryObservableParams
-import kotlinx.nosql.Session.TableSchemaProjectionQueryObservableParams
+import kotlinx.nosql.Session.DocumentSchemaQueryWrapper
+import kotlinx.nosql.Session.DocumentSchemaQueryParams
+import kotlinx.nosql.Session.TableSchemaProjectionQueryParams
+import com.mongodb.DBCollection
+import com.mongodb.DBCursor
 
 class MongoDBSession(val db: DB) : Session() {
     val dbVersion : String
@@ -66,28 +62,20 @@ class MongoDBSession(val db: DB) : Session() {
         collection.remove(BasicDBObject())
     }
 
-    override fun <T : DocumentSchema<P, V>, P, V> T.insert(v: V): Observable<Id<P, T>> {
-        return Observable.create(OnSubscribeFunc<Id<P, T>> { observer ->
-            try {
-                val collection = db.getCollection(this.schemaName)!!
-                val doc = getDBObject(v, this)
-                if (discriminator != null) {
-                    var dominatorValue: Any? = null
-                    for (entry in DocumentSchema.discriminatorClasses.entrySet()) {
-                        if (entry.value.equals(v.javaClass)) {
-                            dominatorValue = entry.key.value
-                        }
-                    }
-                    doc.set(this.discriminator.column.name, dominatorValue!!)
+    override fun <T : DocumentSchema<P, V>, P, V> T.insert(v: V): Id<P, T> {
+        val collection = db.getCollection(this.schemaName)!!
+        val doc = getDBObject(v, this)
+        if (discriminator != null) {
+            var dominatorValue: Any? = null
+            for (entry in DocumentSchema.discriminatorClasses.entrySet()) {
+                if (entry.value.equals(v.javaClass)) {
+                    dominatorValue = entry.key.value
                 }
-                collection.insert(doc)
-                observer.onNext(Id<P, T>(doc.get("_id").toString() as P))
-                observer.onCompleted()
-            } catch(e: Throwable) {
-                observer.onError(e)
             }
-            Subscriptions.empty()!!
-        })
+            doc.set(this.discriminator.column.name, dominatorValue!!)
+        }
+        collection.insert(doc)
+        return Id<P, T>(doc.get("_id").toString() as P)
     }
 
     private fun getDBObject(o: Any, schema: Any): BasicDBObject {
@@ -135,38 +123,46 @@ class MongoDBSession(val db: DB) : Session() {
         return doc
     }
 
-    override fun <T : DocumentSchema<P, C>, P, C> onSubscribe(params: DocumentSchemaQueryObservableParams<T, P, C>,
-                                                              observer: Observer<in C>): Subscription {
-        val collection = db.getCollection(params.schema.schemaName)!!
-        val cursor = collection.find(if (params.query != null) getQuery(params.query) else BasicDBObject())
-        if (params.skip != null) {
-            cursor.skip(params.skip!!)
-        }
-        try {
-            var size = 0
-            while (cursor.hasNext()) {
-                observer.onNext(getObject(cursor.next(), params.schema) as C)
-                if (params.take != null && ++size == params.take!!) {
-                    break;
+    override fun <T : DocumentSchema<P, C>, P, C> find(params: DocumentSchemaQueryParams<T, P, C>): Iterator<C> {
+        return object:Iterator<C> {
+            var cursor: DBCursor? = null
+            var pos = 0
+            override fun next(): C {
+                if (cursor == null) {
+                    val collection = db.getCollection(params.schema.schemaName)
+                    val query = if (params.query != null) getQuery(params.query) else BasicDBObject()
+                    cursor = collection!!.find(query)!!
+                    if (params.skip != null) {
+                        cursor!!.skip(params.skip!!)
+                    }
                 }
+                val value = getObject(cursor!!.next(), params.schema) as C
+                pos++
+                if (!cursor!!.hasNext() || (params.take != null && pos == params.take!!)) {
+                    cursor!!.close()
+                    pos = -1
+                }
+                return value
             }
-            observer.onCompleted()
-        } catch (e: Throwable) {
-            observer.onError(e)
-        } finally {
-            cursor.close();
+            override fun hasNext(): Boolean {
+                if (cursor == null) {
+                    val collection = db.getCollection(params.schema.schemaName)
+                    val query = if (params.query != null) getQuery(params.query) else BasicDBObject()
+                    cursor = collection!!.find(query)!!
+                    if (params.skip != null) {
+                        cursor!!.skip(params.skip!!)
+                    }
+                }
+                return pos != -1 && cursor!!.hasNext() && (params.take == null || pos < params.take!!)
+            }
         }
-        return Subscriptions.empty()!!
     }
 
-    override fun <T : TableSchema<P>, P, V> onSubscribe2(params: TableSchemaProjectionQueryObservableParams<T, P, V>,
-                                                        observer: Observer<in V>): Subscription {
-        val collection = db.getCollection(params.table.schemaName)!!
-        val fields = BasicDBObject()
-        params.projection.forEach {
-            fields.append(it.fullName, "1")
-        }
-        val cursor = collection.find(if (params.query != null) getQuery(params.query) else BasicDBObject(), fields)
+    override fun <T : TableSchema<P>, P, V> find(params: TableSchemaProjectionQueryParams<T, P, V>): Iterator<V> {
+        // TODO TODO TODO
+        /*val collection = db.getCollection(params.table.schemaName)!!
+
+        val cursor = collection.find(if (params.query != null) getQuery(params.query) else BasicDBObject(), fields)!!
         if (params.skip != null) {
             cursor.skip(params.skip!!)
         }
@@ -179,28 +175,85 @@ class MongoDBSession(val db: DB) : Session() {
                     values.add(getColumnObject(doc, it))
                 }
                 when (values.size) {
-                    1 -> observer.onNext(values[0] as V)
-                    2 -> observer.onNext(Pair(values[0], values[1]) as V)
-                    3 -> observer.onNext(Triple(values[0], values[1], values[2]) as V)
-                    4 -> observer.onNext(Quadruple(values[0], values[1], values[2], values[3]) as V)
-                    5 -> observer.onNext(Quintuple(values[0], values[1], values[2], values[3], values[4]) as V)
-                    6 -> observer.onNext(Sextuple(values[0], values[1], values[2], values[3], values[4], values[5]) as V)
-                    7 -> observer.onNext(Septuple(values[0], values[1], values[2], values[3], values[4], values[5], values[6]) as V)
-                    8 -> observer.onNext(Octuple(values[0], values[1], values[2], values[3], values[4], values[5], values[6], values[7]) as V)
-                    9 -> observer.onNext(Nonuple(values[0], values[1], values[2], values[3], values[4], values[5], values[6], values[7], values[8]) as V)
-                    10 -> observer.onNext(Decuple(values[0], values[1], values[2], values[3], values[4], values[5], values[6], values[7], values[8], values[9]) as V)
+                    1 -> observer!!.onNext(values[0] as V)
+                    2 -> observer!!.onNext(Pair(values[0], values[1]) as V)
+                    3 -> observer!!.onNext(Triple(values[0], values[1], values[2]) as V)
+                    4 -> observer!!.onNext(Quadruple(values[0], values[1], values[2], values[3]) as V)
+                    5 -> observer!!.onNext(Quintuple(values[0], values[1], values[2], values[3], values[4]) as V)
+                    6 -> observer!!.onNext(Sextuple(values[0], values[1], values[2], values[3], values[4], values[5]) as V)
+                    7 -> observer!!.onNext(Septuple(values[0], values[1], values[2], values[3], values[4], values[5], values[6]) as V)
+                    8 -> observer!!.onNext(Octuple(values[0], values[1], values[2], values[3], values[4], values[5], values[6], values[7]) as V)
+                    9 -> observer!!.onNext(Nonuple(values[0], values[1], values[2], values[3], values[4], values[5], values[6], values[7], values[8]) as V)
+                    10 -> observer!!.onNext(Decuple(values[0], values[1], values[2], values[3], values[4], values[5], values[6], values[7], values[8], values[9]) as V)
                 }
                 if (params.take != null && ++size == params.take!!) {
                     break;
                 }
             }
-            observer.onCompleted()
+            observer!!.onCompleted()
         } catch (e: Throwable) {
-            observer.onError(e)
+            observer!!.onError(e)
         } finally {
             cursor.close();
         }
-        return Subscriptions.empty()!!
+        return Subscriptions.empty()!!*/
+        return object:Iterator<V> {
+            var cursor: DBCursor? = null
+            var pos = 0
+            override fun next(): V {
+                if (cursor == null) {
+                    val collection = db.getCollection(params.table.schemaName)
+                    val fields = BasicDBObject()
+                    params.projection.forEach {
+                        fields.append(it.fullName, "1")
+                    }
+                    val query = if (params.query != null) getQuery(params.query) else BasicDBObject()
+                    cursor = collection!!.find(query, fields)!!
+                    if (params.skip != null) {
+                        cursor!!.skip(params.skip!!)
+                    }
+                }
+                val doc = cursor!!.next()
+                val values = ArrayList<Any?>()
+                params.projection.forEach {
+                    values.add(getColumnObject(doc, it))
+                }
+                val value = when (values.size) {
+                    1 -> values[0] as V
+                    2 -> Pair(values[0], values[1]) as V
+                    3 -> Triple(values[0], values[1], values[2]) as V
+                    4 -> Quadruple(values[0], values[1], values[2], values[3]) as V
+                    5 -> Quintuple(values[0], values[1], values[2], values[3], values[4]) as V
+                    6 -> Sextuple(values[0], values[1], values[2], values[3], values[4], values[5]) as V
+                    7 -> Septuple(values[0], values[1], values[2], values[3], values[4], values[5], values[6]) as V
+                    8 -> Octuple(values[0], values[1], values[2], values[3], values[4], values[5], values[6], values[7]) as V
+                    9 -> Nonuple(values[0], values[1], values[2], values[3], values[4], values[5], values[6], values[7], values[8]) as V
+                    10 -> Decuple(values[0], values[1], values[2], values[3], values[4], values[5], values[6], values[7], values[8], values[9]) as V
+                    else -> throw UnsupportedOperationException()
+                }
+                pos++
+                if (!cursor!!.hasNext() || (params.take != null && pos == params.take!!)) {
+                    cursor!!.close()
+                    pos = -1
+                }
+                return value
+            }
+            override fun hasNext(): Boolean {
+                if (cursor == null) {
+                    val collection = db.getCollection(params.table.schemaName)
+                    val fields = BasicDBObject()
+                    params.projection.forEach {
+                        fields.append(it.fullName, "1")
+                    }
+                    val query = if (params.query != null) getQuery(params.query) else BasicDBObject()
+                    cursor = collection!!.find(query, fields)!!
+                    if (params.skip != null) {
+                        cursor!!.skip(params.skip!!)
+                    }
+                }
+                return pos != -1 && cursor!!.hasNext() && (params.take == null || pos < params.take!!)
+            }
+        }
     }
 
     private fun Op.usesSearch(): Boolean {
@@ -212,7 +265,7 @@ class MongoDBSession(val db: DB) : Session() {
         }
     }
 
-    private fun getQuery(op: Op, removePrefix: String = ""): BasicDBObject {
+    protected fun getQuery(op: Op, removePrefix: String = ""): BasicDBObject {
         val query = BasicDBObject()
         when (op) {
             is EqualsOp -> {
