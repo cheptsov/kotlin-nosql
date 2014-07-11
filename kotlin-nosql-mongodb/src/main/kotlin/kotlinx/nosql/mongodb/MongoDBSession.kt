@@ -59,7 +59,7 @@ class MongoDBSession(val db: DB) : Session() {
 
     override fun <T : AbstractTableSchema> T.drop() {
         val collection = db.getCollection(this.schemaName)!!
-        collection.remove(BasicDBObject())
+        collection.drop()
     }
 
     override fun <T : DocumentSchema<P, V>, P, V> T.insert(v: V): Id<P, T> {
