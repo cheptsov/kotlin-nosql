@@ -50,7 +50,7 @@ dependencies {
 #### Define a schema
 
 ```kotlin
-object Comments: MongoDBSchema<Comment>("comments", javaClass()) {
+object Comments: DocumentSchema<Comment>("comments", javaClass()) {
     val discussionId = id("discussion_id", Discussions)
     val slug = string("slug")
     val fullSlug = string("full_slug")
