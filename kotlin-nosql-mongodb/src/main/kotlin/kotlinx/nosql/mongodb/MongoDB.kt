@@ -14,8 +14,9 @@ import kotlinx.nosql.Create
 import kotlinx.nosql.CreateDrop
 import kotlinx.nosql.Validate
 import kotlinx.nosql.Update
+import kotlinx.nosql.AbstractSchema
 
-fun MongoDB(uri: MongoClientURI, schemas: Array<out Schema<*>>, initialization: DatabaseInitialization<MongoDBSession> = Validate()): MongoDB {
+fun MongoDB(uri: MongoClientURI, schemas: Array<out AbstractSchema>, initialization: DatabaseInitialization<MongoDBSession> = Validate()): MongoDB {
     val seeds: Array<ServerAddress> = uri.getHosts()!!.map { host ->
         if (host.indexOf(':') > 0) {
             val tokens = host.split(':')
@@ -32,7 +33,7 @@ fun MongoDB(uri: MongoClientURI, schemas: Array<out Schema<*>>, initialization: 
 
 class MongoDB(seeds: Array<ServerAddress> = array(ServerAddress()), val database: String = "test", val userName: String = "",
               val password: CharArray = CharArray(0), val options: MongoClientOptions = MongoClientOptions.Builder().build()!!,
-              schemas: Array<out Schema<*>>, initialization: DatabaseInitialization<MongoDBSession> = Validate()) : Database<MongoDBSession>(schemas, initialization) {
+              schemas: Array<out AbstractSchema>, initialization: DatabaseInitialization<MongoDBSession> = Validate()) : Database<MongoDBSession>(schemas, initialization) {
     val seeds = seeds
     val db = MongoClient(seeds.toList(), options).getDB(database)!!
     var session = MongoDBSession(db);
@@ -41,50 +42,7 @@ class MongoDB(seeds: Array<ServerAddress> = array(ServerAddress()), val database
         if (userName != "")
             db.authenticate(userName, password)
 
-        for (schema in schemas) {
-            buildFullColumnNames(schema)
-            when (initialization) {
-                // TODO: implement validation
-                is Create, is CreateDrop -> {
-                    withSession {
-                        schema.drop()
-                        schema.create()
-                        for (index in schema.indices)
-                            ensureIndex(schema, index)
-                    }
-                }
-                is Update -> {
-                    withSession {
-                        for (index in schema.indices)
-                            ensureIndex(schema, index)
-                    }
-                }
-                // TODO: implement drop after exit
-            }
-        }
-        withSession {
-            if (initialization is Create) {
-                initialization.onCreate()
-            } else if (initialization is CreateDrop) {
-                initialization.onCreate();
-            }
-        }
-    }
-
-    private fun buildFullColumnNames(schema: Any, path: String = "") {
-        val fields = getAllFields(schema.javaClass)
-        for (field in fields) {
-            if (field.isColumn) {
-                val column = field.asColumn(schema)
-                val columnFullName = path + (if (path.isNotEmpty()) "." else "") + column.name
-                fullColumnNames.put(column, columnFullName)
-                buildFullColumnNames(column, columnFullName)
-            }
-        }
-    }
-
-    class object {
-        val fullColumnNames = ConcurrentHashMap<AbstractColumn<*, *, *>, String>()
+        initialize()
     }
 
     // TODO: Use session pool
@@ -95,8 +53,3 @@ class MongoDB(seeds: Array<ServerAddress> = array(ServerAddress()), val database
         return r
     }
 }
-
-val AbstractColumn<*, *, *>.fullName: String
-    get() {
-        return MongoDB.fullColumnNames.get(this)!!
-    }

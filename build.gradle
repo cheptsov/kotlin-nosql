@@ -36,7 +36,6 @@ allprojects {
     dependencies {
         compile 'joda-time:joda-time:2.3'
         compile group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib', version: '0.1-SNAPSHOT', changing: true
-        compile 'org.mongodb:mongo-java-driver:2.12.2'
         testCompile group: 'org.spek', name: 'spek', version: '0.1-SNAPSHOT', changing: true
     }
 
@@ -68,5 +67,13 @@ allprojects {
 project(':kotlin-nosql-mongodb') {
     dependencies {
         compile project(':')
+        compile 'org.mongodb:mongo-java-driver:2.12.2'
+    }
+}
+
+project(':kotlin-nosql-redis') {
+    dependencies {
+        compile project(':')
+        compile('redis.clients:jedis:2.5.1')
     }
 }

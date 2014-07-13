@@ -50,7 +50,7 @@ dependencies {
 #### Define a schema
 
 ```kotlin
-object Comments: Schema<Comment>("comments", javaClass()) {
+object Comments: MongoDBSchema<Comment>("comments", javaClass()) {
     val discussionId = id("discussion_id", Discussions)
     val slug = string("slug")
     val fullSlug = string("full_slug")
@@ -132,7 +132,7 @@ Comments.find { id.equal(commentId) }.projection { posted + text }.update(newDat
 #### Define a base schema
 
 ```kotlin
-open class ProductSchema<D, S : Schema<D>(javaClass: Class<V>, discriminator: String) : Schema<V>("products",
+open class ProductSchema<D, S : DocumentSchema<D>(javaClass: Class<V>, discriminator: String) : DocumentSchema<V>("products",
             discriminator = Discriminator(string("type"), discriminator)) {
     val sku = string<S>("sku")
     val title = string<S>("title")
@@ -142,18 +142,18 @@ open class ProductSchema<D, S : Schema<D>(javaClass: Class<V>, discriminator: St
     val Shipping = ShippingColumn<S>()
     val Pricing = PricingColumn<S>()
 
-    inner class ShippingColumn<S : Schema<D>>() : Column<Shipping, S>("shipping", javaClass()) {
+    inner class ShippingColumn<S : DocumentSchema<D>>() : Column<Shipping, S>("shipping", javaClass()) {
         val weight = integer<S>("weight")
         val dimensions = DimensionsColumn<S>()
     }
 
-    inner class DimensionsColumn<S : Schema<D>>() : Column<Dimensions, S>("dimensions", javaClass()) {
+    inner class DimensionsColumn<S : DocumentSchema<D>>() : Column<Dimensions, S>("dimensions", javaClass()) {
         val width = integer<S>("width")
         val height = integer<S>("height")
         val depth = integer<S>("depth")
     }
 
-    inner class PricingColumn<S : Schema<D>>() : Column<Pricing, S>("pricing", javaClass()) {
+    inner class PricingColumn<S : DocumentSchema<D>>() : Column<Pricing, S>("pricing", javaClass()) {
         val list = integer<S>("list")
         val retail = integer<S>("retail")
         val savings = integer<S>("savings")

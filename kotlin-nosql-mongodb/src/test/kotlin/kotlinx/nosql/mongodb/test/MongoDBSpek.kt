@@ -1,12 +1,13 @@
-package kotlinx.nosql.mongodb
+package kotlinx.nosql.mongodb.test
 
 import org.spek.Spek
 import kotlin.test.assertEquals
 import kotlinx.nosql.*
+import kotlinx.nosql.mongodb.*
 import org.joda.time.LocalDate
 
 class MongoDBSpek : Spek() {
-    open class ProductSchema<D, S : Schema<D>>(javaClass: Class<D>, discriminator: String) : Schema<D>("products",
+    open class ProductSchema<D, S : DocumentSchema<D>>(javaClass: Class<D>, discriminator: String) : DocumentSchema<D>("products",
             javaClass, discriminator = Discriminator(string("type"), discriminator)) {
         val sku = string<S>("sku")
         val title = string<S>("title")
@@ -26,18 +27,18 @@ class MongoDBSpek : Spek() {
         val shipping = ShippingColumn<S>()
         val pricing = PricingColumn<S>()
 
-        inner class ShippingColumn<S : Schema<D>>() : Column<Shipping, S>("shipping", javaClass()) {
+        inner class ShippingColumn<S : DocumentSchema<D>>() : Column<Shipping, S>("shipping", javaClass()) {
             val weight = integer<S>("weight")
             val dimensions = DimensionsColumn<S>()
         }
 
-        inner class DimensionsColumn<S : Schema<D>>() : Column<Dimensions, S>("dimensions", javaClass()) {
+        inner class DimensionsColumn<S : DocumentSchema<D>>() : Column<Dimensions, S>("dimensions", javaClass()) {
             val width = integer<S>("width")
             val height = integer<S>("height")
             val depth = integer<S>("depth")
         }
 
-        inner class PricingColumn<T : Schema<D>>() : Column<Pricing, T>("pricing", javaClass()) {
+        inner class PricingColumn<T : DocumentSchema<D>>() : Column<Pricing, T>("pricing", javaClass()) {
             val list = integer<T>("list")
             val retail = integer<T>("retail")
             val savings = integer<T>("savings")
@@ -50,7 +51,7 @@ class MongoDBSpek : Spek() {
         }
     }
 
-    object Artists : Schema<Artist>("artists", javaClass()) {
+    object Artists : DocumentSchema<Artist>("artists", javaClass()) {
         val name = string("name")
     }
 
@@ -79,7 +80,7 @@ class MongoDBSpek : Spek() {
                            val asin: String, val available: Boolean, val cost: Double,
                            val createdAtDate: LocalDate, val nullableBooleanNoValue: Boolean?,
                            val nullableBooleanWithValue: Boolean?,
-                           val nullableDateNoValue: LocalDate?, val nullableDateWithValue: LocalDate?,
+                           val nullableDateNoValue: org.joda.time.LocalDate?, val nullableDateWithValue: LocalDate?,
                            val nullableDoubleNoValue: Double?, val nullableDoubleWithValue: Double?,
                            val setOfStrings: Set<String>, val shipping: Shipping, val pricing: Pricing) {
         val id: Id<String, Products>? = null // How to define id for implementation classes?
@@ -95,7 +96,7 @@ class MongoDBSpek : Spek() {
     }
 
     class Album(sku: String, title: String, description: String, asin: String, available: Boolean,
-                cost: Double, createdAtDate: LocalDate,
+                cost: Double, createdAtDate: org.joda.time.LocalDate,
                 nullableBooleanNoValue: Boolean?, nullableBooleanWithValue: Boolean?,
                 nullableDateNoValue: LocalDate?, nullableDateWithValue: LocalDate?,
                 nullableDoubleNoValue: Double?, nullableDoubleWithValue: Double?,
@@ -135,8 +136,8 @@ class MongoDBSpek : Spek() {
                         details = Details(title = "A Love Supreme [Original Recording Reissued]",
                                 artistId = arId, artistIds = setOf(arId, arId2),
                                 genre = setOf("Jazz", "General"), tracks = listOf(Track("A Love Supreme Part I: Acknowledgement", 100),
-                                        Track("A Love Supreme Part II - Resolution", 200),
-                                        Track("A Love Supreme, Part III: Pursuance", 300)))))
+                                Track("A Love Supreme Part II - Resolution", 200),
+                                Track("A Love Supreme, Part III: Pursuance", 300)))))
                 assert(aId.value.length > 0)
                 albumId = aId
                 artistId = arId
@@ -151,7 +152,7 @@ class MongoDBSpek : Spek() {
                     }
                     "a"
                 }
-                assertEquals("a", a)
+                kotlin.test.assertEquals("a", a)
             }
 
             fun validate(results: List<Product>) {
@@ -161,26 +162,26 @@ class MongoDBSpek : Spek() {
                 assertEquals("00e8da9b", results[0].sku)
                 assertEquals(true, results[0].available)
                 assertEquals(1.23, results[0].cost)
-                assertEquals(LocalDate(2014, 3, 8), results[0].createdAtDate)
+                kotlin.test.assertEquals(LocalDate(2014, 3, 8), results[0].createdAtDate)
                 assert(results[0].nullableDateNoValue == null)
                 assertEquals(LocalDate(2014, 3, 7), results[0].nullableDateWithValue)
                 assert(results[0].nullableDoubleNoValue == null)
                 assertEquals(1.24, results[0].nullableDoubleWithValue)
                 assert(results[0].nullableBooleanNoValue == null)
                 assertEquals(false, results[0].nullableBooleanWithValue)
-                assertEquals("A Love Supreme", results[0].title)
+                kotlin.test.assertEquals("A Love Supreme", results[0].title)
                 assertEquals("by John Coltrane", results[0].description)
                 assertEquals("B0000A118M", results[0].asin)
                 assert(album.setOfStrings.contains("Something"))
-                assertEquals(6, results[0].shipping.weight)
-                assertEquals(10, results[0].shipping.dimensions.width)
-                assertEquals(10, results[0].shipping.dimensions.height)
-                assertEquals(1, results[0].shipping.dimensions.depth)
+                kotlin.test.assertEquals(6, results[0].shipping.weight)
+                kotlin.test.assertEquals(10, results[0].shipping.dimensions.width)
+                kotlin.test.assertEquals(10, results[0].shipping.dimensions.height)
+                kotlin.test.assertEquals(1, results[0].shipping.dimensions.depth)
                 assertEquals(1200, results[0].pricing.list)
-                assertEquals(1100, results[0].pricing.retail)
+                kotlin.test.assertEquals(1100, results[0].pricing.retail)
                 assertEquals(100, results[0].pricing.savings)
-                assertEquals(8, results[0].pricing.pctSavings)
-                assertEquals("A Love Supreme [Original Recording Reissued]", album.details.title)
+                kotlin.test.assertEquals(8, results[0].pricing.pctSavings)
+                kotlin.test.assertEquals("A Love Supreme [Original Recording Reissued]", album.details.title)
                 assertEquals(artistId!!, album.details.artistId)
                 assert(album.details.artistIds.size == 2)
                 assert(album.details.artistIds.contains(artistId))
@@ -194,7 +195,7 @@ class MongoDBSpek : Spek() {
                 assertEquals(album.details.tracks[1].title, "A Love Supreme Part II - Resolution")
                 assertEquals(album.details.tracks[1].duration, 200)
                 assertEquals(album.details.tracks[2].title, "A Love Supreme, Part III: Pursuance")
-                assertEquals(album.details.tracks[2].duration, 300)
+                kotlin.test.assertEquals(album.details.tracks[2].duration, 300)
             }
 
             /**
@@ -1107,8 +1108,9 @@ class MongoDBSpek : Spek() {
             on("deleting a document") {
                 db.withSession {
                     Albums.find { id.equal(albumId!!) }.remove()
+                    val results =  Albums.find { id.equal(albumId!!) }.toList()
                     it("deletes the document from database") {
-                        assert(Albums.find { id.equal(albumId!!) }.toList().isEmpty())
+                        assert(results.isEmpty())
                     }
                 }
             }
