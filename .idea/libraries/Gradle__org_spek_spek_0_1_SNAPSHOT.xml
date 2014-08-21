@@ -2,10 +2,12 @@
   <library name="Gradle: org.spek:spek:0.1-SNAPSHOT">
     <CLASSES>
       <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.spek/spek/0.1-SNAPSHOT/d5617f87695598cc21842a8fbce4c86b47586787/spek-0.1-SNAPSHOT.jar!/" />
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.spek/spek/0.1-SNAPSHOT/ed5d41a4c153949218c0d963aeb86dd54b74ce3c/spek-0.1-SNAPSHOT.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
       <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.spek/spek/0.1-SNAPSHOT/5f8aa3e51b07be01584b62f3757c99cce5db15b1/spek-0.1-SNAPSHOT-sources.jar!/" />
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.spek/spek/0.1-SNAPSHOT/f4fdc211caf2e2ab433f6a9b89afaf223d68d0df/spek-0.1-SNAPSHOT-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

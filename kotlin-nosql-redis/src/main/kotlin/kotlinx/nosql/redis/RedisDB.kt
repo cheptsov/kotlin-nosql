@@ -10,7 +10,7 @@ import kotlinx.nosql.AbstractSchema
 class RedisDB(val password: String = "", schemas: Array<out AbstractSchema>,
               initialization: DatabaseInitialization<RedisDBSession> = Validate()) :
         Database<RedisDBSession>(schemas, initialization) {
-    val jedis: Jedis = Jedis("localhost")!!
+    val jedis: Jedis = Jedis("localhost");
 
     {
         if (password != "") {

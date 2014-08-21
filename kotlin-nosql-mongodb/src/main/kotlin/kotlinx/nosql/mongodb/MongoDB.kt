@@ -15,6 +15,7 @@ import kotlinx.nosql.CreateDrop
 import kotlinx.nosql.Validate
 import kotlinx.nosql.Update
 import kotlinx.nosql.AbstractSchema
+import com.mongodb.MongoCredential
 
 fun MongoDB(uri: MongoClientURI, schemas: Array<out AbstractSchema>, initialization: DatabaseInitialization<MongoDBSession> = Validate()): MongoDB {
     val seeds: Array<ServerAddress> = uri.getHosts()!!.map { host ->
@@ -25,23 +26,22 @@ fun MongoDB(uri: MongoClientURI, schemas: Array<out AbstractSchema>, initializat
             ServerAddress(host)
     }.copyToArray()
     val database: String = if (uri.getDatabase() != null) uri.getDatabase()!! else "test"
-    val username: String = if (uri.getUsername() != null) uri.getUsername()!! else ""
-    val password: CharArray = if (uri.getPassword() != null) uri.getPassword()!! else CharArray(0)
     val options: MongoClientOptions = uri.getOptions()!!
-    return MongoDB(seeds, database, username, password, options, schemas, initialization)
+    val credentials = if (uri.getUsername() != null)
+      array(MongoCredential.createMongoCRCredential(uri.getUsername(), database, uri.getPassword())!!)
+    else array()
+  return MongoDB(seeds, database, credentials, options, schemas, initialization)
 }
 
-class MongoDB(seeds: Array<ServerAddress> = array(ServerAddress()), val database: String = "test", val userName: String = "",
-              val password: CharArray = CharArray(0), val options: MongoClientOptions = MongoClientOptions.Builder().build()!!,
+// TODO: Allow use more than one database
+class MongoDB(seeds: Array<ServerAddress> = array(ServerAddress()), val database: String = "test",
+              val credentials: Array<MongoCredential> = array(), val options: MongoClientOptions = MongoClientOptions.Builder().build()!!,
               schemas: Array<out AbstractSchema>, initialization: DatabaseInitialization<MongoDBSession> = Validate()) : Database<MongoDBSession>(schemas, initialization) {
     val seeds = seeds
-    val db = MongoClient(seeds.toList(), options).getDB(database)!!
+    val db = MongoClient(seeds.toList(), credentials.toList(), options).getDB(database)!!
     var session = MongoDBSession(db);
 
     {
-        if (userName != "")
-            db.authenticate(userName, password)
-
         initialize()
     }
 

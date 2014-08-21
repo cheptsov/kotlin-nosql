@@ -47,13 +47,13 @@ class MongoDBSession(val db: DB) : Session, DocumentSchemaOperations, TableSchem
             dbObject.append(column.name, "text")
         }
         if (i.name.isNotEmpty())
-            collection.ensureIndex(dbObject, i.name)
+            collection.createIndex(dbObject, i.name)
         else
-            collection.ensureIndex(dbObject)
+            collection.createIndex(dbObject)
     }
 
     override fun <T : AbstractSchema> T.create() {
-        db.createCollection(this.schemaName, null)
+        db.createCollection(this.schemaName, BasicDBObject())
     }
 
     override fun <T : AbstractSchema> T.drop() {
@@ -123,38 +123,64 @@ class MongoDBSession(val db: DB) : Session, DocumentSchemaOperations, TableSchem
     }
 
     override fun <T : kotlinx.nosql.DocumentSchema<P, C>, P, C> find(params: DocumentSchemaQueryParams<T, P, C>): Iterator<C> {
-        return object:Iterator<C> {
+        if (params.query != null && !searchOperatorSupported && params.query.usesSearch())
+          return params.schema.runCommandText(params.query)
+        else
+          return object : Iterator<C> {
             var cursor: DBCursor? = null
             var pos = 0
             override fun next(): C {
-                if (cursor == null) {
-                    val collection = db.getCollection(params.schema.schemaName)
-                    val query = if (params.query != null) getQuery(params.query) else BasicDBObject()
-                    cursor = collection!!.find(query)!!
-                    if (params.skip != null) {
-                        cursor!!.skip(params.skip!!)
-                    }
+              if (cursor == null) {
+                val collection = db.getCollection(params.schema.schemaName)
+                val query = if (params.query != null) getQuery(params.query) else BasicDBObject()
+                cursor = collection!!.find(query)!!
+                if (params.skip != null) {
+                  cursor!!.skip(params.skip!!)
                 }
-                val value = getObject(cursor!!.next(), params.schema) as C
-                pos++
-                if (!cursor!!.hasNext() || (params.take != null && pos == params.take!!)) {
-                    cursor!!.close()
-                    pos = -1
-                }
-                return value
+              }
+              val value = getObject(cursor!!.next(), params.schema) as C
+              pos++
+              if (!cursor!!.hasNext() || (params.take != null && pos == params.take!!)) {
+                cursor!!.close()
+                pos = -1
+              }
+              return value
             }
             override fun hasNext(): Boolean {
-                if (cursor == null) {
-                    val collection = db.getCollection(params.schema.schemaName)
-                    val query = if (params.query != null) getQuery(params.query) else BasicDBObject()
-                    cursor = collection!!.find(query)!!
-                    if (params.skip != null) {
-                        cursor!!.skip(params.skip!!)
-                    }
+              if (cursor == null) {
+                val collection = db.getCollection(params.schema.schemaName)
+                val query = if (params.query != null) getQuery(params.query) else BasicDBObject()
+                cursor = collection!!.find(query)!!
+                if (params.skip != null) {
+                  cursor!!.skip(params.skip!!)
                 }
-                return pos != -1 && cursor!!.hasNext() && (params.take == null || pos < params.take!!)
+              }
+              return pos != -1 && cursor!!.hasNext() && (params.take == null || pos < params.take!!)
             }
-        }
+          }
+    }
+
+    private fun <T : kotlinx.nosql.DocumentSchema<P, C>, P, C> T.runCommandText(op: Query): Iterator<C> {
+      val searchCmd = BasicDBObject()
+      searchCmd.append("text", this.schemaName)
+      // TODO: Only supports text(...) and other condition
+      searchCmd.append("search", when (op) {
+        is TextQuery -> op.search
+        is AndQuery -> if (op.expr1 is TextQuery) op.expr1.search else throw UnsupportedOperationException()
+        else -> throw UnsupportedOperationException()
+      })
+      val schema = this
+      if (op is AndQuery) {
+        searchCmd.append("filter", getQuery(op.expr2))
+      }
+      val result = db.command(searchCmd)!!
+
+      val objects = ArrayList<C>()
+      for (doc in result.get("results") as BasicDBList) {
+        objects.add(getObject((doc as DBObject).get("obj") as DBObject, schema))
+      }
+
+      return objects.iterator()
     }
 
     override fun <T : TableSchema<P>, P, V> find(params: TableSchemaProjectionQueryParams<T, P, V>): Iterator<V> {
@@ -433,7 +459,7 @@ class MongoDBSession(val db: DB) : Session, DocumentSchemaOperations, TableSchem
             s = schema
             newInstance(schema.valueClass)
         }
-        val schemaClass = s.javaClass
+        val schemaClass = s!!.javaClass
         val schemaFields = getAllFields(schemaClass as Class<in Any?>)
         val valueFields = getAllFieldsMap(valueInstance.javaClass as Class<in Any?>)
         for (schemaField in schemaFields) {
