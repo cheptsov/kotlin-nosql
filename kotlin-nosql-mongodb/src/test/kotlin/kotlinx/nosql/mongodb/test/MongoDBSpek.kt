@@ -1,10 +1,10 @@
 package kotlinx.nosql.mongodb.test
 
-import org.spek.Spek
 import kotlin.test.assertEquals
 import kotlinx.nosql.*
 import kotlinx.nosql.mongodb.*
 import org.joda.time.LocalDate
+import org.jetbrains.spek.api.Spek
 
 class MongoDBSpek : Spek() {
     open class ProductSchema<D, S : DocumentSchema<D>>(javaClass: Class<D>, discriminator: String) : DocumentSchema<D>("products",

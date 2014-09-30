@@ -509,7 +509,7 @@ class MongoDBSession(val db: DB) : Session, DocumentSchemaOperations, TableSchem
     }
 
     private fun newInstance(clazz: Class<out Any?>): Any {
-        val constructor = clazz.getConstructors()[0]
+        val constructor = clazz.getConstructors()!![0]
         val constructorParamTypes = constructor.getParameterTypes()!!
         val constructorParamValues = Array<Any?>(constructor.getParameterTypes()!!.size, { index ->
             when (constructorParamTypes[index].getName()) {
@@ -535,7 +535,7 @@ class MongoDBSession(val db: DB) : Session, DocumentSchemaOperations, TableSchem
     private fun getObject(doc: DBObject, column: AbstractColumn<*, *, *>): Any? {
         val valueInstance = newInstance(column.valueClass)
         val schemaClass = column.javaClass
-        val columnFields = schemaClass.getDeclaredFields()
+        val columnFields = schemaClass.getDeclaredFields()!!
         val valueFields = getAllFieldsMap(valueInstance.javaClass as Class<in Any?>)
         for (columnField in columnFields) {
             if (columnField.isColumn) {

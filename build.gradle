@@ -36,7 +36,7 @@ allprojects {
     dependencies {
         compile 'joda-time:joda-time:2.3'
         compile group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib', version: '0.1-SNAPSHOT', changing: true
-        testCompile group: 'org.spek', name: 'spek', version: '0.1-SNAPSHOT', changing: true
+        testCompile group: 'org.jetbrains.spek', name: 'spek', version: '0.1-SNAPSHOT', changing: true
     }
 
     task sourcesJar(type: Jar, dependsOn: classes) {

@@ -8,7 +8,7 @@ import kotlinx.nosql.AbstractSchema
 
 fun getAllFields(_type: Class<in Any>, condition: (Field) -> Boolean = { f -> true },
                  fields: MutableList<Field> = ArrayList()): MutableList<Field> {
-    for (field in _type.getDeclaredFields()) {
+    for (field in _type.getDeclaredFields()!!) {
         if (condition(field)) fields.add(field)
     }
     if (_type.getSuperclass() != null) {
@@ -19,7 +19,7 @@ fun getAllFields(_type: Class<in Any>, condition: (Field) -> Boolean = { f -> tr
 
 fun getAllFieldsMap(_type: Class<in Any>, condition: (Field) -> Boolean = { f -> true },
                     fields: MutableMap<String, Field> = HashMap()): MutableMap<String, Field> {
-    for (field in _type.getDeclaredFields()) {
+    for (field in _type.getDeclaredFields()!!) {
         if (condition(field)) fields.put(field.getName()!!.toLowerCase(), field)
     }
     if (_type.getSuperclass() != null) {

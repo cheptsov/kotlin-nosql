@@ -1,8 +1,8 @@
 package kotlinx.nosql.redis.test
 
-import org.spek.Spek
 import kotlinx.nosql.*
 import kotlinx.nosql.redis.*
+import org.jetbrains.spek.api.Spek
 
 class RedisDBSpek : Spek() {
     object Global: KeyValueSchema("global") {
