@@ -123,7 +123,7 @@ class MongoDBSpek : Spek() {
             var artistId2: Id<String, Artists>? = null
             var albumId: Id<String, Albums>? = null
 
-            val db = MongoDB(schemas = array(Artists, Products, Albums), initialization = CreateDrop(onCreate = {
+            val db = MongoDB(schemas = array(Artists, Products, Albums), action = CreateDrop(onCreate = {
                 val arId: Id<String, Artists> = Artists.insert(Artist(name = "John Coltrane"))
                 val arId2: Id<String, Artists> = Artists.insert(Artist(name = "Andrey Cheptsov"))
                 assert(arId.value.length > 0)

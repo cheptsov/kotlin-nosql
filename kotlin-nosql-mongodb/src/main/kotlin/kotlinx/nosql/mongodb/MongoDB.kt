@@ -9,7 +9,7 @@ import java.util.concurrent.ConcurrentHashMap
 import com.mongodb.ServerAddress
 import com.mongodb.MongoClientOptions
 import com.mongodb.MongoClientURI
-import kotlinx.nosql.DatabaseInitialization
+import kotlinx.nosql.SchemaGenerationAction
 import kotlinx.nosql.Create
 import kotlinx.nosql.CreateDrop
 import kotlinx.nosql.Validate
@@ -17,7 +17,7 @@ import kotlinx.nosql.Update
 import kotlinx.nosql.AbstractSchema
 import com.mongodb.MongoCredential
 
-fun MongoDB(uri: MongoClientURI, schemas: Array<out AbstractSchema>, initialization: DatabaseInitialization<MongoDBSession> = Validate()): MongoDB {
+fun MongoDB(uri: MongoClientURI, schemas: Array<out AbstractSchema>, initialization: SchemaGenerationAction<MongoDBSession> = Validate()): MongoDB {
     val seeds: Array<ServerAddress> = uri.getHosts()!!.map { host ->
         if (host.indexOf(':') > 0) {
             val tokens = host.split(':')
@@ -36,7 +36,7 @@ fun MongoDB(uri: MongoClientURI, schemas: Array<out AbstractSchema>, initializat
 // TODO: Allow use more than one database
 class MongoDB(seeds: Array<ServerAddress> = array(ServerAddress()), val database: String = "test",
               val credentials: Array<MongoCredential> = array(), val options: MongoClientOptions = MongoClientOptions.Builder().build()!!,
-              schemas: Array<out AbstractSchema>, initialization: DatabaseInitialization<MongoDBSession> = Validate()) : Database<MongoDBSession>(schemas, initialization) {
+              schemas: Array<out AbstractSchema>, action: SchemaGenerationAction<MongoDBSession> = Validate()) : Database<MongoDBSession>(schemas, action) {
     val seeds = seeds
     val db = MongoClient(seeds.toList(), credentials.toList(), options).getDB(database)!!
     var session = MongoDBSession(db);

@@ -9,7 +9,6 @@ enum class ColumnType(val primitive: Boolean = false,
     public INTEGER : ColumnType(primitive = true)
     public PRIMARY_ID : ColumnType(primitive = true, id = true)
     public FOREIGN_ID : ColumnType(primitive = true, id = true)
-    public ID : ColumnType(primitive = true)
     public STRING : ColumnType(primitive = true)
     public BOOLEAN : ColumnType(primitive = true)
     public DATE : ColumnType(primitive = true)

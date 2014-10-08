@@ -5,13 +5,13 @@ import kotlinx.nosql.util.getAllFields
 import kotlinx.nosql.util.isColumn
 import kotlinx.nosql.util.asColumn
 
-abstract class Database<S: Session>(val schemas: Array<out AbstractSchema>, val initialization: DatabaseInitialization<S>) {
+abstract class Database<S: Session>(val schemas: Array<out AbstractSchema>, val action: SchemaGenerationAction<S>) {
     abstract fun <R> withSession(statement: S.() -> R): R
 
     fun initialize() {
         for (schema in schemas) {
             buildFullColumnNames(schema)
-            when (initialization) {
+            when (action) {
             // TODO: implement validation
                 is Create, is CreateDrop -> {
                     withSession {
@@ -33,10 +33,10 @@ abstract class Database<S: Session>(val schemas: Array<out AbstractSchema>, val 
             }
         }
         withSession {
-            if (initialization is Create) {
-                initialization.onCreate()
-            } else if (initialization is CreateDrop) {
-                initialization.onCreate();
+            if (action is Create) {
+                action.onCreate()
+            } else if (action is CreateDrop) {
+                action.onCreate();
             }
         }
     }

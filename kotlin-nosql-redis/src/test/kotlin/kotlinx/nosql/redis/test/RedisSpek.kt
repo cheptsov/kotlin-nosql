@@ -4,10 +4,10 @@ import kotlinx.nosql.*
 import kotlinx.nosql.redis.*
 import org.jetbrains.spek.api.Spek
 
-class RedisDBSpek : Spek() {
+class RedisSpek : Spek() {
     object Global: KeyValueSchema("global") {
-        val nextUserId = integer("nextUserId")
-        val nextPostId = integer("nextPostId")
+        val userId = id("next_user id", Users)
+        val postId = id("next_post_id", Posts)
     }
 
     object Users: DocumentSchema<Int, User>("users", javaClass(), integer("id")) {
@@ -19,7 +19,7 @@ class RedisDBSpek : Spek() {
         val auth = nullableString("auth")
     }
 
-    class User(val id: Int? = null,
+    class User(val id: Id<Int, Users>,
                val name: String,
                val password: String,
                val posts: List<Int> = listOf(),
@@ -35,12 +35,18 @@ class RedisDBSpek : Spek() {
     class Post(val id: Int? = null, val body: String) {
     }
 
+    fun <String, B : Id<*, *>> String.myfunc(st: () -> Id<B, *>) {
+
+    }
+
     {
         given("a key value schema") {
-            val db = RedisDB(schemas = array(Global, Users, Posts))
+            val redis = Redis(schemas = array(Global, Users, Posts), action = CreateDrop())
 
-            db.withSession {
-                Users.insert(User(1, "andrey.cheptsov", "123"))
+            redis.withSession {
+                val userId = Global.next { userId }
+
+                Users.insert(User(userId, "andrey.cheptsov", "123"))
             }
         }
     }

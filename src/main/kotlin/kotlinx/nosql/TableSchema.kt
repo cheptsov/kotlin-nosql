@@ -11,8 +11,8 @@ val <C, T : TableSchema<C>> T.id: AbstractColumn<Id<C, T>, T, C>
         return pk as AbstractColumn<Id<C, T>, T, C>
     }
 
-fun <S : TableSchema<P>, R: TableSchema<P>, P> id(name: String, schema: R): AbstractColumn<Id<P, R>, S, P> = AbstractColumn(name, schema.id.valueClass, ColumnType.FOREIGN_ID)
-fun <S : TableSchema<P>, R: TableSchema<P>, P> S.id(name: String, schema: R): AbstractColumn<Id<P, R>, S, P> = AbstractColumn(name, schema.id.valueClass, ColumnType.FOREIGN_ID)
+fun <S : AbstractSchema, R: TableSchema<P>, P> id(name: String, schema: R): AbstractColumn<Id<P, R>, S, P> = AbstractColumn(name, schema.id.valueClass, ColumnType.FOREIGN_ID)
+fun <S : AbstractSchema, R: TableSchema<P>, P> S.id(name: String, schema: R): AbstractColumn<Id<P, R>, S, P> = AbstractColumn(name, schema.id.valueClass, ColumnType.FOREIGN_ID)
 
 fun <S : TableSchema<P>, R: TableSchema<P>, P>  listOfId(name: String, schema: R): AbstractColumn<List<Id<P, R>>, S, Id<P, R>> = AbstractColumn(name, javaClass<Id<P, R>>(), ColumnType.ID_LIST)
 fun <S : TableSchema<P>, R: TableSchema<P>, P> S.listOfId(name: String, schema: R): AbstractColumn<List<Id<P, R>>, S, Id<P, R>> = AbstractColumn(name, javaClass<Id<P, R>>(), ColumnType.ID_LIST)
