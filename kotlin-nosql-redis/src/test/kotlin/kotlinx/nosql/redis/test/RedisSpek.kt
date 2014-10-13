@@ -3,11 +3,13 @@ package kotlinx.nosql.redis.test
 import kotlinx.nosql.*
 import kotlinx.nosql.redis.*
 import org.jetbrains.spek.api.Spek
+import kotlin.test.assertNotNull
+import kotlin.test.assertEquals
 
 class RedisSpek : Spek() {
     object Global: KeyValueSchema("global") {
-        val userId = id("next_user id", Users)
-        val postId = id("next_post_id", Posts)
+        val nextUserId = id("next_user id", Users)
+        val nextPostId = id("next_post_id", Posts)
     }
 
     object Users: DocumentSchema<Int, User>("users", javaClass(), integer("id")) {
@@ -19,12 +21,12 @@ class RedisSpek : Spek() {
         val auth = nullableString("auth")
     }
 
-    class User(val id: Id<Int, Users>,
+    data class User(val id: Id<Int, Users>,
                val name: String,
                val password: String,
-               val posts: List<Int> = listOf(),
-               val followers: Set<Int> = setOf(),
-               val following: Set<Int> = setOf(),
+               val posts: List<Id<Int, Posts>> = listOf(),
+               val followers: Set<Id<Int, Users>> = setOf(),
+               val following: Set<Id<Int, Users>> = setOf(),
                val auth: String? = null) {
     }
 
@@ -32,11 +34,7 @@ class RedisSpek : Spek() {
         val body = string("body")
     }
 
-    class Post(val id: Int? = null, val body: String) {
-    }
-
-    fun <String, B : Id<*, *>> String.myfunc(st: () -> Id<B, *>) {
-
+    data class Post(val id: Id<Int, Posts>, val body: String) {
     }
 
     {
@@ -44,9 +42,25 @@ class RedisSpek : Spek() {
             val redis = Redis(schemas = array(Global, Users, Posts), action = CreateDrop())
 
             redis.withSession {
-                val userId = Global.next { userId }
+                val userId = Global.nextUserId.incr()
+                val postId = Global.nextPostId.incr()
+                //val (u, p) = Global.projection { nextUserId + nextPostId }.get()
 
-                Users.insert(User(userId, "andrey.cheptsov", "123"))
+                Posts.insert(Post(postId, "Test"))
+
+                Users.insert(User(userId, "andrey.cheptsov", "123", listOf(postId)))
+                // Users.find(id).projection { posts }.add(postId)
+
+                //Users.find(userId).projection { auth }.update("x")
+                // Users.find(userId).projection { auth }.get()
+
+                val user = Users.find(userId).get()
+                // val posts: List<Id<Int, Posts>> = Users.find(userId).projection { posts }.get()
+                assertEquals(userId, user.id)
+                assertEquals("andrey.cheptsov", user.name)
+                assertEquals("123", user.password)
+                assertEquals(1, user.posts.size)
+                assertEquals(postId, user.posts.first)
             }
         }
     }

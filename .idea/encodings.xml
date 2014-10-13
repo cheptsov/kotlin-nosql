@@ -4,7 +4,7 @@
     <file url="file://$PROJECT_DIR$/build.gradle" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/kotlin-nosql-mongodb/src/main/kotlin/kotlinx/nosql/mongodb/MongoDB.kt" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/kotlin-nosql-mongodb/src/main/kotlin/kotlinx/nosql/mongodb/MongoDBSession.kt" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/kotlin-nosql-redis/src/main/kotlin/kotlinx/nosql/redis/RedisDB.kt" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/kotlin-nosql-redis/src/main/kotlin/kotlinx/nosql/redis/Redis.kt" charset="UTF-8" />
   </component>
 </project>
 

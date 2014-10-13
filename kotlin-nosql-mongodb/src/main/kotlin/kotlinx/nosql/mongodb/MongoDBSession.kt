@@ -23,6 +23,12 @@ import com.mongodb.DBCursor
 import kotlinx.nosql.query.*
 
 class MongoDBSession(val db: DB) : Session, DocumentSchemaOperations, TableSchemaOperations, IndexOperations {
+    override fun <T : Number> incr(schema: KeyValueSchema, column: AbstractColumn<out Any?, out AbstractSchema, T>, value: T): T {
+        throw UnsupportedOperationException()
+    }
+    /*override fun <T : Number> incr(schema: AbstractSchema, column: AbstractColumn<out Any?, out AbstractSchema, T>, value: T, op: Query): T {
+        throw UnsupportedOperationException()
+    }*/
     val dbVersion : String
     val searchOperatorSupported: Boolean
 
@@ -506,30 +512,6 @@ class MongoDBSession(val db: DB) : Session, DocumentSchemaOperations, TableSchem
             }
         }
         return valueInstance as V
-    }
-
-    private fun newInstance(clazz: Class<out Any?>): Any {
-        val constructor = clazz.getConstructors()!![0]
-        val constructorParamTypes = constructor.getParameterTypes()!!
-        val constructorParamValues = Array<Any?>(constructor.getParameterTypes()!!.size, { index ->
-            when (constructorParamTypes[index].getName()) {
-                "int" -> 0
-                "java.lang.String" -> ""
-                "org.joda.time.LocalDate" -> LocalDate()
-                "org.joda.time.LocalTime" -> LocalTime()
-                "org.joda.time.DateTime" -> DateTime()
-                "double" -> 0.toDouble()
-                "float" -> 0.toFloat()
-                "long" -> 0.toLong()
-                "short" -> 0.toShort()
-                "byte" -> 0.toByte()
-                "boolean" -> false
-                "java.util.List" -> listOf<Any>()
-                "java.util.Set" -> setOf<Any>()
-                else -> newInstance(constructorParamTypes[index])
-            }
-        })
-        return constructor.newInstance(*constructorParamValues)!!
     }
 
     private fun getObject(doc: DBObject, column: AbstractColumn<*, *, *>): Any? {

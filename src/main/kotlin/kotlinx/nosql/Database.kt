@@ -41,14 +41,15 @@ abstract class Database<S: Session>(val schemas: Array<out AbstractSchema>, val 
         }
     }
 
-    private fun buildFullColumnNames(schema: Any, path: String = "") {
+    private fun buildFullColumnNames(root: AbstractSchema, path: String = "",  schema: Any = root) {
         val fields = getAllFields(schema.javaClass)
         for (field in fields) {
             if (field.isColumn) {
                 val column = field.asColumn(schema)
+                column._schema = root
                 val columnFullName = path + (if (path.isNotEmpty()) "." else "") + column.name
                 fullColumnNames.put(column, columnFullName)
-                buildFullColumnNames(column, columnFullName)
+                buildFullColumnNames(root, columnFullName, column)
             }
         }
     }

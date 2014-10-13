@@ -5,6 +5,13 @@ import java.util.regex.Pattern
 import kotlinx.nosql.query.*
 
 open class AbstractColumn<C, T : AbstractSchema, S>(val name: String, val valueClass: Class<S>, val columnType: ColumnType) : ColumnQueryWrapper<C>(), Expression<C> {
+    internal var _schema: AbstractSchema? = null
+
+    val schema: T
+        get() {
+            return _schema!! as T
+        }
+
     fun matches(other: Pattern): Query {
         return MatchesQuery(this, LiteralExpression(other))
     }
@@ -16,6 +23,10 @@ open class AbstractColumn<C, T : AbstractSchema, S>(val name: String, val valueC
     fun <C2> plus(c: AbstractColumn<C2, T, *>): ColumnPair<T, C, C2> {
         return ColumnPair(this, c) as ColumnPair<T, C, C2>
     }
+}
+
+fun<C, T: AbstractSchema> AbstractColumn<C, T, *>.get(): C {
+    throw UnsupportedOperationException()
 }
 
 fun <C, T: AbstractSchema> AbstractColumn<C, T, *>.update(value: C): Int {

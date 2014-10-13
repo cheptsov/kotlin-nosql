@@ -16,6 +16,8 @@ trait Session {
     internal fun update(schema: AbstractSchema, columnValues: Array<Pair<AbstractColumn<*, *, *>, *>>, op: Query): Int
 
     internal fun <T> addAll(schema: AbstractSchema, column: AbstractColumn<Collection<T>, *, *>, values: Collection<T>, op: Query): Int
+    internal fun <T: Number> incr(schema: KeyValueSchema, column: AbstractColumn<*, *, T>, value: T): T
+    //internal fun <T: Number> incr(schema: AbstractSchema, column: AbstractColumn<*, *, T>, value: T, op: Query): T
 
     internal fun <T> removeAll(schema: AbstractSchema, column: AbstractColumn<Collection<T>, *, *>, values: Collection<T>, op: Query): Int
 
