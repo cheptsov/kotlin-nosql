@@ -44,7 +44,7 @@ class RedisSpek : Spek() {
             redis.withSession {
                 val userId = Global.nextUserId.incr()
                 val postId = Global.nextPostId.incr()
-                //val (u, p) = Global.projection { nextUserId + nextPostId }.single()
+                //val (u, p) = Global.projection { nextUserId + nextPostId }.get()
 
                 Posts.insert(Post(postId, "Test"))
 
@@ -54,7 +54,7 @@ class RedisSpek : Spek() {
                 //Users.find(userId).projection { auth }.update("x")
                 // Users.find(userId).projection { auth }.get()
 
-                val user = Users.find(userId).single()
+                val user = Users.find(userId).get()
                 // val posts: List<Id<Int, Posts>> = Users.find(userId).projection { posts }.get()
                 assertEquals(userId, user.id)
                 assertEquals("andrey.cheptsov", user.name)
