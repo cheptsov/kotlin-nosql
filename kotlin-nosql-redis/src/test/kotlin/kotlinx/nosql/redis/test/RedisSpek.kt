@@ -42,9 +42,9 @@ class RedisSpek : Spek() {
             val redis = Redis(schemas = array(Global, Users, Posts), action = CreateDrop())
 
             redis.withSession {
-                val userId = Global.nextUserId.incr()
-                val postId = Global.nextPostId.incr()
-                //val (u, p) = Global.projection { nextUserId + nextPostId }.get()
+                val userId = Global.find { nextUserId }.incr()
+                val postId = Global.find { nextPostId }.incr()
+                val (u, p) = Global.find { nextUserId + nextPostId }.get()
 
                 Posts.insert(Post(postId, "Test"))
 
