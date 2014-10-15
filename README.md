@@ -7,6 +7,7 @@ Kotlin NoSQL is a reactive and type-safe DSL for working with NoSQL databases.
 Under development (POC). The following NoSQL databases are supported now:
 
 - [MongoDB](https://www.mongodb.org/)
+- [Redis](https://http://redis.io//)
 
 Feedback is welcome.
 
