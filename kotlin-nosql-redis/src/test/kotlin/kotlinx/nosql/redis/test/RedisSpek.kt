@@ -42,25 +42,46 @@ class RedisSpek : Spek() {
             val redis = Redis(schemas = array(Global, Users, Posts), action = CreateDrop())
 
             redis.withSession {
-                val userId = Global.find { nextUserId }.incr()
-                val postId = Global.find { nextPostId }.incr()
-                val (u, p) = Global.find { nextUserId + nextPostId }.get()
+                val userId = Global.nextUserId.incr()
+                val postId = Global.nextPostId.incr()
+
+                assertEquals(1, userId.value)
+                assertEquals(1, postId.value)
+
+                val (u, p) = Global.projection { nextUserId + nextPostId }.single()
+
+                assertEquals(1, u.value)
+                assertEquals(1, p.value)
 
                 Posts.insert(Post(postId, "Test"))
 
                 Users.insert(User(userId, "andrey.cheptsov", "123", listOf(postId)))
-                // Users.find(id).projection { posts }.add(postId)
-
-                //Users.find(userId).projection { auth }.update("x")
-                // Users.find(userId).projection { auth }.get()
 
                 val user = Users.find(userId).get()
-                // val posts: List<Id<Int, Posts>> = Users.find(userId).projection { posts }.get()
+
                 assertEquals(userId, user.id)
                 assertEquals("andrey.cheptsov", user.name)
                 assertEquals("123", user.password)
                 assertEquals(1, user.posts.size)
                 assertEquals(postId, user.posts.first)
+
+                val anotherPostId = Global.nextPostId.incr()
+                Posts.insert(Post(anotherPostId, "Test (another post)"))
+
+                Users.find(userId).projection { posts }.add(anotherPostId)
+
+                val posts = Users.find(userId).projection { posts }.single().map { Posts.find(it).single() }
+
+                assertEquals(1, posts.size)
+                assertEquals(postId, posts[1].id)
+                assertEquals("Test", posts[1].body)
+                assertEquals(anotherPostId, posts[2].id)
+                assertEquals("Test (another post)", posts[2].body)
+
+                Users.find(userId).projection { auth }.update("x")
+
+                val auth = Users.find(userId).projection { auth }.single()
+                assertEquals("x", auth!!)
             }
         }
     }

@@ -6,6 +6,7 @@ class ColumnPair<S : AbstractSchema, A, B>(val a: AbstractColumn<A, S, *>, val b
     }
 }
 
+/*
 fun <S : KeyValueSchema, A, B> ColumnPair<S, A, B>.get(): Pair<A, B> {
     throw UnsupportedOperationException()
-}
+}*/

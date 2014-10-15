@@ -2,12 +2,12 @@
   <library name="Gradle: org.mongodb:bson:3.0.0-SNAPSHOT">
     <CLASSES>
       <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.mongodb/bson/3.0.0-SNAPSHOT/8d97481737ddb3772be209288e5c6e5d76c54700/bson-3.0.0-SNAPSHOT.jar!/" />
-      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.mongodb/bson/3.0.0-SNAPSHOT/b0231fc48298674e1f598cbee879dd7ee0562781/bson-3.0.0-SNAPSHOT.jar!/" />
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.mongodb/bson/3.0.0-SNAPSHOT/135ef9994cc8464520fa07f88d652bc477eaeae9/bson-3.0.0-SNAPSHOT.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
       <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.mongodb/bson/3.0.0-SNAPSHOT/a9ce46c64e48cacbe699e083018d84aaf8457433/bson-3.0.0-SNAPSHOT-sources.jar!/" />
-      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.mongodb/bson/3.0.0-SNAPSHOT/2d3c3e9b7020c5896f2b1b7ba2717b882f740f93/bson-3.0.0-SNAPSHOT-sources.jar!/" />
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.mongodb/bson/3.0.0-SNAPSHOT/7c466b650ee7362aa8dbec223064c642c7257326/bson-3.0.0-SNAPSHOT-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

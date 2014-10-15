@@ -1117,4 +1117,3 @@ class MongoDBSpek : Spek() {
         }
     }
 }
-

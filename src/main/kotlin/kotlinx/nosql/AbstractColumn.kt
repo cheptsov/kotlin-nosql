@@ -25,9 +25,11 @@ open class AbstractColumn<C, T : AbstractSchema, S>(val name: String, val valueC
     }
 }
 
+/*
 fun<C, T: AbstractSchema> AbstractColumn<C, T, *>.get(): C {
     throw UnsupportedOperationException()
 }
+*/
 
 fun <C, T: AbstractSchema> AbstractColumn<C, T, *>.update(value: C): Int {
     val wrapper = TableSchemaProjectionQueryWrapper.get()
