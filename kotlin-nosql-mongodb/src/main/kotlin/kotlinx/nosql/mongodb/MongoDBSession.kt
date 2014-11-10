@@ -598,13 +598,13 @@ class MongoDBSession(val db: DB) : Session, DocumentSchemaOperations, TableSchem
     }
 
     private fun getDBValue(value: Any?, column: AbstractColumn<*, *, *>, withinIterable: Boolean = false): Any? {
-        return if (!column.columnType.custom && (!column.columnType.iterable || withinIterable ))
+        return if (!column.columnType.custom && (!column.columnType.iterable || withinIterable )) {
             when (value) {
                 is DateTime, is LocalDate, is LocalTime -> value.toString()
                 is Id<*, *> -> ObjectId(value.value.toString())
                 else -> value
             }
-        else if (column.columnType.custom && !column.columnType.iterable)
+        } else if (column.columnType.custom && !column.columnType.iterable)
             if (value != null) getDBObject(value, column) else null
         else if (column.columnType.list && column.columnType.custom)
             (value as List<*>).map { getDBObject(it!!, column) }
@@ -614,6 +614,7 @@ class MongoDBSession(val db: DB) : Session, DocumentSchemaOperations, TableSchem
             (value as List<*>).map { getDBValue(it!!, column, true) }
         else if (column.columnType.set && !column.columnType.custom)
             (value as Set<*>).map { getDBValue(it!!, column, true) }.toSet()
+        else throw UnsupportedOperationException()
     }
 
     private fun getColumnObject(doc: DBObject, column: AbstractColumn<*, *, *>): Any? {
