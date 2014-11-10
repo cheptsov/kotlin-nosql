@@ -597,8 +597,8 @@ class MongoDBSession(val db: DB) : Session, DocumentSchemaOperations, TableSchem
         return collection.update(getQuery(op), doc)!!.getN()
     }
 
-    private fun getDBValue(value: Any?, column: AbstractColumn<*, *, *>): Any? {
-        return if (!column.columnType.custom)
+    private fun getDBValue(value: Any?, column: AbstractColumn<*, *, *>, withinIterable: Boolean = false): Any? {
+        return if (!column.columnType.custom && (!column.columnType.iterable || withinIterable ))
             when (value) {
                 is DateTime, is LocalDate, is LocalTime -> value.toString()
                 is Id<*, *> -> ObjectId(value.value.toString())
@@ -606,23 +606,33 @@ class MongoDBSession(val db: DB) : Session, DocumentSchemaOperations, TableSchem
             }
         else if (column.columnType.custom && !column.columnType.iterable)
             if (value != null) getDBObject(value, column) else null
-        else
+        else if (column.columnType.list && column.columnType.custom)
             (value as List<*>).map { getDBObject(it!!, column) }
+        else if (column.columnType.set && column.columnType.custom)
+            (value as Set<*>).map { getDBObject(it!!, column) }.toSet()
+        else if (column.columnType.list && !column.columnType.custom)
+            (value as List<*>).map { getDBValue(it!!, column, true) }
+        else if (column.columnType.set && !column.columnType.custom)
+            (value as Set<*>).map { getDBValue(it!!, column, true) }.toSet()
     }
 
     private fun getColumnObject(doc: DBObject, column: AbstractColumn<*, *, *>): Any? {
         val columnObject = parse(doc, column.fullName.split("\\."))
-        return if (column.columnType.id) {
+        return if (column.columnType.id && !column.columnType.iterable) {
             Id<String, TableSchema<String>>(columnObject.toString())
-        } else if (column.columnType.primitive) when (column.columnType) {
+        } else if (column.columnType.primitive && !column.columnType.iterable) when (column.columnType) {
             ColumnType.DATE -> LocalDate.parse(columnObject.toString())
             ColumnType.TIME -> LocalTime.parse(columnObject.toString())
             ColumnType.DATE_TIME -> DateTime.parse(columnObject.toString())
             else -> columnObject
-        } else if (!column.columnType.custom && column.columnType.set) {
+        } else if (column.columnType == ColumnType.STRING_SET) {
             (columnObject as BasicDBList).toSet()
-        } else if (!column.columnType.custom && column.columnType.list) {
+        } else if (column.columnType == ColumnType.STRING_LIST) {
             (columnObject as BasicDBList).toList()
+        } else if (column.columnType.id && column.columnType.set) {
+            (columnObject as BasicDBList).map { Id<String, TableSchema<String>>(it.toString()) }.toSet()
+        } else if (column.columnType.id && column.columnType.list) {
+            (columnObject as BasicDBList).map { Id<String, TableSchema<String>>(it.toString()) }
         } else if (column.columnType.custom && column.columnType.list) {
             (columnObject as BasicDBList).map { getObject(it as DBObject, column as ListColumn<Any?, out AbstractSchema>) }
         } else if (column.columnType.custom && column.columnType.set) {

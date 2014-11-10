@@ -5,6 +5,7 @@ import kotlinx.nosql.*
 import kotlinx.nosql.mongodb.*
 import org.joda.time.LocalDate
 import org.jetbrains.spek.api.Spek
+import kotlin.test.assertTrue
 
 class MongoDBSpek : Spek() {
     open class ProductSchema<D, S : DocumentSchema<D>>(javaClass: Class<D>, discriminator: String) : DocumentSchema<D>("products",
@@ -121,11 +122,13 @@ class MongoDBSpek : Spek() {
         given("a polymorhpic schema") {
             var artistId: Id<String, Artists>? = null
             var artistId2: Id<String, Artists>? = null
+            var artistId3: Id<String, Artists>? = null
             var albumId: Id<String, Albums>? = null
 
             val db = MongoDB(schemas = array(Artists, Products, Albums), action = CreateDrop(onCreate = {
                 val arId: Id<String, Artists> = Artists.insert(Artist(name = "John Coltrane"))
                 val arId2: Id<String, Artists> = Artists.insert(Artist(name = "Andrey Cheptsov"))
+                val arId3: Id<String, Artists> = Artists.insert(Artist(name = "Daft Punk"))
                 assert(arId.value.length > 0)
                 val aId = Albums.insert(Album(sku = "00e8da9b", title = "A Love Supreme", description = "by John Coltrane",
                         asin = "B0000A118M", available = true, cost = 1.23, createdAtDate = LocalDate(2014, 3, 8), nullableBooleanNoValue = null,
@@ -142,6 +145,7 @@ class MongoDBSpek : Spek() {
                 albumId = aId
                 artistId = arId
                 artistId2 = arId2
+                artistId3 = arId3
             }))
 
             on("filtering a non-inherited schema") {
@@ -1071,6 +1075,17 @@ class MongoDBSpek : Spek() {
                         assertEquals(4, tracks.size)
                         assertEquals("A Love Supreme, Part IV-Psalm", tracks[3].title)
                         assertEquals(400, tracks[3].duration)
+                    }
+                }
+            }
+
+            on("adding a new id to an id set column on a non-abstract schema by id") {
+                db.withSession {
+                    Albums.find { id.equal(albumId!!) }.projection { details.artistIds }.add(artistId3)
+                    val artistIds = Albums.find { id.equal(albumId!!) }.projection { details.artistIds }.single()
+                    it("takes effect") {
+                        assertEquals(3, artistIds.size)
+                        assertTrue(artistIds.contains(artistId3))
                     }
                 }
             }

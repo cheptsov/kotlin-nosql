@@ -1,13 +1,11 @@
 <component name="libraryTable">
   <library name="Gradle: org.jetbrains.spek:spek:0.1-SNAPSHOT">
     <CLASSES>
-      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.spek/spek/0.1-SNAPSHOT/d2ae8351f23943ce67699a4369dcd70bf352f9f6/spek-0.1-SNAPSHOT.jar!/" />
-      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.spek/spek/0.1-SNAPSHOT/d2ae8351f23943ce67699a4369dcd70bf352f9f6/spek-0.1-SNAPSHOT.jar!/" />
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.spek/spek/0.1-SNAPSHOT/859717c78d268f22bf0f503d7ac118367e68b114/spek-0.1-SNAPSHOT.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.spek/spek/0.1-SNAPSHOT/69cd8e29c35365a7a5b49ef3abee279d06eb3026/spek-0.1-SNAPSHOT-sources.jar!/" />
-      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.spek/spek/0.1-SNAPSHOT/69cd8e29c35365a7a5b49ef3abee279d06eb3026/spek-0.1-SNAPSHOT-sources.jar!/" />
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.spek/spek/0.1-SNAPSHOT/4ada6e3c7a55e89d6a96d070bae7b6bc97066a54/spek-0.1-SNAPSHOT-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
