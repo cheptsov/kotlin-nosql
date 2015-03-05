@@ -2,14 +2,12 @@
   <library name="Gradle: org.mongodb:mongo-java-driver:3.0.0-SNAPSHOT">
     <CLASSES>
       <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.mongodb/mongo-java-driver/3.0.0-SNAPSHOT/2105c9dce0f75bfbdaabaa45f1a68b551e831f32/mongo-java-driver-3.0.0-SNAPSHOT.jar!/" />
-      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.mongodb/mongo-java-driver/3.0.0-SNAPSHOT/77c35ff7fc0a60225f7337856fe565f659498071/mongo-java-driver-3.0.0-SNAPSHOT.jar!/" />
-      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.mongodb/mongo-java-driver/3.0.0-SNAPSHOT/e950025ee2673bd3e374cab5d5dd84fe85e63be7/mongo-java-driver-3.0.0-SNAPSHOT.jar!/" />
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.mongodb/mongo-java-driver/3.0.0-SNAPSHOT/b411ebc1a970fb2d582c9f003d3624d192ec4161/mongo-java-driver-3.0.0-SNAPSHOT.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
       <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.mongodb/mongo-java-driver/3.0.0-SNAPSHOT/6ffe3cbe157c26c928cef4e6378beaafb692ddf2/mongo-java-driver-3.0.0-SNAPSHOT-sources.jar!/" />
-      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.mongodb/mongo-java-driver/3.0.0-SNAPSHOT/14e77ee70aef3a126735dfb15dff057c5976f8b6/mongo-java-driver-3.0.0-SNAPSHOT-sources.jar!/" />
-      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.mongodb/mongo-java-driver/3.0.0-SNAPSHOT/d933d42177eab0b369a85da2f28ba85535134e8/mongo-java-driver-3.0.0-SNAPSHOT-sources.jar!/" />
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.mongodb/mongo-java-driver/3.0.0-SNAPSHOT/ff13e2d0c7dc88a7048bd9f94a1fcf005c16baba/mongo-java-driver-3.0.0-SNAPSHOT-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
