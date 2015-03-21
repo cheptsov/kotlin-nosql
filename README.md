@@ -46,6 +46,8 @@ dependencies {
 
 ## Getting Started
 
+Demo: http://www.youtube.com/watch?v=80xgl3KThvM
+
 ### Basics
 
 #### Define a schema
