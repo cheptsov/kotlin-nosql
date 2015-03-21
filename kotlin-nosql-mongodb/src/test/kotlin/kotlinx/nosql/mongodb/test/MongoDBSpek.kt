@@ -3,6 +3,7 @@ package kotlinx.nosql.mongodb.test
 import kotlin.test.assertEquals
 import kotlinx.nosql.*
 import kotlinx.nosql.mongodb.*
+import kotlinx.nosql.mongodb.DocumentSchema
 import org.joda.time.LocalDate
 import org.jetbrains.spek.api.Spek
 import kotlin.test.assertTrue
@@ -46,7 +47,7 @@ class MongoDBSpek : Spek() {
             val pctSavings = integer<T>("pct_savings")
         }
 
-        {
+        init {
             ensureIndex(text = array(title, description))
             ensureIndex(name = "asinIndex", unique = true, ascending = array(asin))
         }
@@ -118,7 +119,7 @@ class MongoDBSpek : Spek() {
     class Track(val title: String, val duration: Int) {
     }
 
-    {
+    init {
         given("a polymorhpic schema") {
             var artistId: Id<String, Artists>? = null
             var artistId2: Id<String, Artists>? = null

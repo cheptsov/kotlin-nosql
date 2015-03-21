@@ -21,8 +21,6 @@
     <orderEntry type="library" exported="" name="Gradle: org.jetbrains.kotlin:kotlin-stdlib:0.1-SNAPSHOT" level="project" />
     <orderEntry type="library" exported="" name="Gradle: org.jetbrains.kotlin:kotlin-runtime:0.1-SNAPSHOT" level="project" />
     <orderEntry type="library" exported="" name="Gradle: org.mongodb:mongo-java-driver:3.0.0-SNAPSHOT" level="project" />
-    <orderEntry type="library" exported="" name="Gradle: org.mongodb:bson:3.0.0-SNAPSHOT" level="project" />
-    <orderEntry type="library" exported="" name="Gradle: org.mongodb:mongo-java-driver-core:3.0.0-SNAPSHOT" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: junit:junit:4.11" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: org.hamcrest:hamcrest-core:1.3" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: org.jetbrains.spek:spek:0.1-SNAPSHOT" level="project" />

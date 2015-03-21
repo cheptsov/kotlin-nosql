@@ -42,7 +42,7 @@ class RedisSession(val jedis: Jedis) : Session, KeyValueSchemaOperations, KeyVal
             var instance: Any? = null
             val discriminatorValue = reader(this.discriminator.column)
             for (discriminator in kotlinx.nosql.DocumentSchema.tableDiscriminators.get(this.schemaName)!!) {
-                if (discriminator.value.equals(discriminatorValue)) {
+                if (discriminator.value!!.equals(discriminatorValue)) {
                     instance = newInstance(kotlinx.nosql.DocumentSchema.discriminatorClasses.get(discriminator)!!)
                     break
                 }
@@ -58,7 +58,7 @@ class RedisSession(val jedis: Jedis) : Session, KeyValueSchemaOperations, KeyVal
         if (this.discriminator != null) {
             val discriminatorValue = reader(this.discriminator.column)
             for (discriminator in kotlinx.nosql.DocumentSchema.tableDiscriminators.get(this.schemaName)!!) {
-                if (discriminator.value.equals(discriminatorValue)) {
+                if (discriminator.value!!.equals(discriminatorValue)) {
                     s = kotlinx.nosql.DocumentSchema.discriminatorSchemas.get(discriminator)!!
                     break
                 }
@@ -164,7 +164,7 @@ class RedisSession(val jedis: Jedis) : Session, KeyValueSchemaOperations, KeyVal
             var instance: Any? = null
             val discriminatorValue = map.get(schema.discriminator.column.name)
             for (discriminator in kotlinx.nosql.DocumentSchema.tableDiscriminators.get(schema.schemaName)!!) {
-                if (discriminator.value.equals(discriminatorValue)) {
+                if (discriminator.value!!.equals(discriminatorValue)) {
                     instance = newInstance(kotlinx.nosql.DocumentSchema.discriminatorClasses.get(discriminator)!!)
                     s = kotlinx.nosql.DocumentSchema.discriminatorSchemas.get(discriminator)!!
                     break

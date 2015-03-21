@@ -37,7 +37,7 @@ class RedisSpek : Spek() {
     data class Post(val id: Id<Int, Posts>, val body: String) {
     }
 
-    {
+    init {
         given("a key value schema") {
             val redis = Redis(schemas = array(Global, Users, Posts), action = CreateDrop())
 

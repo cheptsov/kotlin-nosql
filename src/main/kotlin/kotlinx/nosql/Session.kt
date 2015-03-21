@@ -23,7 +23,7 @@ trait Session {
 
     internal fun <T> removeAll(schema: AbstractSchema, column: AbstractColumn<Collection<T>, *, *>, removeOp: Query, op: Query): Int
 
-    class object {
+    companion object {
         val threadLocale = ThreadLocal<Session>()
 
         fun <T> current(): T {

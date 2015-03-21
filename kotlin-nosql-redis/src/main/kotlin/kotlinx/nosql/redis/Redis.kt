@@ -11,11 +11,11 @@ import kotlinx.nosql.Session
 class Redis(val password: String = "", schemas: Array<out AbstractSchema>,
               action: SchemaGenerationAction<RedisSession> = Validate()) :
         Database<RedisSession>(schemas, action) {
-    val jedis: Jedis = Jedis("localhost");
-    var session = RedisSession(jedis);
+    val jedis: Jedis = Jedis("localhost")
+    var session = RedisSession(jedis)
 
 
-    {
+    init {
         if (password != "") {
             jedis.auth(password)
         }

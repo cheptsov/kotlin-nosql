@@ -36,7 +36,7 @@ abstract class Database<S: Session>(val schemas: Array<out AbstractSchema>, val 
             if (action is Create) {
                 action.onCreate()
             } else if (action is CreateDrop) {
-                action.onCreate();
+                action.onCreate()
             }
         }
     }
@@ -54,7 +54,7 @@ abstract class Database<S: Session>(val schemas: Array<out AbstractSchema>, val 
         }
     }
 
-    class object {
+    companion object {
         val fullColumnNames = ConcurrentHashMap<AbstractColumn<*, *, *>, String>()
     }
 }

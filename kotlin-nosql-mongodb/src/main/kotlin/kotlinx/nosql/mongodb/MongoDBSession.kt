@@ -32,7 +32,7 @@ class MongoDBSession(val db: DB) : Session, DocumentSchemaOperations, TableSchem
     val dbVersion : String
     val searchOperatorSupported: Boolean
 
-    {
+    init {
         val results = db.command("buildInfo")
         dbVersion = results!!.get("version")!!.toString()
         val versions = dbVersion.split('.')
@@ -454,7 +454,7 @@ class MongoDBSession(val db: DB) : Session, DocumentSchemaOperations, TableSchem
             var instance: Any? = null
             val discriminatorValue = doc.get(schema.discriminator.column.name)
             for (discriminator in kotlinx.nosql.DocumentSchema.tableDiscriminators.get(schema.schemaName)!!) {
-                if (discriminator.value.equals(discriminatorValue)) {
+                if (discriminator.value!!.equals(discriminatorValue)) {
                     instance = newInstance(kotlinx.nosql.DocumentSchema.discriminatorClasses.get(discriminator)!!)
                     s = kotlinx.nosql.DocumentSchema.discriminatorSchemas.get(discriminator)!!
                     break

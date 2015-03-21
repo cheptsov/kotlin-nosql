@@ -15,7 +15,7 @@ fun getAllFields(_type: Class<in Any>, condition: (Field) -> Boolean = { f -> tr
         if (condition(field)) fields.add(field)
     }
     if (_type.getSuperclass() != null) {
-        getAllFields(_type.getSuperclass()!!, condition, fields);
+        getAllFields(_type.getSuperclass()!!, condition, fields)
     }
     return fields
 }
@@ -26,7 +26,7 @@ fun getAllFieldsMap(_type: Class<in Any>, condition: (Field) -> Boolean = { f ->
         if (condition(field)) fields.put(field.getName()!!.toLowerCase(), field)
     }
     if (_type.getSuperclass() != null) {
-        getAllFieldsMap(_type.getSuperclass()!!, condition, fields);
+        getAllFieldsMap(_type.getSuperclass()!!, condition, fields)
     }
     return fields
 }

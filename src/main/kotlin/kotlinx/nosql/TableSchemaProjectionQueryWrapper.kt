@@ -15,7 +15,7 @@ class TableSchemaProjectionQueryWrapper<T : TableSchema<P>, P, V>(val params: Ta
         return this
     }
 
-    class object {
+    companion object {
         val threadLocal = ThreadLocal<TableSchemaProjectionQueryWrapper<out TableSchema<*>, *, *>>()
 
         fun get(): TableSchemaProjectionQueryWrapper<out TableSchema<*>, *, *> {

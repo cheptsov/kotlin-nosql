@@ -16,7 +16,7 @@ abstract class AbstractSchema(val schemaName: String) {
     // val columns = ArrayList<AbstractColumn<*, *, *>>()
 
     // TODO TODO TODO
-    class object {
+    companion object {
         val threadLocale = ThreadLocal<AbstractSchema>()
 
         fun <T: AbstractSchema> current(): T {

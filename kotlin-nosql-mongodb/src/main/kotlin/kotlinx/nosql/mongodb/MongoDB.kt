@@ -39,9 +39,9 @@ class MongoDB(seeds: Array<ServerAddress> = array(ServerAddress()), val database
               schemas: Array<out AbstractSchema>, action: SchemaGenerationAction<MongoDBSession> = Validate()) : Database<MongoDBSession>(schemas, action) {
     val seeds = seeds
     val db = MongoClient(seeds.toList(), credentials.toList(), options).getDB(database)!!
-    var session = MongoDBSession(db);
+    var session = MongoDBSession(db)
 
-    {
+    init {
         initialize()
     }
 
