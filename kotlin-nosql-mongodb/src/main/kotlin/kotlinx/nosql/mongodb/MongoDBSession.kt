@@ -618,7 +618,7 @@ class MongoDBSession(val db: DB) : Session, DocumentSchemaOperations, TableSchem
     }
 
     private fun getColumnObject(doc: DBObject, column: AbstractColumn<*, *, *>): Any? {
-        val columnObject = parse(doc, column.fullName.split("\\."))
+        val columnObject = parse(doc, column.fullName.split(".").toTypedArray())
         return if (column.columnType.id && !column.columnType.iterable) {
             Id<String, TableSchema<String>>(columnObject.toString())
         } else if (column.columnType.primitive && !column.columnType.iterable) when (column.columnType) {

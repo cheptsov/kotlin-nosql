@@ -63,7 +63,7 @@ class RedisSpek : Spek() {
                 assertEquals("andrey.cheptsov", user.name)
                 assertEquals("123", user.password)
                 assertEquals(1, user.posts.size)
-                assertEquals(postId, user.posts.first)
+                assertEquals(postId, user.posts.first())
 
                 val anotherPostId = Global.nextPostId.incr()
                 Posts.insert(Post(anotherPostId, "Test (another post)"))

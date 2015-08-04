@@ -6,6 +6,7 @@ import kotlinx.nosql.mongodb.*
 import kotlinx.nosql.mongodb.DocumentSchema
 import org.joda.time.LocalDate
 import org.jetbrains.spek.api.Spek
+import java.util.regex.Pattern
 import kotlin.test.assertTrue
 
 class MongoDBSpek : Spek() {
@@ -886,7 +887,7 @@ class MongoDBSpek : Spek() {
 
             on("getting one column by regex filter expression") {
                 db.withSession {
-                    val results = Albums.find { details.title.matches("Love Supreme".toRegex()) }.toList()
+                    val results = Albums.find { details.title.matches(Pattern.compile("Love Supreme")) }.toList()
                     it("returns correct values") {
                         validate(results)
                     }
@@ -895,7 +896,7 @@ class MongoDBSpek : Spek() {
 
             on("getting one column by regex filter expression") {
                 db.withSession {
-                    val results = Albums.find { details.title.matches("Love Supremex".toRegex()) }.toList()
+                    val results = Albums.find { details.title.matches(Pattern.compile("Love Supremex")) }.toList()
                     it("should return nothing") {
                         assert(results.isEmpty())
                     }
@@ -905,7 +906,7 @@ class MongoDBSpek : Spek() {
             on("setting a new value to a string column on a non-abstract schema by id") {
                 db.withSession {
                     Albums.find { id.equal(albumId!!) }.projection { details.title }.update("A Love Supreme. Original Recording Reissued")
-                    val title = Albums.find { id.equal(albumId!!) }.projection { details.title }.single()!!
+                    val title = Albums.find { id.equal(albumId!!) }.projection { details.title }.single()
                     it("takes effect") {
                         assertEquals("A Love Supreme. Original Recording Reissued", title)
                     }
