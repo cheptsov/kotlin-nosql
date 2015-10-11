@@ -1,5 +1,5 @@
 package kotlinx.nosql
 
-trait IndexOperations {
+interface IndexOperations {
     fun createIndex(schema: AbstractSchema, index: AbstractIndex)
 }

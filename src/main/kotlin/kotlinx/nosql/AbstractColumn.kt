@@ -20,7 +20,7 @@ open class AbstractColumn<C, T : AbstractSchema, S>(val name: String, val valueC
         return "$name"
     }
 
-    fun <C2> plus(c: AbstractColumn<C2, T, *>): ColumnPair<T, C, C2> {
+    operator fun <C2> plus(c: AbstractColumn<C2, T, *>): ColumnPair<T, C, C2> {
         return ColumnPair(this, c) as ColumnPair<T, C, C2>
     }
 }
@@ -33,7 +33,7 @@ fun<C, T: AbstractSchema> AbstractColumn<C, T, *>.get(): C {
 
 fun <C, T: AbstractSchema> AbstractColumn<C, T, *>.update(value: C): Int {
     val wrapper = TableSchemaProjectionQueryWrapper.get()
-    return Session.current<Session>().update(wrapper.params.table, array(wrapper.params.projection.get(0) to value),
+    return Session.current<Session>().update(wrapper.params.table, arrayOf(wrapper.params.projection.get(0) to value),
             wrapper.params.query!!)
 }
 

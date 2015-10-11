@@ -1,3 +1,1 @@
 include 'kotlin-nosql-mongodb'
-include 'kotlin-nosql-redis'
-

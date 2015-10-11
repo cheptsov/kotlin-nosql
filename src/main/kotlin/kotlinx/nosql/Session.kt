@@ -2,26 +2,26 @@ package kotlinx.nosql
 
 import java.util.ArrayList
 
-trait Session {
+interface Session {
     fun <T : AbstractSchema>T.create()
 
     fun <T : AbstractSchema>T.drop()
 
     // TODO: Refactor
-    internal fun <T : AbstractSchema> insert(columns: Array<Pair<AbstractColumn<*, T, *>, *>>)
+    fun <T : AbstractSchema> insert(columns: Array<Pair<AbstractColumn<*, T, *>, *>>)
 
     // TODO: Refactor
-    internal fun <T : AbstractSchema> delete(table: T, op: Query): Int
+    fun <T : AbstractSchema> delete(table: T, op: Query): Int
 
-    internal fun update(schema: AbstractSchema, columnValues: Array<Pair<AbstractColumn<*, *, *>, *>>, op: Query): Int
+    fun update(schema: AbstractSchema, columnValues: Array<Pair<AbstractColumn<*, *, *>, *>>, op: Query): Int
 
-    internal fun <T> addAll(schema: AbstractSchema, column: AbstractColumn<Collection<T>, *, *>, values: Collection<T>, op: Query): Int
-    internal fun <T: Number> incr(schema: KeyValueSchema, column: AbstractColumn<*, *, T>, value: T): T
+    fun <T> addAll(schema: AbstractSchema, column: AbstractColumn<Collection<T>, *, *>, values: Collection<T>, op: Query): Int
+    fun <T: Number> incr(schema: KeyValueSchema, column: AbstractColumn<*, *, T>, value: T): T
     //internal fun <T: Number> incr(schema: AbstractSchema, column: AbstractColumn<*, *, T>, value: T, op: Query): T
 
-    internal fun <T> removeAll(schema: AbstractSchema, column: AbstractColumn<Collection<T>, *, *>, values: Collection<T>, op: Query): Int
+    fun <T> removeAll(schema: AbstractSchema, column: AbstractColumn<Collection<T>, *, *>, values: Collection<T>, op: Query): Int
 
-    internal fun <T> removeAll(schema: AbstractSchema, column: AbstractColumn<Collection<T>, *, *>, removeOp: Query, op: Query): Int
+    fun <T> removeAll(schema: AbstractSchema, column: AbstractColumn<Collection<T>, *, *>, removeOp: Query, op: Query): Int
 
     companion object {
         val threadLocale = ThreadLocal<Session>()

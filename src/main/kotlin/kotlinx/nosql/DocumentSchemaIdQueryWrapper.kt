@@ -2,7 +2,7 @@ package kotlinx.nosql
 
 import java.util.ArrayList
 
-class DocumentSchemaIdQueryWrapper<T : DocumentSchema<P, C>, P, C>(val schema: T, val id: Id<P, T>): DocumentSchemaQueryWrapper<T, P, C>(DocumentSchemaQueryParams(schema,
+class DocumentSchemaIdQueryWrapper<T : DocumentSchema<P, C>, P: Any, C: Any>(val schema: T, val id: Id<P, T>): DocumentSchemaQueryWrapper<T, P, C>(DocumentSchemaQueryParams(schema,
         schema.id.equal(id))
 ) {
     fun get(): C {

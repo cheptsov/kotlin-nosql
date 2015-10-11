@@ -1,8 +1,0 @@
-<component name="ArtifactManager">
-  <artifact type="jar" name="Exposed:jar">
-    <output-path>$PROJECT_DIR$/out/artifacts/Exposed_jar</output-path>
-    <root id="archive" name="Exposed.jar">
-      <element id="module-output" name="kotlin-nosql" />
-    </root>
-  </artifact>
-</component>

@@ -7,7 +7,6 @@ Kotlin NoSQL is a reactive and type-safe DSL for working with NoSQL databases.
 Under development (POC). The following NoSQL databases are supported now:
 
 - [MongoDB](https://www.mongodb.org/)
-- [Redis](https://http://redis.io//)
 
 Feedback is welcome.
 
@@ -53,7 +52,7 @@ Demo: http://www.youtube.com/watch?v=80xgl3KThvM
 #### Define a schema
 
 ```kotlin
-object Comments: DocumentSchema<Comment>("comments", javaClass()) {
+object Comments: DocumentSchema<Comment>("comments", Comment::class.java) {
     val discussionId = id("discussion_id", Discussions)
     val slug = string("slug")
     val fullSlug = string("full_slug")
@@ -62,7 +61,7 @@ object Comments: DocumentSchema<Comment>("comments", javaClass()) {
 
     val AuthorInfo = AuthorInfoColumn()
 
-    class AuthorInfoColumn() : Column<AuthorInfo, Comments>("author", javaClass()) {
+    class AuthorInfoColumn() : Column<AuthorInfo, Comments>("author", AuthorInfo::class.java) {
         val authorId = id("id", Authors)
         val name = string("name")
     }
@@ -79,7 +78,7 @@ class AuthorInfo(val authorId: Id<String, Authors>, val name: String)
 #### Define a database
 
 ```kotlin
-val db = MongoDB(database = "test", schemas = array(Comments), action = CreateDrop(onCreate = {
+val db = MongoDB(database = "test", schemas = arrayOf(Comments), action = CreateDrop(onCreate = {
     // ...
 }))
 
@@ -145,18 +144,18 @@ open class ProductSchema<D, S : DocumentSchema<D>(javaClass: Class<V>, discrimin
     val Shipping = ShippingColumn<S>()
     val Pricing = PricingColumn<S>()
 
-    inner class ShippingColumn<S : DocumentSchema<D>>() : Column<Shipping, S>("shipping", javaClass()) {
+    inner class ShippingColumn<S : DocumentSchema<D>>() : Column<Shipping, S>("shipping", Shipping::class.java) {
         val weight = integer<S>("weight")
         val dimensions = DimensionsColumn<S>()
     }
 
-    inner class DimensionsColumn<S : DocumentSchema<D>>() : Column<Dimensions, S>("dimensions", javaClass()) {
+    inner class DimensionsColumn<S : DocumentSchema<D>>() : Column<Dimensions, S>("dimensions", Dimensions::class.java) {
         val width = integer<S>("width")
         val height = integer<S>("height")
         val depth = integer<S>("depth")
     }
 
-    inner class PricingColumn<S : DocumentSchema<D>>() : Column<Pricing, S>("pricing", javaClass()) {
+    inner class PricingColumn<S : DocumentSchema<D>>() : Column<Pricing, S>("pricing", Pricing::class.java) {
         val list = integer<S>("list")
         val retail = integer<S>("retail")
         val savings = integer<S>("savings")
@@ -164,7 +163,7 @@ open class ProductSchema<D, S : DocumentSchema<D>(javaClass: Class<V>, discrimin
     }
 }
 
-object Products : ProductSchema<Product, Products>(javaClass(), "")
+object Products : ProductSchema<Product, Products>(Product::class.java, "")
 
 abstract class Product(val id: Id<String, Products>? = null, val sku: String, val title: String, val description: String,
                        val asin: String, val shipping: Shipping, val pricing: Pricing) {
@@ -181,10 +180,10 @@ class Pricing(val list: Int, val retail: Int, val savings: Int, val pctSavings: 
 #### Define an inherited schema
 
 ```kotlin
-object Albums : ProductSchema<Album, Albums>(javaClass(), discriminator = "Audio Album") {
+object Albums : ProductSchema<Album, Albums>(Album::class.java, discriminator = "Audio Album") {
     val details = DetailsColumn()
 
-    class DetailsColumn() : Column<Details, Albums>("details", javaClass()) {
+    class DetailsColumn() : Column<Details, Albums>("details", Details::class.java) {
         val title = string("title")
         val artistId = id("artistId", Artists)
         val genre = setOfString("genre")
@@ -192,7 +191,7 @@ object Albums : ProductSchema<Album, Albums>(javaClass(), discriminator = "Audio
         val tracks = TracksColumn()
     }
 
-    class TracksColumn() : ListColumn<Track, Albums>("tracks", javaClass()) {
+    class TracksColumn() : ListColumn<Track, Albums>("tracks", Track::class.java) {
         val title = string("title")
         val duration = integer("duration")
     }

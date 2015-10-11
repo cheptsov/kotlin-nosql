@@ -24,18 +24,18 @@ fun MongoDB(uri: MongoClientURI, schemas: Array<out AbstractSchema>, initializat
             ServerAddress(tokens[0], tokens[1].toInt())
         } else
             ServerAddress(host)
-    }.copyToArray()
+    }.toTypedArray()
     val database: String = if (uri.getDatabase() != null) uri.getDatabase()!! else "test"
     val options: MongoClientOptions = uri.getOptions()!!
     val credentials = if (uri.getUsername() != null)
-      array(MongoCredential.createMongoCRCredential(uri.getUsername(), database, uri.getPassword())!!)
-    else array()
+      arrayOf(MongoCredential.createMongoCRCredential(uri.getUsername(), database, uri.getPassword())!!)
+    else arrayOf()
   return MongoDB(seeds, database, credentials, options, schemas, initialization)
 }
 
 // TODO: Allow use more than one database
-class MongoDB(seeds: Array<ServerAddress> = array(ServerAddress()), val database: String = "test",
-              val credentials: Array<MongoCredential> = array(), val options: MongoClientOptions = MongoClientOptions.Builder().build()!!,
+class MongoDB(seeds: Array<ServerAddress> = arrayOf(ServerAddress()), val database: String = "test",
+              val credentials: Array<MongoCredential> = arrayOf(), val options: MongoClientOptions = MongoClientOptions.Builder().build()!!,
               schemas: Array<out AbstractSchema>, action: SchemaGenerationAction<MongoDBSession> = Validate()) : Database<MongoDBSession>(schemas, action) {
     val seeds = seeds
     val db = MongoClient(seeds.toList(), credentials.toList(), options).getDB(database)!!

@@ -70,10 +70,3 @@ project(':kotlin-nosql-mongodb') {
         compile 'org.mongodb:mongo-java-driver:3.0.3'
     }
 }
-
-project(':kotlin-nosql-redis') {
-    dependencies {
-        compile project(':')
-        compile('redis.clients:jedis:2.5.1')
-    }
-}

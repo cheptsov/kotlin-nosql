@@ -3,18 +3,24 @@
   <component name="GradleSettings">
     <option name="linkedExternalProjectsSettings">
       <GradleProjectSettings>
-        <option name="createEmptyContentRootDirectories" value="true" />
-        <option name="distributionType" value="WRAPPED" />
+        <option name="disableWrapperSourceDistributionNotification" value="true" />
+        <option name="distributionType" value="DEFAULT_WRAPPED" />
         <option name="externalProjectPath" value="$PROJECT_DIR$" />
-        <option name="gradleHome" value="/usr/local/bin/gradle" />
+        <option name="gradleHome" value="/usr/local/Cellar/gradle/2.2.1/bin" />
+        <option name="gradleJvm" value="1.8" />
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/kotlin-nosql-mongodb" />
-            <option value="$PROJECT_DIR$/kotlin-nosql-redis" />
           </set>
         </option>
         <option name="useAutoImport" value="true" />
+        <option name="myModules">
+          <set>
+            <option value="$PROJECT_DIR$" />
+            <option value="$PROJECT_DIR$/kotlin-nosql-mongodb" />
+          </set>
+        </option>
       </GradleProjectSettings>
     </option>
   </component>

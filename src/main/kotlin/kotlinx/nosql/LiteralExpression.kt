@@ -1,4 +1,4 @@
 package kotlinx.nosql
 
-class LiteralExpression(val value: Any): Expression<Any> {
+class LiteralExpression(val value: Any?): Expression<Any?> {
 }

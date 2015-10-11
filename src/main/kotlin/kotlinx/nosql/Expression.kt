@@ -1,4 +1,4 @@
 package kotlinx.nosql
 
-trait Expression<T> {
+interface Expression<T> {
 }

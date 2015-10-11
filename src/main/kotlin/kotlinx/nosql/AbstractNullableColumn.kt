@@ -1,4 +1,4 @@
 package kotlinx.nosql
 
-trait AbstractNullableColumn {
+interface AbstractNullableColumn {
 }

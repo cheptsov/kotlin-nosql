@@ -1,6 +1,6 @@
 package kotlinx.nosql
 
-class TableSchemaProjectionQueryWrapper<T : TableSchema<P>, P, V>(val params: TableSchemaProjectionQueryParams<T, P, V>): Iterable<V> {
+class TableSchemaProjectionQueryWrapper<T : TableSchema<P>, P: Any, V: Any>(val params: TableSchemaProjectionQueryParams<T, P, V>): Iterable<V> {
     override fun iterator(): Iterator<V> {
         return Session.current<TableSchemaOperations>().find(params)
     }

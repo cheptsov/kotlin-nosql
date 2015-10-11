@@ -1,11 +1,11 @@
 <component name="libraryTable">
   <library name="Gradle: org.jetbrains.spek:spek:0.1-SNAPSHOT">
     <CLASSES>
-      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.spek/spek/0.1-SNAPSHOT/bc92fcc6a8517450cd239c47c54eef54e7656314/spek-0.1-SNAPSHOT.jar!/" />
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.spek/spek/0.1-SNAPSHOT/eba907451423ec0109c095e3aa0f71c1cb917a6d/spek-0.1-SNAPSHOT.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.spek/spek/0.1-SNAPSHOT/dc07ebe409d6ad4e187a9c5062d2d7dae875667c/spek-0.1-SNAPSHOT-sources.jar!/" />
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.spek/spek/0.1-SNAPSHOT/c3a9006a8f4a64a458e03ed08e02d96f34ce5a6b/spek-0.1-SNAPSHOT-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

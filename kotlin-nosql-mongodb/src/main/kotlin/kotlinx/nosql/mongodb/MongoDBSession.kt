@@ -67,7 +67,7 @@ class MongoDBSession(val db: DB) : Session, DocumentSchemaOperations, TableSchem
         collection.drop()
     }
 
-    override fun <T : kotlinx.nosql.DocumentSchema<P, V>, P, V> T.insert(v: V): Id<P, T> {
+    override fun <T : kotlinx.nosql.DocumentSchema<P, V>, P: Any, V: Any> T.insert(v: V): Id<P, T> {
         val collection = db.getCollection(this.schemaName)!!
         val doc = getDBObject(v, this)
         if (discriminator != null) {
@@ -77,7 +77,7 @@ class MongoDBSession(val db: DB) : Session, DocumentSchemaOperations, TableSchem
                     dominatorValue = entry.key.value
                 }
             }
-            doc.set(this.discriminator.column.name, dominatorValue!!)
+            doc.set(this.discriminator!!.column.name, dominatorValue!!)
         }
         collection.insert(doc)
         return Id<P, T>(doc.get("_id").toString() as P)
@@ -128,9 +128,9 @@ class MongoDBSession(val db: DB) : Session, DocumentSchemaOperations, TableSchem
         return doc
     }
 
-    override fun <T : kotlinx.nosql.DocumentSchema<P, C>, P, C> find(params: DocumentSchemaQueryParams<T, P, C>): Iterator<C> {
-        if (params.query != null && !searchOperatorSupported && params.query.usesSearch())
-          return params.schema.runCommandText(params.query)
+    override fun <T : kotlinx.nosql.DocumentSchema<P, C>, P: Any, C: Any> find(params: DocumentSchemaQueryParams<T, P, C>): Iterator<C> {
+        if (params.query != null && !searchOperatorSupported && params.query!!.usesSearch())
+          return params.schema.runCommandText(params.query!!)
         else
           return object : Iterator<C> {
             var cursor: DBCursor? = null
@@ -138,7 +138,7 @@ class MongoDBSession(val db: DB) : Session, DocumentSchemaOperations, TableSchem
             override fun next(): C {
               if (cursor == null) {
                 val collection = db.getCollection(params.schema.schemaName)
-                val query = if (params.query != null) getQuery(params.query) else BasicDBObject()
+                val query = if (params.query != null) getQuery(params.query!!) else BasicDBObject()
                 cursor = collection!!.find(query)!!
                 if (params.skip != null) {
                   cursor!!.skip(params.skip!!)
@@ -155,7 +155,7 @@ class MongoDBSession(val db: DB) : Session, DocumentSchemaOperations, TableSchem
             override fun hasNext(): Boolean {
               if (cursor == null) {
                 val collection = db.getCollection(params.schema.schemaName)
-                val query = if (params.query != null) getQuery(params.query) else BasicDBObject()
+                val query = if (params.query != null) getQuery(params.query!!) else BasicDBObject()
                 cursor = collection!!.find(query)!!
                 if (params.skip != null) {
                   cursor!!.skip(params.skip!!)
@@ -166,13 +166,13 @@ class MongoDBSession(val db: DB) : Session, DocumentSchemaOperations, TableSchem
           }
     }
 
-    private fun <T : kotlinx.nosql.DocumentSchema<P, C>, P, C> T.runCommandText(op: Query): Iterator<C> {
+    private fun <T : kotlinx.nosql.DocumentSchema<P, C>, P: Any, C> T.runCommandText(op: Query): Iterator<C> {
       val searchCmd = BasicDBObject()
       searchCmd.append("text", this.schemaName)
       // TODO: Only supports text(...) and other condition
       searchCmd.append("search", when (op) {
         is TextQuery -> op.search
-        is AndQuery -> if (op.expr1 is TextQuery) op.expr1.search else throw UnsupportedOperationException()
+        is AndQuery -> if (op.expr1 is TextQuery) (op.expr1 as TextQuery).search else throw UnsupportedOperationException()
         else -> throw UnsupportedOperationException()
       })
       val schema = this
@@ -189,7 +189,7 @@ class MongoDBSession(val db: DB) : Session, DocumentSchemaOperations, TableSchem
       return objects.iterator()
     }
 
-    override fun <T : TableSchema<P>, P, V> find(params: TableSchemaProjectionQueryParams<T, P, V>): Iterator<V> {
+    override fun <T : TableSchema<P>, P: Any, V: Any> find(params: TableSchemaProjectionQueryParams<T, P, V>): Iterator<V> {
         return object:Iterator<V> {
             var cursor: DBCursor? = null
             var pos = 0
@@ -200,7 +200,7 @@ class MongoDBSession(val db: DB) : Session, DocumentSchemaOperations, TableSchem
                     params.projection.forEach {
                         fields.append(it.fullName, "1")
                     }
-                    val query = if (params.query != null) getQuery(params.query) else BasicDBObject()
+                    val query = if (params.query != null) getQuery(params.query!!) else BasicDBObject()
                     cursor = collection!!.find(query, fields)!!
                     if (params.skip != null) {
                         cursor!!.skip(params.skip!!)
@@ -238,7 +238,7 @@ class MongoDBSession(val db: DB) : Session, DocumentSchemaOperations, TableSchem
                     params.projection.forEach {
                         fields.append(it.fullName, "1")
                     }
-                    val query = if (params.query != null) getQuery(params.query) else BasicDBObject()
+                    val query = if (params.query != null) getQuery(params.query!!) else BasicDBObject()
                     cursor = collection!!.find(query, fields)!!
                     if (params.skip != null) {
                         cursor!!.skip(params.skip!!)
@@ -264,21 +264,21 @@ class MongoDBSession(val db: DB) : Session, DocumentSchemaOperations, TableSchem
             is EqualQuery -> {
                 if (op.expr1 is AbstractColumn<*, *, *>) {
                     if (op.expr2 is LiteralExpression) {
-                        if (op.expr1.columnType.primitive) {
-                            if (op.expr1.columnType.id) {
-                                query.append(op.expr1.fullName, ObjectId(op.expr2.value.toString()))
+                        if ((op.expr1 as AbstractColumn<*, *, *>).columnType.primitive) {
+                            if ((op.expr1 as AbstractColumn<*, *, *>).columnType.id) {
+                                query.append((op.expr1 as AbstractColumn<*, *, *>).fullName, ObjectId((op.expr2 as LiteralExpression).value.toString()))
                             } else {
-                                var columnName = op.expr1.fullName
+                                var columnName = (op.expr1 as AbstractColumn<*, *, *>).fullName
                                 if (removePrefix.isNotEmpty() && columnName.startsWith(removePrefix)) {
-                                    columnName = columnName.substring(removePrefix.length + 1)
+                                    columnName = columnName.substring(removePrefix.length() + 1)
                                 }
-                                query.append( columnName, op.expr2.value)
+                                query.append( columnName, (op.expr2 as LiteralExpression).value)
                             }
                         } else {
                             throw UnsupportedOperationException()
                         }
                     } else if (op.expr2 is AbstractColumn<*, *, *>) {
-                        query.append("\$where", "this.${op.expr1.fullName} == this.${op.expr2.fullName}")
+                        query.append("\$where", "this.${(op.expr1 as AbstractColumn<*, *, *>).fullName} == this.${(op.expr2 as AbstractColumn<*, *, *>).fullName}")
                     } else {
                         throw UnsupportedOperationException()
                     }
@@ -289,8 +289,8 @@ class MongoDBSession(val db: DB) : Session, DocumentSchemaOperations, TableSchem
             is MatchesQuery -> {
                 if (op.expr1 is AbstractColumn<*, *, *>) {
                     if (op.expr2 is LiteralExpression) {
-                        if (op.expr2.value is Pattern) {
-                            query.append(op.expr1.fullName, BasicDBObject().append("\$regex", op.expr2.value))
+                        if ((op.expr2 as LiteralExpression).value is Pattern) {
+                            query.append((op.expr1 as AbstractColumn<*, *, *>).fullName, BasicDBObject().append("\$regex", (op.expr2 as LiteralExpression).value))
                         } else {
                             throw UnsupportedOperationException()
                         }
@@ -304,17 +304,17 @@ class MongoDBSession(val db: DB) : Session, DocumentSchemaOperations, TableSchem
             is NotEqualQuery -> {
                 if (op.expr1 is AbstractColumn<*, *, *>) {
                     if (op.expr2 is LiteralExpression) {
-                        if (op.expr2.value is String || op.expr2.value is Int) {
-                            if (op.expr1.columnType.id) {
-                                query.append(op.expr1.fullName, BasicDBObject().append("\$ne", ObjectId(op.expr2.value.toString())))
+                        if ((op.expr2 as LiteralExpression).value is String || (op.expr2 as LiteralExpression).value is Int) {
+                            if ((op.expr1 as AbstractColumn<*, *, *>).columnType.id) {
+                                query.append((op.expr1 as AbstractColumn<*, *, *>).fullName, BasicDBObject().append("\$ne", ObjectId((op.expr2 as LiteralExpression).value.toString())))
                             } else {
-                                query.append(op.expr1.fullName, BasicDBObject().append("\$ne", op.expr2.value))
+                                query.append((op.expr1 as AbstractColumn<*, *, *>).fullName, BasicDBObject().append("\$ne", (op.expr2 as LiteralExpression).value))
                             }
                         } else {
                             throw UnsupportedOperationException()
                         }
                     } else if (op.expr2 is AbstractColumn<*, *, *>) {
-                        query.append("\$where", "this.${op.expr1.fullName} != this.${op.expr2.fullName}")
+                        query.append("\$where", "this.${(op.expr1 as AbstractColumn<*, *, *>).fullName} != this.${(op.expr2 as AbstractColumn<*, *, *>).fullName}")
                     } else {
                         throw UnsupportedOperationException()
                     }
@@ -325,13 +325,13 @@ class MongoDBSession(val db: DB) : Session, DocumentSchemaOperations, TableSchem
             is GreaterQuery -> {
                 if (op.expr1 is AbstractColumn<*, *, *>) {
                     if (op.expr2 is LiteralExpression) {
-                        if (op.expr2.value is String || op.expr2.value is Int) {
-                            query.append(op.expr1.fullName, BasicDBObject().append("\$gt", op.expr2.value))
+                        if ((op.expr2 as LiteralExpression).value is String || (op.expr2 as LiteralExpression).value is Int) {
+                            query.append((op.expr1 as AbstractColumn<*, *, *>).fullName, BasicDBObject().append("\$gt", (op.expr2 as LiteralExpression).value))
                         } else {
                             throw UnsupportedOperationException()
                         }
                     } else if (op.expr2 is AbstractColumn<*, *, *>) {
-                        query.append("\$where", "this.${op.expr1.fullName} > this.${op.expr2.fullName}")
+                        query.append("\$where", "this.${(op.expr1 as AbstractColumn<*, *, *>).fullName} > this.${(op.expr2 as AbstractColumn<*, *, *>).fullName}")
                     } else {
                         throw UnsupportedOperationException()
                     }
@@ -342,13 +342,13 @@ class MongoDBSession(val db: DB) : Session, DocumentSchemaOperations, TableSchem
             is LessQuery -> {
                 if (op.expr1 is AbstractColumn<*, *, *>) {
                     if (op.expr2 is LiteralExpression) {
-                        if (op.expr2.value is String || op.expr2.value is Int) {
-                            query.append(op.expr1.fullName, BasicDBObject().append("\$lt", op.expr2.value))
+                        if ((op.expr2 as LiteralExpression).value is String || (op.expr2 as LiteralExpression).value is Int) {
+                            query.append((op.expr1 as AbstractColumn<*, *, *>).fullName, BasicDBObject().append("\$lt", (op.expr2 as LiteralExpression).value))
                         } else {
                             throw UnsupportedOperationException()
                         }
                     } else if (op.expr2 is AbstractColumn<*, *, *>) {
-                        query.append("\$where", "this.${op.expr1.fullName} < this.${op.expr2.fullName}")
+                        query.append("\$where", "this.${(op.expr1 as AbstractColumn<*, *, *>).fullName} < this.${(op.expr2 as AbstractColumn<*, *, *>).fullName}")
                     } else {
                         throw UnsupportedOperationException()
                     }
@@ -359,13 +359,13 @@ class MongoDBSession(val db: DB) : Session, DocumentSchemaOperations, TableSchem
             is GreaterEqualQuery -> {
                 if (op.expr1 is AbstractColumn<*, *, *>) {
                     if (op.expr2 is LiteralExpression) {
-                        if (op.expr2.value is String || op.expr2.value is Int) {
-                            query.append(op.expr1.fullName, BasicDBObject().append("\$gte", op.expr2.value))
+                        if ((op.expr2 as LiteralExpression).value is String || (op.expr2 as LiteralExpression).value is Int) {
+                            query.append((op.expr1 as AbstractColumn<*, *, *>).fullName, BasicDBObject().append("\$gte", (op.expr2 as LiteralExpression).value))
                         } else {
                             throw UnsupportedOperationException()
                         }
                     } else if (op.expr2 is AbstractColumn<*, *, *>) {
-                        query.append("\$where", "this.${op.expr1.fullName} >= this.${op.expr2.fullName}")
+                        query.append("\$where", "this.${(op.expr1 as AbstractColumn<*, *, *>).fullName} >= this.${(op.expr2 as AbstractColumn<*, *, *>).fullName}")
                     } else {
                         throw UnsupportedOperationException()
                     }
@@ -376,13 +376,13 @@ class MongoDBSession(val db: DB) : Session, DocumentSchemaOperations, TableSchem
             is LessEqualQuery -> {
                 if (op.expr1 is AbstractColumn<*, *, *>) {
                     if (op.expr2 is LiteralExpression) {
-                        if (op.expr2.value is String || op.expr2.value is Int) {
-                            query.append(op.expr1.fullName, BasicDBObject().append("\$lte", op.expr2.value))
+                        if ((op.expr2 as LiteralExpression).value is String || (op.expr2 as LiteralExpression).value is Int) {
+                            query.append((op.expr1 as AbstractColumn<*, *, *>).fullName, BasicDBObject().append("\$lte", (op.expr2 as LiteralExpression).value))
                         } else {
                             throw UnsupportedOperationException()
                         }
                     } else if (op.expr2 is AbstractColumn<*, *, *>) {
-                        query.append("\$where", "this.${op.expr1.fullName} <= this.${op.expr2.fullName}")
+                        query.append("\$where", "this.${(op.expr1 as AbstractColumn<*, *, *>).fullName} <= this.${(op.expr2 as AbstractColumn<*, *, *>).fullName}")
                     } else {
                         throw UnsupportedOperationException()
                     }
@@ -393,8 +393,8 @@ class MongoDBSession(val db: DB) : Session, DocumentSchemaOperations, TableSchem
             is MemberOfQuery -> {
                 if (op.expr1 is AbstractColumn<*, *, *>) {
                     if (op.expr2 is LiteralExpression) {
-                        if (op.expr2.value is List<*> || op.expr2.value is Array<*>) {
-                            query.append(op.expr1.fullName, BasicDBObject().append("\$in", op.expr2.value))
+                        if ((op.expr2 as LiteralExpression).value is List<*> || (op.expr2 as LiteralExpression).value is Array<*>) {
+                            query.append((op.expr1 as AbstractColumn<*, *, *>).fullName, BasicDBObject().append("\$in", (op.expr2 as LiteralExpression).value))
                         } else {
                             throw UnsupportedOperationException()
                         }
@@ -408,8 +408,8 @@ class MongoDBSession(val db: DB) : Session, DocumentSchemaOperations, TableSchem
             is NotMemberOfQuery -> {
                 if (op.expr1 is AbstractColumn<*, *, *>) {
                     if (op.expr2 is LiteralExpression) {
-                        if (op.expr2.value is List<*> || op.expr2.value is Array<*>) {
-                            query.append(op.expr1.fullName, BasicDBObject().append("\$nin", op.expr2.value))
+                        if ((op.expr2 as LiteralExpression).value is List<*> || (op.expr2 as LiteralExpression).value is Array<*>) {
+                            query.append((op.expr1 as AbstractColumn<*, *, *>).fullName, BasicDBObject().append("\$nin", (op.expr2 as LiteralExpression).value))
                         } else {
                             throw UnsupportedOperationException()
                         }
@@ -448,11 +448,11 @@ class MongoDBSession(val db: DB) : Session, DocumentSchemaOperations, TableSchem
         return query
     }
 
-    private fun <T: kotlinx.nosql.DocumentSchema<P, V>, P, V> getObject(doc: DBObject, schema: T): V {
+    private fun <T: kotlinx.nosql.DocumentSchema<P, V>, P: Any, V> getObject(doc: DBObject, schema: T): V {
         var s: AbstractSchema? = null
         val valueInstance: Any = if (schema is kotlinx.nosql.DocumentSchema<*, *> && schema.discriminator != null) {
             var instance: Any? = null
-            val discriminatorValue = doc.get(schema.discriminator.column.name)
+            val discriminatorValue = doc.get(schema.discriminator!!.column.name)
             for (discriminator in kotlinx.nosql.DocumentSchema.tableDiscriminators.get(schema.schemaName)!!) {
                 if (discriminator.value!!.equals(discriminatorValue)) {
                     instance = newInstance(kotlinx.nosql.DocumentSchema.discriminatorClasses.get(discriminator)!!)
@@ -469,7 +469,7 @@ class MongoDBSession(val db: DB) : Session, DocumentSchemaOperations, TableSchem
         val schemaFields = getAllFields(schemaClass as Class<in Any?>)
         val valueFields = getAllFieldsMap(valueInstance.javaClass as Class<in Any?>)
         for (schemaField in schemaFields) {
-            if (javaClass<AbstractColumn<Any?, T, Any?>>().isAssignableFrom(schemaField.getType()!!)) {
+            if (AbstractColumn::class.java.isAssignableFrom(schemaField.getType()!!)) {
                 val valueField = valueFields.get(if (schemaField.getName()!!.equals("pk")) "id" else schemaField.getName()!!.toLowerCase())
                 if (valueField != null) {
                     schemaField.setAccessible(true)
@@ -553,17 +553,17 @@ class MongoDBSession(val db: DB) : Session, DocumentSchemaOperations, TableSchem
         return valueInstance
     }
 
-    internal override fun <T : AbstractSchema> insert(columns: Array<Pair<AbstractColumn<out Any?, T, out Any?>, Any?>>) {
+    override fun <T : AbstractSchema> insert(columns: Array<Pair<AbstractColumn<out Any?, T, out Any?>, Any?>>) {
         throw UnsupportedOperationException()
     }
 
-    internal override fun <T : AbstractSchema> delete(table: T, op: Query): Int {
+    override fun <T : AbstractSchema> delete(table: T, op: Query): Int {
         val collection = db.getCollection(table.schemaName)!!
         val query = getQuery(op)
         return collection.remove(query)!!.getN()
     }
 
-    internal override fun update(schema: AbstractSchema, columnValues: Array<Pair<AbstractColumn<*, *, *>, *>>, op: Query): Int {
+    override fun update(schema: AbstractSchema, columnValues: Array<Pair<AbstractColumn<*, *, *>, *>>, op: Query): Int {
         val collection = db.getCollection(schema.schemaName)!!
         val statement = BasicDBObject()
         val doc = BasicDBObject().append("\$set", statement)
@@ -573,7 +573,7 @@ class MongoDBSession(val db: DB) : Session, DocumentSchemaOperations, TableSchem
         return collection.update(getQuery(op), doc)!!.getN()
     }
 
-    internal override fun <T> addAll(schema: AbstractSchema, column: AbstractColumn<Collection<T>, *, *>, values: Collection<T>, op: Query): Int {
+    override fun <T> addAll(schema: AbstractSchema, column: AbstractColumn<Collection<T>, *, *>, values: Collection<T>, op: Query): Int {
         val collection = db.getCollection(schema.schemaName)!!
         val statement = BasicDBObject()
         val doc = BasicDBObject().append("\$pushAll", statement)
@@ -581,7 +581,7 @@ class MongoDBSession(val db: DB) : Session, DocumentSchemaOperations, TableSchem
         return collection.update(getQuery(op), doc)!!.getN()
     }
 
-    internal override fun <T> removeAll(schema: AbstractSchema, column: AbstractColumn<Collection<T>, *, *>, values: Collection<T>, op: Query): Int {
+    override fun <T> removeAll(schema: AbstractSchema, column: AbstractColumn<Collection<T>, *, *>, values: Collection<T>, op: Query): Int {
         val collection = db.getCollection(schema.schemaName)!!
         val statement = BasicDBObject()
         val doc = BasicDBObject().append("\$pullAll", statement)
@@ -589,7 +589,7 @@ class MongoDBSession(val db: DB) : Session, DocumentSchemaOperations, TableSchem
         return collection.update(getQuery(op), doc)!!.getN()
     }
 
-    internal override fun <T> removeAll(schema: AbstractSchema, column: AbstractColumn<Collection<T>, *, *>, removeOp: Query, op: Query): Int {
+    override fun <T> removeAll(schema: AbstractSchema, column: AbstractColumn<Collection<T>, *, *>, removeOp: Query, op: Query): Int {
         val collection = db.getCollection(schema.schemaName)!!
         val statement = BasicDBObject()
         val doc = BasicDBObject().append("\$pull", statement)
@@ -647,14 +647,14 @@ class MongoDBSession(val db: DB) : Session, DocumentSchemaOperations, TableSchem
 
     private fun parse(doc: DBObject, path: Array<String>, position: Int = 0): Any? {
         val value = doc.get(path[position])
-        if (position < path.size - 1) {
+        if (position < path.size() - 1) {
             return parse(value as DBObject, path, position + 1)
         } else {
             return value
         }
     }
 
-    override fun <T: kotlinx.nosql.DocumentSchema<P, C>, P, C> T.find(query: T.() -> Query): DocumentSchemaQueryWrapper<T, P, C> {
+    override fun <T: kotlinx.nosql.DocumentSchema<P, C>, P: Any, C: Any> T.find(query: T.() -> Query): DocumentSchemaQueryWrapper<T, P, C> {
         val params = DocumentSchemaQueryParams<T, P, C>(this, query())
         return DocumentSchemaQueryWrapper(params)
     }

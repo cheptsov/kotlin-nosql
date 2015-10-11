@@ -1,6 +1,6 @@
 package kotlinx.nosql
 
-open class DocumentSchemaQueryWrapper<T : DocumentSchema<P, C>, P, C>(val params: kotlinx.nosql.DocumentSchemaQueryParams<T, P, C>): Iterable<C> {
+open class DocumentSchemaQueryWrapper<T : DocumentSchema<P, C>, P: Any, C: Any>(val params: kotlinx.nosql.DocumentSchemaQueryParams<T, P, C>): Iterable<C> {
     override fun iterator(): Iterator<C> {
         return Session.current<DocumentSchemaOperations>().find(params)
     }
@@ -21,7 +21,7 @@ open class DocumentSchemaQueryWrapper<T : DocumentSchema<P, C>, P, C>(val params
 
     fun <X> projection(x: T.() -> X): X {
         val xx = params.schema.x()
-        val projectionParams = kotlinx.nosql.TableSchemaProjectionQueryParams<TableSchema<Any?>, Any?, Any?>(params.schema as TableSchema<Any?>,
+        val projectionParams = kotlinx.nosql.TableSchemaProjectionQueryParams<TableSchema<Any>, Any, Any>(params.schema as TableSchema<Any>,
                 when (xx) {
                     is AbstractColumn<*, *, *> -> listOf(xx)
                     is ColumnPair<*, *, *> -> listOf(xx.a, xx.b)
