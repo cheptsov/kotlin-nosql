@@ -2,8 +2,9 @@ package kotlinx.nosql
 
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.reflect.KClass
 
-abstract class DocumentSchema<I: Any, D>(name: String, val valueClass: Class<D>, primaryKey: AbstractColumn<I,
+abstract class DocumentSchema<I: Any, D: Any>(name: String, val valueClass: KClass<D>, primaryKey: AbstractColumn<I,
         out DocumentSchema<I, D>, I>, val discriminator: Discriminator<out Any, out DocumentSchema<out Any, out Any>>? = null) : TableSchema<I>(name, primaryKey) {
     init {
         if (discriminator != null) {
@@ -22,7 +23,7 @@ abstract class DocumentSchema<I: Any, D>(name: String, val valueClass: Class<D>,
 
     companion object {
         val tableDiscriminators = ConcurrentHashMap<String, MutableList<Discriminator<*, *>>>()
-        val discriminatorClasses = ConcurrentHashMap<Discriminator<*, *>, Class<*>>()
+        val discriminatorClasses = ConcurrentHashMap<Discriminator<*, *>, KClass<*>>()
         val discriminatorSchemaClasses = ConcurrentHashMap<Discriminator<*, *>, Class<*>>()
         val discriminatorSchemas = ConcurrentHashMap<Discriminator<*, *>, AbstractSchema>()
     }

@@ -52,7 +52,7 @@ Demo: http://www.youtube.com/watch?v=80xgl3KThvM
 #### Define a schema
 
 ```kotlin
-object Comments: DocumentSchema<Comment>("comments", Comment::class.java) {
+object Comments: DocumentSchema<Comment>("comments", Comment::class) {
     val discussionId = id("discussion_id", Discussions)
     val slug = string("slug")
     val fullSlug = string("full_slug")
@@ -61,7 +61,7 @@ object Comments: DocumentSchema<Comment>("comments", Comment::class.java) {
 
     val AuthorInfo = AuthorInfoColumn()
 
-    class AuthorInfoColumn() : Column<AuthorInfo, Comments>("author", AuthorInfo::class.java) {
+    class AuthorInfoColumn() : Column<AuthorInfo, Comments>("author", AuthorInfo::class) {
         val authorId = id("id", Authors)
         val name = string("name")
     }
@@ -144,18 +144,18 @@ open class ProductSchema<D, S : DocumentSchema<D>(javaClass: Class<V>, discrimin
     val Shipping = ShippingColumn<S>()
     val Pricing = PricingColumn<S>()
 
-    inner class ShippingColumn<S : DocumentSchema<D>>() : Column<Shipping, S>("shipping", Shipping::class.java) {
+    inner class ShippingColumn<S : DocumentSchema<D>>() : Column<Shipping, S>("shipping", Shipping::class) {
         val weight = integer<S>("weight")
         val dimensions = DimensionsColumn<S>()
     }
 
-    inner class DimensionsColumn<S : DocumentSchema<D>>() : Column<Dimensions, S>("dimensions", Dimensions::class.java) {
+    inner class DimensionsColumn<S : DocumentSchema<D>>() : Column<Dimensions, S>("dimensions", Dimensions::class) {
         val width = integer<S>("width")
         val height = integer<S>("height")
         val depth = integer<S>("depth")
     }
 
-    inner class PricingColumn<S : DocumentSchema<D>>() : Column<Pricing, S>("pricing", Pricing::class.java) {
+    inner class PricingColumn<S : DocumentSchema<D>>() : Column<Pricing, S>("pricing", Pricing::class) {
         val list = integer<S>("list")
         val retail = integer<S>("retail")
         val savings = integer<S>("savings")
@@ -163,7 +163,7 @@ open class ProductSchema<D, S : DocumentSchema<D>(javaClass: Class<V>, discrimin
     }
 }
 
-object Products : ProductSchema<Product, Products>(Product::class.java, "")
+object Products : ProductSchema<Product, Products>(Product::class, "")
 
 abstract class Product(val id: Id<String, Products>? = null, val sku: String, val title: String, val description: String,
                        val asin: String, val shipping: Shipping, val pricing: Pricing) {
@@ -180,10 +180,10 @@ class Pricing(val list: Int, val retail: Int, val savings: Int, val pctSavings: 
 #### Define an inherited schema
 
 ```kotlin
-object Albums : ProductSchema<Album, Albums>(Album::class.java, discriminator = "Audio Album") {
+object Albums : ProductSchema<Album, Albums>(Album::class, discriminator = "Audio Album") {
     val details = DetailsColumn()
 
-    class DetailsColumn() : Column<Details, Albums>("details", Details::class.java) {
+    class DetailsColumn() : Column<Details, Albums>("details", Details::class) {
         val title = string("title")
         val artistId = id("artistId", Artists)
         val genre = setOfString("genre")
@@ -191,7 +191,7 @@ object Albums : ProductSchema<Album, Albums>(Album::class.java, discriminator = 
         val tracks = TracksColumn()
     }
 
-    class TracksColumn() : ListColumn<Track, Albums>("tracks", Track::class.java) {
+    class TracksColumn() : ListColumn<Track, Albums>("tracks", Track::class) {
         val title = string("title")
         val duration = integer("duration")
     }

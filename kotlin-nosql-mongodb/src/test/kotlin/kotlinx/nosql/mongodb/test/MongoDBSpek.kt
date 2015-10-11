@@ -7,11 +7,12 @@ import kotlinx.nosql.mongodb.DocumentSchema
 import org.joda.time.LocalDate
 import org.jetbrains.spek.api.Spek
 import java.util.regex.Pattern
+import kotlin.reflect.KClass
 import kotlin.test.assertTrue
 
 class MongoDBSpek : Spek() {
-    open class ProductSchema<D: Any, S : DocumentSchema<D>>(javaClass: Class<D>, discriminator: String) : DocumentSchema<D>("products",
-            javaClass, discriminator = Discriminator(string("type"), discriminator)) {
+    open class ProductSchema<D: Any, S : DocumentSchema<D>>(klass: KClass<D>, discriminator: String) : DocumentSchema<D>("products",
+            klass, discriminator = Discriminator(string("type"), discriminator)) {
         val sku = string<S>("sku")
         val title = string<S>("title")
         val description = string<S>("description")
@@ -30,18 +31,18 @@ class MongoDBSpek : Spek() {
         val shipping = ShippingColumn<S>()
         val pricing = PricingColumn<S>()
 
-        inner class ShippingColumn<S : DocumentSchema<D>>() : Column<Shipping, S>("shipping", Shipping::class.java) {
+        inner class ShippingColumn<S : DocumentSchema<D>>() : Column<Shipping, S>("shipping", Shipping::class) {
             val weight = integer<S>("weight")
             val dimensions = DimensionsColumn<S>()
         }
 
-        inner class DimensionsColumn<S : DocumentSchema<D>>() : Column<Dimensions, S>("dimensions", Dimensions::class.java) {
+        inner class DimensionsColumn<S : DocumentSchema<D>>() : Column<Dimensions, S>("dimensions", Dimensions::class) {
             val width = integer<S>("width")
             val height = integer<S>("height")
             val depth = integer<S>("depth")
         }
 
-        inner class PricingColumn<T : DocumentSchema<D>>() : Column<Pricing, T>("pricing", Pricing::class.java) {
+        inner class PricingColumn<T : DocumentSchema<D>>() : Column<Pricing, T>("pricing", Pricing::class) {
             val list = integer<T>("list")
             val retail = integer<T>("retail")
             val savings = integer<T>("savings")
@@ -54,17 +55,17 @@ class MongoDBSpek : Spek() {
         }
     }
 
-    object Artists : DocumentSchema<Artist>("artists", Artist::class.java) {
+    object Artists : DocumentSchema<Artist>("artists", Artist::class) {
         val name = string("name")
     }
 
-    object Products : ProductSchema<Product, Products>(Product::class.java, "") {
+    object Products : ProductSchema<Product, Products>(Product::class, "") {
     }
 
-    object Albums : ProductSchema<Album, Albums>(Album::class.java, discriminator = "Audio Album") {
+    object Albums : ProductSchema<Album, Albums>(Album::class, discriminator = "Audio Album") {
         val details = DetailsColumn()
 
-        class DetailsColumn() : Column<Details, Albums>("details", Details::class.java) {
+        class DetailsColumn() : Column<Details, Albums>("details", Details::class) {
             val title: AbstractColumn<String, Albums, String> = string("title")
             val artistId = id("artistId", Artists)
             val artistIds = setOfId("artistIds", Artists)
@@ -73,7 +74,7 @@ class MongoDBSpek : Spek() {
             val tracks = TracksColumn()
         }
 
-        class TracksColumn() : ListColumn<Track, Albums>("tracks", Track::class.java) {
+        class TracksColumn() : ListColumn<Track, Albums>("tracks", Track::class) {
             val title = string("title")
             val duration = integer("duration")
         }

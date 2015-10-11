@@ -15,7 +15,7 @@ fun getAllFields(_type: Class<in Any>, condition: (Field) -> Boolean = { f -> tr
         if (condition(field)) fields.add(field)
     }
     if (_type.superclass != null) {
-        getAllFields(_type.superclass, condition, fields)
+        getAllFields(_type.superclass!!, condition, fields)
     }
     return fields
 }

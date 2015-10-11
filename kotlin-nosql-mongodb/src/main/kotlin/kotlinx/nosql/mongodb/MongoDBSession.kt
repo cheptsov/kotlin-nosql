@@ -73,7 +73,7 @@ class MongoDBSession(val db: DB) : Session, DocumentSchemaOperations, TableSchem
         if (discriminator != null) {
             var dominatorValue: Any? = null
             for (entry in kotlinx.nosql.DocumentSchema.discriminatorClasses.entrySet()) {
-                if (entry.value.equals(v.javaClass)) {
+                if (entry.value.java.equals(v.javaClass)) {
                     dominatorValue = entry.key.value
                 }
             }
@@ -91,7 +91,7 @@ class MongoDBSession(val db: DB) : Session, DocumentSchemaOperations, TableSchem
         var s: AbstractSchema? = null
         if (schema is kotlinx.nosql.DocumentSchema<*, *> && schema.discriminator != null) {
             for (entry in kotlinx.nosql.DocumentSchema.discriminatorClasses.entrySet()) {
-                if (entry.value.equals(o.javaClass)) {
+                if (entry.value.java.equals(o.javaClass)) {
                     sc = kotlinx.nosql.DocumentSchema.discriminatorSchemaClasses.get(entry.key)!!
                     s = kotlinx.nosql.DocumentSchema.discriminatorSchemas.get(entry.key)!!
                 }
@@ -166,7 +166,7 @@ class MongoDBSession(val db: DB) : Session, DocumentSchemaOperations, TableSchem
           }
     }
 
-    private fun <T : kotlinx.nosql.DocumentSchema<P, C>, P: Any, C> T.runCommandText(op: Query): Iterator<C> {
+    private fun <T : kotlinx.nosql.DocumentSchema<P, C>, P: Any, C: Any> T.runCommandText(op: Query): Iterator<C> {
       val searchCmd = BasicDBObject()
       searchCmd.append("text", this.schemaName)
       // TODO: Only supports text(...) and other condition
@@ -448,14 +448,14 @@ class MongoDBSession(val db: DB) : Session, DocumentSchemaOperations, TableSchem
         return query
     }
 
-    private fun <T: kotlinx.nosql.DocumentSchema<P, V>, P: Any, V> getObject(doc: DBObject, schema: T): V {
+    private fun <T: kotlinx.nosql.DocumentSchema<P, V>, P: Any, V : Any /* not sure */> getObject(doc: DBObject, schema: T): V {
         var s: AbstractSchema? = null
         val valueInstance: Any = if (schema is kotlinx.nosql.DocumentSchema<*, *> && schema.discriminator != null) {
             var instance: Any? = null
             val discriminatorValue = doc.get(schema.discriminator!!.column.name)
             for (discriminator in kotlinx.nosql.DocumentSchema.tableDiscriminators.get(schema.schemaName)!!) {
                 if (discriminator.value!!.equals(discriminatorValue)) {
-                    instance = newInstance(kotlinx.nosql.DocumentSchema.discriminatorClasses.get(discriminator)!!)
+                    instance = newInstance(kotlinx.nosql.DocumentSchema.discriminatorClasses.get(discriminator)!!.java)
                     s = kotlinx.nosql.DocumentSchema.discriminatorSchemas.get(discriminator)!!
                     break
                 }
@@ -463,7 +463,7 @@ class MongoDBSession(val db: DB) : Session, DocumentSchemaOperations, TableSchem
             instance!!
         } else {
             s = schema
-            newInstance(schema.valueClass)
+            newInstance(schema.valueClass.java)
         }
         val schemaClass = s!!.javaClass
         val schemaFields = getAllFields(schemaClass as Class<in Any?>)
@@ -501,7 +501,7 @@ class MongoDBSession(val db: DB) : Session, DocumentSchemaOperations, TableSchem
                         val list = doc.get(column.name) as BasicDBList
                         list.map { getObject(it as DBObject, column as ListColumn<*, out AbstractSchema>) }.toList()
                     } else {
-                        getObject(doc.get(column.name) as DBObject, column as Column<Any?, T>)
+                        getObject(doc.get(column.name) as DBObject, column as Column<Any, T>)
                     }
                     if (columnValue != null || column is AbstractNullableColumn) {
                         valueField.set(valueInstance, columnValue)
@@ -515,7 +515,7 @@ class MongoDBSession(val db: DB) : Session, DocumentSchemaOperations, TableSchem
     }
 
     private fun getObject(doc: DBObject, column: AbstractColumn<*, *, *>): Any? {
-        val valueInstance = newInstance(column.valueClass)
+        val valueInstance = newInstance(column.valueClass.java)
         val schemaClass = column.javaClass
         val columnFields = schemaClass.getDeclaredFields()!!
         val valueFields = getAllFieldsMap(valueInstance.javaClass as Class<in Any?>)
@@ -553,7 +553,7 @@ class MongoDBSession(val db: DB) : Session, DocumentSchemaOperations, TableSchem
         return valueInstance
     }
 
-    override fun <T : AbstractSchema> insert(columns: Array<Pair<AbstractColumn<out Any?, T, out Any?>, Any?>>) {
+    override fun <T : AbstractSchema> insert(columns: Array<Pair<AbstractColumn<out Any?, T, out Any>, Any?>>) {
         throw UnsupportedOperationException()
     }
 
@@ -635,9 +635,9 @@ class MongoDBSession(val db: DB) : Session, DocumentSchemaOperations, TableSchem
         } else if (column.columnType.id && column.columnType.list) {
             (columnObject as BasicDBList).map { Id<String, TableSchema<String>>(it.toString()) }
         } else if (column.columnType.custom && column.columnType.list) {
-            (columnObject as BasicDBList).map { getObject(it as DBObject, column as ListColumn<Any?, out AbstractSchema>) }
+            (columnObject as BasicDBList).map { getObject(it as DBObject, column as ListColumn<Any, out AbstractSchema>) }
         } else if (column.columnType.custom && column.columnType.set) {
-            (columnObject as BasicDBList).map { getObject(it as DBObject, column as ListColumn<Any?, out AbstractSchema>) }.toSet()
+            (columnObject as BasicDBList).map { getObject(it as DBObject, column as ListColumn<Any, out AbstractSchema>) }.toSet()
         } else if (column.columnType.custom) {
             getObject(columnObject as DBObject, column)
         } else {
