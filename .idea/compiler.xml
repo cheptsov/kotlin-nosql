@@ -18,5 +18,11 @@
         <processorPath useClasspath="true" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="kotlin_nosql_main" target="1.8" />
+      <module name="kotlin_nosql_mongodb_main" target="1.8" />
+      <module name="kotlin_nosql_mongodb_test" target="1.8" />
+      <module name="kotlin_nosql_test" target="1.8" />
+    </bytecodeTargetLevel>
   </component>
 </project>

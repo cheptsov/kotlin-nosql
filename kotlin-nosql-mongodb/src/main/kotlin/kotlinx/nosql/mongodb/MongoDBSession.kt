@@ -21,6 +21,8 @@ import org.joda.time.LocalTime
 import com.mongodb.DBCollection
 import com.mongodb.DBCursor
 import kotlinx.nosql.query.*
+import kotlin.collections.*
+import kotlin.text.*
 
 class MongoDBSession(val db: DB) : Session, DocumentSchemaOperations, TableSchemaOperations, IndexOperations {
     override fun <T : Number> incr(schema: KeyValueSchema, column: AbstractColumn<out Any?, out AbstractSchema, T>, value: T): T {

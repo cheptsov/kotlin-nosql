@@ -1,5 +1,7 @@
 package kotlinx.nosql
 
+import kotlin.collections.listOf
+
 open class DocumentSchemaQueryWrapper<T : DocumentSchema<P, C>, P: Any, C: Any>(val params: kotlinx.nosql.DocumentSchemaQueryParams<T, P, C>): Iterable<C> {
     override fun iterator(): Iterator<C> {
         return Session.current<DocumentSchemaOperations>().find(params)

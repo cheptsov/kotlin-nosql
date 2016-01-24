@@ -3,6 +3,8 @@ package kotlinx.nosql
 import java.util.ArrayList
 import java.util.regex.Pattern
 import kotlinx.nosql.query.*
+import kotlin.collections.listOf
+import kotlin.collections.setOf
 import kotlin.reflect.KClass
 
 open class AbstractColumn<C, T : AbstractSchema, S: Any>(val name: String, val valueClass: KClass<S>, val columnType: ColumnType) : ColumnQueryWrapper<C>(), Expression<C> {

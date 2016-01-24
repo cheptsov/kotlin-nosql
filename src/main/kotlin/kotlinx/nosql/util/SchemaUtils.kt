@@ -8,6 +8,9 @@ import kotlinx.nosql.AbstractSchema
 import org.joda.time.LocalDate
 import org.joda.time.LocalTime
 import org.joda.time.DateTime
+import kotlin.collections.listOf
+import kotlin.collections.setOf
+import kotlin.text.toLowerCase
 
 fun getAllFields(_type: Class<in Any>, condition: (Field) -> Boolean = { f -> true },
                  fields: MutableList<Field> = ArrayList()): MutableList<Field> {
@@ -44,7 +47,7 @@ fun Field.asColumn(schema: Any): AbstractColumn<*, *, *> {
 fun newInstance(clazz: Class<out Any?>): Any {
   val constructor = clazz.constructors!![0]
   val constructorParamTypes = constructor.parameterTypes!!
-  val constructorParamValues = Array<Any?>(constructor.parameterTypes!!.size(), { index ->
+  val constructorParamValues = Array<Any?>(constructor.parameterTypes!!.size(), { index: Int ->
     when (constructorParamTypes[index].name) {
       "int" -> 0
       "java.lang.String" -> ""

@@ -2,8 +2,12 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/kotlin-nosql.iml" filepath="$PROJECT_DIR$/kotlin-nosql.iml" />
-      <module fileurl="file://$PROJECT_DIR$/kotlin-nosql-mongodb/kotlin-nosql-mongodb.iml" filepath="$PROJECT_DIR$/kotlin-nosql-mongodb/kotlin-nosql-mongodb.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/kotlin-nosql.iml" filepath="$PROJECT_DIR$/.idea/modules/kotlin-nosql.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/kotlin-nosql-mongodb/kotlin-nosql-mongodb.iml" filepath="$PROJECT_DIR$/.idea/modules/kotlin-nosql-mongodb/kotlin-nosql-mongodb.iml" group="kotlin-nosql-mongodb" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/kotlin_nosql_main.iml" filepath="$PROJECT_DIR$/.idea/modules/kotlin_nosql_main.iml" group="kotlin-nosql" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/kotlin-nosql-mongodb/kotlin_nosql_mongodb_main.iml" filepath="$PROJECT_DIR$/.idea/modules/kotlin-nosql-mongodb/kotlin_nosql_mongodb_main.iml" group="kotlin-nosql-mongodb" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/kotlin-nosql-mongodb/kotlin_nosql_mongodb_test.iml" filepath="$PROJECT_DIR$/.idea/modules/kotlin-nosql-mongodb/kotlin_nosql_mongodb_test.iml" group="kotlin-nosql-mongodb" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/kotlin_nosql_test.iml" filepath="$PROJECT_DIR$/.idea/modules/kotlin_nosql_test.iml" group="kotlin-nosql" />
     </modules>
   </component>
 </project>

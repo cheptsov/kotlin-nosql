@@ -4,6 +4,7 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlinx.nosql.util.getAllFields
 import kotlinx.nosql.util.isColumn
 import kotlinx.nosql.util.asColumn
+import kotlin.text.isNotEmpty
 
 abstract class Database<S: Session>(val schemas: Array<out AbstractSchema>, val action: SchemaGenerationAction<S>) {
     abstract fun <R> withSession(statement: S.() -> R): R
@@ -34,9 +35,9 @@ abstract class Database<S: Session>(val schemas: Array<out AbstractSchema>, val 
         }
         withSession {
             if (action is Create) {
-                action.onCreate()
+                action.onCreate(this)
             } else if (action is CreateDrop) {
-                action.onCreate()
+                action.onCreate(this)
             }
         }
     }
