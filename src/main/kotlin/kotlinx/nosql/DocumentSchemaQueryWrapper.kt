@@ -25,7 +25,7 @@ open class DocumentSchemaQueryWrapper<T : DocumentSchema<P, C>, P: Any, C: Any>(
         val xx = params.schema.x()
         val projectionParams = kotlinx.nosql.TableSchemaProjectionQueryParams<TableSchema<Any>, Any, Any>(params.schema as TableSchema<Any>,
                 when (xx) {
-                    is AbstractColumn<*, *, *> -> listOf(xx)
+                    is AbstractColumn<*, *, *> -> listOf(xx) as List<AbstractColumn<*, *, *>>
                     is ColumnPair<*, *, *> -> listOf(xx.a, xx.b)
                     is ColumnTriple<*, *, *, *> -> listOf(xx.a, xx.b, xx.c)
                     is kotlinx.nosql.ColumnQuadruple<*, *, *, *, *> -> listOf(xx.a, xx.b, xx.c, xx.d)

@@ -132,7 +132,7 @@ class MongoDBSpek : Spek() {
                 val arId: Id<String, Artists> = Artists.insert(Artist(name = "John Coltrane"))
                 val arId2: Id<String, Artists> = Artists.insert(Artist(name = "Andrey Cheptsov"))
                 val arId3: Id<String, Artists> = Artists.insert(Artist(name = "Daft Punk"))
-                assert(arId.value.length() > 0)
+                assert(arId.value.length > 0)
                 val aId = Albums.insert(Album(sku = "00e8da9b", title = "A Love Supreme", description = "by John Coltrane",
                         asin = "B0000A118M", available = true, cost = 1.23, createdAtDate = LocalDate(2014, 3, 8), nullableBooleanNoValue = null,
                         nullableBooleanWithValue = false, nullableDateNoValue = null, nullableDateWithValue = LocalDate(2014, 3, 7),
@@ -144,7 +144,7 @@ class MongoDBSpek : Spek() {
                                 genre = setOf("Jazz", "General"), tracks = listOf(Track("A Love Supreme Part I: Acknowledgement", 100),
                                 Track("A Love Supreme Part II - Resolution", 200),
                                 Track("A Love Supreme, Part III: Pursuance", 300)))))
-                assert(aId.value.length() > 0)
+                assert(aId.value.length > 0)
                 albumId = aId
                 artistId = arId
                 artistId2 = arId2
@@ -191,7 +191,7 @@ class MongoDBSpek : Spek() {
                 kotlin.test.assertEquals("A Love Supreme [Original Recording Reissued]", album.details.title)
                 assertEquals(artistId!!, album.details.artistId)
                 assert(album.details.artistIds.size == 2)
-                assert(album.details.artistIds.contains(artistId))
+                assert(album.details.artistIds.contains(artistId as Id<String, Artists>))
                 assert(album.details.artistIds.contains(artistId2))
                 assert(album.details.genre.size == 2)
                 assert(album.details.genre.contains("Jazz"))
@@ -232,7 +232,7 @@ class MongoDBSpek : Spek() {
                 db.withSession {
                     val results = Products.find { (sku.equal("00e8da9b")).or(shipping.weight.equal(6)) }.skip(1).take(1).toList()
                     it("should return nothing") {
-                        assert(results.isEmpty)
+                        assert(results.isEmpty())
                     }
                 }
             }
@@ -582,7 +582,7 @@ class MongoDBSpek : Spek() {
                 db.withSession {
                     val results = Products.find { text("Love") and shipping.weight.equal(16) }.toList()
                     it("should return nothing") {
-                        assert(results.isEmpty)
+                        assert(results.isEmpty())
                     }
                 }
             }
@@ -591,7 +591,7 @@ class MongoDBSpek : Spek() {
                 db.withSession {
                     val results = Products.find { text("Love1") }.toList()
                     it("should return nothing") {
-                        assert(results.isEmpty)
+                        assert(results.isEmpty())
                     }
                 }
             }
@@ -609,7 +609,7 @@ class MongoDBSpek : Spek() {
                 db.withSession {
                     val results = Products.find { shipping.weight.equal(7) }.toList()
                     it("should return nothing") {
-                        assert(results.isEmpty)
+                        assert(results.isEmpty())
                     }
                 }
             }
@@ -627,7 +627,7 @@ class MongoDBSpek : Spek() {
                 db.withSession {
                     val results = Products.find { shipping.weight.notEqual(6) }.toList()
                     it("should return nothing") {
-                        assert(results.isEmpty)
+                        assert(results.isEmpty())
                     }
                 }
             }
@@ -645,7 +645,7 @@ class MongoDBSpek : Spek() {
                 db.withSession {
                     val results = Products.find { shipping.weight.gt(6) }.toList()
                     it("should return nothing") {
-                        assert(results.isEmpty)
+                        assert(results.isEmpty())
                     }
                 }
             }
@@ -663,7 +663,7 @@ class MongoDBSpek : Spek() {
                 db.withSession {
                     val results = Products.find { shipping.weight.lt(6) }.toList()
                     it("should return nothing") {
-                        assert(results.isEmpty)
+                        assert(results.isEmpty())
                     }
                 }
             }
@@ -690,7 +690,7 @@ class MongoDBSpek : Spek() {
                 db.withSession {
                     val results = Products.find { shipping.weight.ge(7) }.toList()
                     it("should return nothing") {
-                        assert(results.isEmpty)
+                        assert(results.isEmpty())
                     }
                 }
             }
@@ -717,7 +717,7 @@ class MongoDBSpek : Spek() {
                 db.withSession {
                     val results = Products.find { shipping.weight.le(5) }.toList()
                     it("should return nothing") {
-                        assert(results.isEmpty)
+                        assert(results.isEmpty())
                     }
                 }
             }
@@ -735,7 +735,7 @@ class MongoDBSpek : Spek() {
                 db.withSession {
                     val results = Products.find { shipping.weight.memberOf( arrayOf(5, 7)) }.toList()
                     it("should return nothing") {
-                        assert(results.isEmpty)
+                        assert(results.isEmpty())
                     }
                 }
             }
@@ -753,7 +753,7 @@ class MongoDBSpek : Spek() {
                 db.withSession {
                     val results = Products.find { shipping.weight.notMemberOf( arrayOf(5, 6)) }.toList()
                     it("should return nothing") {
-                        assert(results.isEmpty)
+                        assert(results.isEmpty())
                     }
                 }
             }
@@ -771,7 +771,7 @@ class MongoDBSpek : Spek() {
                 db.withSession {
                     val results = Products.find { with (shipping.dimensions) { width.equal(depth) } }.toList()
                     it("should return nothing") {
-                        assert(results.isEmpty)
+                        assert(results.isEmpty())
                     }
                 }
             }
@@ -789,7 +789,7 @@ class MongoDBSpek : Spek() {
                 db.withSession {
                     val results = Products.find { with (shipping.dimensions) { width.notEqual(height) } }.toList()
                     it("should return nothing") {
-                        assert(results.isEmpty)
+                        assert(results.isEmpty())
                     }
                 }
             }
@@ -809,7 +809,7 @@ class MongoDBSpek : Spek() {
                 db.withSession {
                     val results = Products.find { shipping.dimensions.depth.gt(shipping.dimensions.width) }.toList()
                     it("should return nothing") {
-                        assert(results.isEmpty)
+                        assert(results.isEmpty())
                     }
                 }
             }
@@ -827,7 +827,7 @@ class MongoDBSpek : Spek() {
                 db.withSession {
                     val results = Products.find { shipping.dimensions.width.lt(shipping.dimensions.depth) }.toList()
                     it("should return nothing") {
-                        assert(results.isEmpty)
+                        assert(results.isEmpty())
                     }
                 }
             }
@@ -854,7 +854,7 @@ class MongoDBSpek : Spek() {
                 db.withSession {
                     val results = Products.find { shipping.dimensions.depth.ge(shipping.dimensions.width) }.toList()
                     it("should return nothing") {
-                        assert(results.isEmpty)
+                        assert(results.isEmpty())
                     }
                 }
             }
@@ -881,7 +881,7 @@ class MongoDBSpek : Spek() {
                 db.withSession {
                     val results = Products.find { shipping.dimensions.width.le(shipping.dimensions.depth) }.toList()
                     it("should return nothing") {
-                        assert(results.isEmpty)
+                        assert(results.isEmpty())
                     }
                 }
             }
@@ -899,7 +899,7 @@ class MongoDBSpek : Spek() {
                 db.withSession {
                     val results = Albums.find { details.title.matches(Pattern.compile("Love Supremex")) }.toList()
                     it("should return nothing") {
-                        assert(results.isEmpty)
+                        assert(results.isEmpty())
                     }
                 }
             }
@@ -1128,7 +1128,7 @@ class MongoDBSpek : Spek() {
                     Albums.find { id.equal(albumId!!) }.remove()
                     val results =  Albums.find { id.equal(albumId!!) }.toList()
                     it("deletes the document from database") {
-                        assert(results.isEmpty)
+                        assert(results.isEmpty())
                     }
                 }
             }

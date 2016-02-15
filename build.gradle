@@ -11,7 +11,7 @@ buildscript {
         }
     }
     dependencies {
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.0.0-beta-4589"
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.0.0"
     }
 }
 
@@ -35,8 +35,8 @@ allprojects {
 
     dependencies {
         compile 'joda-time:joda-time:2.3'
-        compile group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib', version: '1.0.0-beta-4589', changing: true
-        testCompile group: 'org.jetbrains.spek', name: 'spek', version: '0.1.189', changing: true
+        compile group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib', version: '1.0.0', changing: true
+        testCompile group: 'org.jetbrains.spek', name: 'spek', version: '0.1.195', changing: true
     }
 
     task sourcesJar(type: Jar, dependsOn: classes) {

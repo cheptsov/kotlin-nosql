@@ -47,7 +47,7 @@ fun Field.asColumn(schema: Any): AbstractColumn<*, *, *> {
 fun newInstance(clazz: Class<out Any?>): Any {
   val constructor = clazz.constructors!![0]
   val constructorParamTypes = constructor.parameterTypes!!
-  val constructorParamValues = Array<Any?>(constructor.parameterTypes!!.size(), { index: Int ->
+  val constructorParamValues = Array<Any?>(constructor.parameterTypes!!.size, { index: Int ->
     when (constructorParamTypes[index].name) {
       "int" -> 0
       "java.lang.String" -> ""

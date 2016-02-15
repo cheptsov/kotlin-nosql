@@ -38,7 +38,7 @@ class MongoDBSession(val db: DB) : Session, DocumentSchemaOperations, TableSchem
         val results = db.command("buildInfo")
         dbVersion = results!!.get("version")!!.toString()
         val versions = dbVersion.split('.')
-        searchOperatorSupported = versions[0].toInt() >= 2 && versions[1].toInt() >= 6
+        searchOperatorSupported = versions[0].toInt() > 2 || (versions[0].toInt() == 2 && versions[1].toInt() >= 6)
     }
 
     override fun createIndex(schema: AbstractSchema, index: AbstractIndex) {
@@ -74,7 +74,7 @@ class MongoDBSession(val db: DB) : Session, DocumentSchemaOperations, TableSchem
         val doc = getDBObject(v, this)
         if (discriminator != null) {
             var dominatorValue: Any? = null
-            for (entry in kotlinx.nosql.DocumentSchema.discriminatorClasses.entrySet()) {
+            for (entry in kotlinx.nosql.DocumentSchema.discriminatorClasses.entries) {
                 if (entry.value.java.equals(v.javaClass)) {
                     dominatorValue = entry.key.value
                 }
@@ -92,7 +92,7 @@ class MongoDBSession(val db: DB) : Session, DocumentSchemaOperations, TableSchem
         var sc: Class<out Any?>? = null
         var s: AbstractSchema? = null
         if (schema is kotlinx.nosql.DocumentSchema<*, *> && schema.discriminator != null) {
-            for (entry in kotlinx.nosql.DocumentSchema.discriminatorClasses.entrySet()) {
+            for (entry in kotlinx.nosql.DocumentSchema.discriminatorClasses.entries) {
                 if (entry.value.java.equals(o.javaClass)) {
                     sc = kotlinx.nosql.DocumentSchema.discriminatorSchemaClasses.get(entry.key)!!
                     s = kotlinx.nosql.DocumentSchema.discriminatorSchemas.get(entry.key)!!
@@ -272,7 +272,7 @@ class MongoDBSession(val db: DB) : Session, DocumentSchemaOperations, TableSchem
                             } else {
                                 var columnName = (op.expr1 as AbstractColumn<*, *, *>).fullName
                                 if (removePrefix.isNotEmpty() && columnName.startsWith(removePrefix)) {
-                                    columnName = columnName.substring(removePrefix.length() + 1)
+                                    columnName = columnName.substring(removePrefix.length + 1)
                                 }
                                 query.append( columnName, (op.expr2 as LiteralExpression).value)
                             }
@@ -426,10 +426,10 @@ class MongoDBSession(val db: DB) : Session, DocumentSchemaOperations, TableSchem
             is AndQuery -> {
                 val query1 = getQuery(op.expr1)
                 val query2 = getQuery(op.expr2)
-                for (entry in query1.entrySet()) {
+                for (entry in query1.entries) {
                     query.append(entry.key, entry.value)
                 }
-                for (entry in query2.entrySet()) {
+                for (entry in query2.entries) {
                     query.append(entry.key, entry.value)
                 }
                 return query
@@ -649,7 +649,7 @@ class MongoDBSession(val db: DB) : Session, DocumentSchemaOperations, TableSchem
 
     private fun parse(doc: DBObject, path: Array<String>, position: Int = 0): Any? {
         val value = doc.get(path[position])
-        if (position < path.size() - 1) {
+        if (position < path.size - 1) {
             return parse(value as DBObject, path, position + 1)
         } else {
             return value
