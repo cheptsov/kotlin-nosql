@@ -19,7 +19,7 @@ allprojects {
     apply plugin: "kotlin"
 
     group = "org.jetbrains.kotlin"
-    version = "1.0.0-beta-4589"
+    version = "0.1-SNAPSHOT"
 
     repositories {
         mavenCentral()
